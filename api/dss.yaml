@@ -322,6 +322,15 @@ paths:
       description: Delete reference to a future Entity.  Deletion is not allowed if
         the EntitySummary’s start time is after the current time (in that case, the
         `time_end` should be mutated in PUT).
+      parameters:
+      - name: location
+        in: query
+        description: The approximate location of the Entity reference must be specified
+          to find it in the DSS.  This point may lie anywhere within the Entity's
+          extents, and must be specified in the form "latitude,longitude".
+        required: true
+        schema:
+          type: string
       responses:
         200:
           description: Reference to Entity was successfully deleted from DSS.
@@ -389,6 +398,111 @@ paths:
     - name: id
       in: path
       description: EntityUUID of the Entity details.
+      required: true
+      schema:
+        type: string
+  /constraints/{id}:
+    summary: Public Constraint Entities stored in the DSS.
+    get:
+      tags:
+      - dss
+      summary: 'DSS: /constraints/{id}'
+      description: Retrieve the details of a public Constraint Entity stored in the
+        SAM and exposed by DSS instances.  This path's GET API is compatible with
+        a GET for an EntityDetailsURLs.
+      responses:
+        200:
+          description: The Constraint details were retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Entity'
+      security:
+      - AuthFromJurisdictionalAuthority:
+        - dss.read.airspace_awareness
+        - dss.write.airspace_awareness
+        - dss.write.operations
+    put:
+      tags:
+      - dss
+      summary: 'DSS: /constraints/{id}'
+      description: Publish a new public Constraint that will be stored in the SAM
+        and exposed by DSS instances (details do not need to be hosted by the requesting
+        client).
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PutEntityParameters'
+        required: true
+      responses:
+        200:
+          description: Constraint was successfully added to the airspace.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PutEntityResponse'
+      security:
+      - AuthFromJurisdictionalAuthority:
+        - dss.write.constraints
+    delete:
+      tags:
+      - dss
+      summary: 'DSS: /constraints/{id}'
+      description: Delete a public Constraint stored in the SAM and served from the
+        DSS.
+      responses:
+        200:
+          description: Constraint was successfully deleted from DSS.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteEntityResponse'
+      security:
+      - AuthFromJurisdictionalAuthority:
+        - dss.write.constraints
+    parameters:
+    - name: id
+      in: path
+      description: EntityUUID of the Constraint.
+      required: true
+      schema:
+        type: string
+  /sam_constraints/{id}:
+    summary: Constraints stored directly in the shared airspace model internal to
+      the DSS constellation.
+    put:
+      tags:
+      - sam
+      summary: 'SAM: /sam_constraints'
+      description: Update the contents in the shared airspace model for a particular
+        constraint.  Note that this operation will probably not be hosted at a standard
+        endpoint; instead, the idea of writing information to an endpoint like this
+        will be accomplished via the SAM synchronization interface which may be an
+        atomic broadcast system like Apache Zookeeper.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PutSAMConstraintParameters'
+        required: true
+      responses:
+        200:
+          description: The specified Constraint was propagated to the SAM successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PutSAMConstraintResponse'
+        409:
+          description: Constraint could not be updated because it had changed remotely.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PutSAMConstraintResponse'
+    parameters:
+    - name: id
+      in: path
+      description: EntityUUID of the Constraint.
       required: true
       schema:
         type: string
@@ -1398,11 +1512,11 @@ components:
             $ref: '#/components/schemas/SAMCellID'
     PutEntityParameters:
       description: Parameters for a request to create or update a reference to an
-        Entity in the DSS.
+        Entity in the DSS.  The `url` property is required unless adding a public
+        Constraint via the separate /constraints/{id} DSS endpoint.
       required:
       - extents
       - signature
-      - url
       - type
       type: object
       properties:
@@ -1430,6 +1544,38 @@ components:
             Entity via GET.  For Entities that must receive flight-critical notifications
             (Operation, RogueOperation, AirspaceAwarenessProvider), this endpoint
             must also support PUT according to the `client` Entities endpoint.
+    PutSAMConstraintResponse:
+      description: Response to a request to create or update Constraint details in
+        the SAM.
+      type: object
+    InternalConstraint:
+      description: Data stored in the SAM for a Constraint whose details are stored
+        in the SAM and provided by the DSS.
+      required:
+      - constraint
+      - signature
+      type: object
+      properties:
+        constraint:
+          $ref: '#/components/schemas/Entity'
+        signature:
+          $ref: '#/components/schemas/EntitySignature'
+    PutSAMConstraintParameters:
+      description: Parameters for a request to create or update a Constraint stored
+        in the shared airspace model.
+      required:
+      - constraint
+      type: object
+      properties:
+        constraint:
+          description: Entity details of Constraint to store in the shared airspace
+            model.
+          allOf:
+          - $ref: '#/components/schemas/InternalConstraint'
+        version:
+          description: The previous version of this Constraint in the SAM.  Omit this
+            property if the Constraint did not previously exist in the SAM.
+          type: integer
   securitySchemes:
     AuthFromJurisdictionalAuthority:
       type: oauth2
@@ -1454,8 +1600,17 @@ components:
             dss.write.operations: In addition to `dss.write.airspace_awareness`, client
               may query, read, and create Operation Entities.  A strategic planning
               UTM provider would use this scope.
+            dss.write.constraints: Client may create un-deconflicted constraints in
+              the airspace.  A client acting on behalf of a governmental organization
+              would use this scope.
 security:
-- AuthFromJurisdictionalAuthority: []
+- AuthFromJurisdictionalAuthority:
+  - dss.read.rid_entities
+  - dss.write.rid_entities
+  - dss.read.airspace_awareness
+  - dss.write.airspace_awareness
+  - dss.write.operations
+  - dss.write.constraints
 tags:
 - name: dss
   description: Endpoints exposed by the DSS server.
@@ -1464,4 +1619,5 @@ tags:
 - name: rid
   description: Endpoints exposed by remote ID providers for peer-peer communication.
 - name: sam
-  description: Pseudo-endpoint actions used by DSS instances to synchronize cell information.
+  description: Pseudo-endpoint actions used by DSS instances to synchronize shared
+    airspace model cell information.

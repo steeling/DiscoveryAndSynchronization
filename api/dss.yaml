@@ -145,6 +145,11 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/GetFlightsResponse'
+        404:
+          description: All of the requested views are outside any remote ID service
+            provision areas (RIDProvider Entity volumes) this provider has.  A display
+            provider receiving this response should discontinue polling for this endpoint
+            for the set of view ports requested until otherwise directed by DSS interactions.
       security:
       - AuthFromJurisdictionalAuthority:
         - dss.read.rid_entities
@@ -506,6 +511,34 @@ paths:
       required: true
       schema:
         type: string
+  /rid_providers:
+    description: ""
+    post:
+      tags:
+      - dss
+      summary: 'DSS: /rid_providers'
+      description: |-
+        Alternative endpoint to retrieve just remote ID service provider polling endpoints directly without involving the concept of DSS Entities.
+
+        Note that some providers returned by this call may be guaranteed not to have any flights within the requested view ports because the DSS cannot filter results on a sub-cell basis.  These irrelevant service providers will return 404 at their flights endpoint upon the first poll, and the display provider should not poll that endpoint for the corresponding views any more until/unless directed by DSS interactions.
+
+        Note also that this endpoint is primarily an optimization to make DSS interactions simpler for remote ID display providers.  It could be removed to simplify the DSS API at a cost of slightly increased complexity for remote ID display provider clients.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetRIDProvidersParameters'
+        required: true
+      responses:
+        200:
+          description: Remote ID service providers were successfully retrieved.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetRIDProvidersResponse'
+      security:
+      - AuthFromJurisdictionalAuthority:
+        - dss.read.rid_entities
 components:
   schemas:
     Token:
@@ -784,6 +817,10 @@ components:
             (no subscription necessary in that case).
           allOf:
           - $ref: '#/components/schemas/SubscriptionUUID'
+        flights_url:
+          $ref: '#/components/schemas/RIDFlightsURL'
+          description: If this Entity is a RIDProvider, the URL at which remote ID
+            display providers may poll for flights.
     SubscriptionState:
       description: State of AreaSubscription which is causing a notification to be
         sent.
@@ -1512,8 +1549,7 @@ components:
             $ref: '#/components/schemas/SAMCellID'
     PutEntityParameters:
       description: Parameters for a request to create or update a reference to an
-        Entity in the DSS.  The `url` property is required unless adding a public
-        Constraint via the separate /constraints/{id} DSS endpoint.
+        Entity in the DSS.
       required:
       - extents
       - signature
@@ -1540,10 +1576,13 @@ components:
           $ref: '#/components/schemas/EntityType'
         url:
           $ref: '#/components/schemas/EntityDetailsURL'
-          description: The URL at which a peer client can retrieve details for this
-            Entity via GET.  For Entities that must receive flight-critical notifications
-            (Operation, RogueOperation, AirspaceAwarenessProvider), this endpoint
-            must also support PUT according to the `client` Entities endpoint.
+          description: |-
+            The URL at which a peer client can retrieve details for this Entity via GET.  For Entities that must receive flight-critical notifications (Operation, RogueOperation, AirspaceAwarenessProvider), this endpoint must also support PUT according to the `client` Entities endpoint.
+
+            Required unless adding a public Constraint via the separate /constraints/{id} DSS endpoint.
+        rid_provider:
+          $ref: '#/components/schemas/PutRIDProviderParameters'
+          description: Parameters specific to RIDProvider Entities.
     PutSAMConstraintResponse:
       description: Response to a request to create or update Constraint details in
         the SAM.
@@ -1576,6 +1615,56 @@ components:
           description: The previous version of this Constraint in the SAM.  Omit this
             property if the Constraint did not previously exist in the SAM.
           type: integer
+    GetRIDProvidersParameters:
+      description: Parameters of a message requesting remote ID provider URLs from
+        the DSS.
+      required:
+      - views
+      type: object
+      properties:
+        views:
+          description: The set of views (one per client) for which the calling display
+            provider would like to receive endpoints of possibly-relevant remote ID
+            service providers.
+          type: array
+          items:
+            $ref: '#/components/schemas/RIDViewArea'
+    GetRIDProvidersResponse:
+      description: Response to DSS query for remote ID service providers in an area
+        of interest.
+      required:
+      - rid_service_providers
+      type: object
+      properties:
+        rid_service_providers:
+          description: A superset of the remote ID service providers relevant to the
+            requested areas.
+          type: array
+          items:
+            $ref: '#/components/schemas/RIDProviderInViews'
+    RIDProviderInViews:
+      description: A remote ID provider relevant to one or more view ports.
+      required:
+      - url
+      type: object
+      properties:
+        url:
+          $ref: '#/components/schemas/RIDFlightsURL'
+        views:
+          description: Set of requested display provider views to which this remote
+            ID service provider flights URL pertains.
+          type: array
+          items:
+            type: string
+    PutRIDProviderParameters:
+      description: Additional parameters for a request to create or update a reference
+        to a RIDProvider Entity in the DSS.
+      required:
+      - flights_url
+      type: object
+      properties:
+        flights_url:
+          $ref: '#/components/schemas/RIDFlightsURL'
   securitySchemes:
     AuthFromJurisdictionalAuthority:
       type: oauth2

@@ -284,6 +284,8 @@ paths:
         Create or update reference to an Entity.  Note that an authorization scope with appropriate permissions must be provided according to the type of Entity being created or updated.
 
         For remote ID Entities, the DSS automatically adds `retention_period` to `time_end` in EntitySummary before storing it.  Updating `time_start` is not allowed if it is before the current time.
+
+        Operation Entities require additional parameters in `operation`.  If an Entity is declared a RogueOperation, a `key` is not necessary to mutate it.
       parameters:
       - name: id
         in: path
@@ -316,7 +318,7 @@ paths:
     delete:
       tags:
       - dss
-      summary: 'DSS: /entities/{id}'
+      summary: 'DSS: /entityrefs/{id}'
       description: Delete reference to a future Entity.  Deletion is not allowed if
         the EntitySummary’s start time is after the current time (in that case, the
         `time_end` should be mutated in PUT).
@@ -366,7 +368,7 @@ paths:
     put:
       tags:
       - client
-      summary: 'Client: /entity_details/{id}'
+      summary: 'Client: /entities/{id}'
       description: Publish new information about an Entity to this client (usually
         because of instructions from the DSS triggered by a subscription).
       requestBody:
@@ -975,11 +977,6 @@ components:
             all relevant Entities.  Not required when Operation is declared rogue.
           allOf:
           - $ref: '#/components/schemas/DeconflictionKey'
-        rogue:
-          description: True if control of the aircraft for this Operation has been
-            lost.  When this parameter is true, an Operation may be mutated without
-            a DeconflictionKey.  Assumed false if not specified.
-          type: boolean
         rid_url:
           description: The URL at which a peer client may obtain the details for the
             remote ID provider Entity that must be associated with this Operation.
@@ -1001,36 +998,6 @@ components:
             in the DSS).
           allOf:
           - $ref: '#/components/schemas/EntitySignature'
-    PutEntityParameters:
-      description: Parameters for a request to create or update a reference to an
-        Entity in the DSS.
-      required:
-      - extents
-      - signature
-      - url
-      type: object
-      properties:
-        extents:
-          description: The bounding spacetime extents of this Entity.  Start and end
-            times must be specified.  Spatial information is translated into SAM cells
-            internally by the DSS then discarded.
-          allOf:
-          - $ref: '#/components/schemas/Volume4D'
-        url:
-          description: The URL at which a peer client can retrieve details for this
-            Entity via GET.
-          allOf:
-          - $ref: '#/components/schemas/EntityDetailsURL'
-        signature:
-          description: Signature for this version of this Entity.  May be used to
-            verify that peer clients have retrieved the details of this Operation
-            before being allowed to place deconflicted Entities into the airspace.
-          allOf:
-          - $ref: '#/components/schemas/EntitySignature'
-        operation:
-          description: Parameters specific to Operation Entities.
-          allOf:
-          - $ref: '#/components/schemas/PutOperationParameters'
     PutOperationResponse:
       description: Additional response information when creating or updating a reference
         to an Operation Entity in the DSS.
@@ -1210,8 +1177,14 @@ components:
           type: number
           example: 1321.2
         extrapolated:
+          description: True if this position was generated primarily by computation
+            rather than primarily from a direct instrument measurement.  Assumed false
+            if not specified.
           type: boolean
         accuracy:
+          format: float
+          description: The maximum number of meters of error that are likely to be
+            present in this reported position.
           type: number
     RIDFlightDetails:
       description: Details about a flight reported by a remote ID service provider.
@@ -1423,6 +1396,40 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/SAMCellID'
+    PutEntityParameters:
+      description: Parameters for a request to create or update a reference to an
+        Entity in the DSS.
+      required:
+      - extents
+      - signature
+      - url
+      - type
+      type: object
+      properties:
+        extents:
+          description: The bounding spacetime extents of this Entity.  Start and end
+            times must be specified.  Spatial information is translated into SAM cells
+            internally by the DSS then discarded.
+          allOf:
+          - $ref: '#/components/schemas/Volume4D'
+        signature:
+          description: Signature for this version of this Entity.  May be used to
+            verify that peer clients have retrieved the details of this Operation
+            before being allowed to place deconflicted Entities into the airspace.
+          allOf:
+          - $ref: '#/components/schemas/EntitySignature'
+        operation:
+          description: Parameters specific to Operation Entities.
+          allOf:
+          - $ref: '#/components/schemas/PutOperationParameters'
+        type:
+          $ref: '#/components/schemas/EntityType'
+        url:
+          $ref: '#/components/schemas/EntityDetailsURL'
+          description: The URL at which a peer client can retrieve details for this
+            Entity via GET.  For Entities that must receive flight-critical notifications
+            (Operation, RogueOperation, AirspaceAwarenessProvider), this endpoint
+            must also support PUT according to the `client` Entities endpoint.
   securitySchemes:
     AuthFromJurisdictionalAuthority:
       type: oauth2

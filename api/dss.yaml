@@ -187,37 +187,37 @@ paths:
       schema:
         type: string
   /cells:
-    summary: Geographic segmentation cells of shared airspace model internal to the
-      DSS constellation.
+    summary: Geographic segmentation cells of DSS airspace representation internal
+      to the DSS constellation.
     put:
       tags:
-      - sam
-      summary: 'SAM: /cells'
-      description: Update the contents in the shared airspace model for a set of cells.  Note
-        that this operation will probably not be hosted at a standard endpoint; instead,
-        the idea of writing information to an endpoint like this will be accomplished
-        via the SAM synchronization interface which may be an atomic broadcast system
-        like Apache Zookeeper.
+      - dar
+      summary: 'DAR: /cells'
+      description: Update the contents in the DSS airspace representation for a set
+        of cells.  Note that this operation will probably not be hosted at a standard
+        endpoint; instead, the idea of writing information to an endpoint like this
+        will be accomplished via the DAR synchronization interface which may be an
+        atomic broadcast system like Apache Zookeeper.
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PutSAMCellsParameters'
+              $ref: '#/components/schemas/PutDARCellsParameters'
         required: true
       responses:
         200:
-          description: The specified SAM cells were updated successfully.
+          description: The specified DAR cells were updated successfully.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PutSAMCellsResponse'
+                $ref: '#/components/schemas/PutDARCellsResponse'
         409:
-          description: SAM cells could not be updated because at least one cell had
+          description: DAR cells could not be updated because at least one cell had
             been changed before this transaction could be executed.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PutSAMCellsResponse'
+                $ref: '#/components/schemas/PutDARCellsResponse'
   /entityrefs:
     summary: Set of airspace Entities in the DSS.
     description: ""
@@ -225,9 +225,9 @@ paths:
       tags:
       - dss
       summary: 'DSS: /entityrefs'
-      description: Retrieve references to all visible airspace Entities in the SAM
+      description: Retrieve references to all visible airspace Entities in the DAR
         for a given area during the given time.  Note that some Entities will lie
-        entirely outside the requested area because an individual SAM cell cannot
+        entirely outside the requested area because an individual DAR cell cannot
         filter EntitySummaries by exact geography.  Note that some Entities may not
         be visible for a given authorization scope.
       parameters:
@@ -413,7 +413,7 @@ paths:
       - dss
       summary: 'DSS: /constraints/{id}'
       description: Retrieve the details of a public Constraint Entity stored in the
-        SAM and exposed by DSS instances.  This path's GET API is compatible with
+        DAR and exposed by DSS instances.  This path's GET API is compatible with
         a GET for an EntityDetailsURLs.
       responses:
         200:
@@ -431,7 +431,7 @@ paths:
       tags:
       - dss
       summary: 'DSS: /constraints/{id}'
-      description: Publish a new public Constraint that will be stored in the SAM
+      description: Publish a new public Constraint that will be stored in the DAR
         and exposed by DSS instances (details do not need to be hosted by the requesting
         client).
       requestBody:
@@ -454,7 +454,7 @@ paths:
       tags:
       - dss
       summary: 'DSS: /constraints/{id}'
-      description: Delete a public Constraint stored in the SAM and served from the
+      description: Delete a public Constraint stored in the DAR and served from the
         DSS.
       responses:
         200:
@@ -473,37 +473,37 @@ paths:
       required: true
       schema:
         type: string
-  /sam_constraints/{id}:
-    summary: Constraints stored directly in the shared airspace model internal to
-      the DSS constellation.
+  /dar_constraints/{id}:
+    summary: Constraints stored directly in the DSS airspace representation internal
+      to the DSS constellation.
     put:
       tags:
-      - sam
-      summary: 'SAM: /sam_constraints'
-      description: Update the contents in the shared airspace model for a particular
+      - dar
+      summary: 'DAR: /dar_constraints'
+      description: Update the contents in the DSS airspace representation for a particular
         constraint.  Note that this operation will probably not be hosted at a standard
         endpoint; instead, the idea of writing information to an endpoint like this
-        will be accomplished via the SAM synchronization interface which may be an
+        will be accomplished via the DAR synchronization interface which may be an
         atomic broadcast system like Apache Zookeeper.
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PutSAMConstraintParameters'
+              $ref: '#/components/schemas/PutDARConstraintParameters'
         required: true
       responses:
         200:
-          description: The specified Constraint was propagated to the SAM successfully.
+          description: The specified Constraint was propagated to the DAR successfully.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PutSAMConstraintResponse'
+                $ref: '#/components/schemas/PutDARConstraintResponse'
         409:
           description: Constraint could not be updated because it had changed remotely.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PutSAMConstraintResponse'
+                $ref: '#/components/schemas/PutDARConstraintResponse'
     parameters:
     - name: id
       in: path
@@ -518,7 +518,7 @@ paths:
       - dss
       summary: 'DSS: /rid_providers'
       description: |-
-        Alternative endpoint to retrieve just remote ID service provider polling endpoints directly without involving the concept of DSS Entities.
+        Alternative endpoint to retrieve just remote ID service provider polling endpoints directly without involving the concept of DSS Entities.  Also creates a subscription to be notified if any remote ID entities change in the DSS.
 
         Note that some providers returned by this call may be guaranteed not to have any flights within the requested view ports because the DSS cannot filter results on a sub-cell basis.  These irrelevant service providers will return 404 at their flights endpoint upon the first poll, and the display provider should not poll that endpoint for the corresponding views any more until/unless directed by DSS interactions.
 
@@ -808,7 +808,7 @@ components:
             included in the creation area but omitted from the deletion area.
           type: array
           items:
-            $ref: '#/components/schemas/SAMCellID'
+            $ref: '#/components/schemas/DARCellID'
         subscription:
           description: The subscription that provides the airspace awareness for this
             EntitySummary.  If no subscription was provided upon creation, the DSS
@@ -1018,7 +1018,7 @@ components:
             in the creation area but omitted from the deletion area.
           type: array
           items:
-            $ref: '#/components/schemas/SAMCellID'
+            $ref: '#/components/schemas/DARCellID'
         generated_by_dss:
           description: True if this subscription was automatically generated by the
             DSS for a UTM Entity, and therefore should be deleted when the associated
@@ -1489,25 +1489,24 @@ components:
             client.  A remote ID display provider may indicate to which views each
             remote ID flight belongs.
           type: string
-    PutSAMCellsParameters:
-      description: Parameters for a request to update cells in the shared airspace
-        model.
+    PutDARCellsParameters:
+      description: Parameters for a request to update cells in the DSS airspace representation.
       required:
       - updates
       type: object
       properties:
         updates:
-          description: A set of updates to SAM cells to apply in a single transaction.
+          description: A set of updates to DAR cells to apply in a single transaction.
           type: array
           items:
-            $ref: '#/components/schemas/SAMCellUpdate'
-    SAMCellID:
-      description: Descriptor for a particular cell in the SAM.  Format not yet defined.
+            $ref: '#/components/schemas/DARCellUpdate'
+    DARCellID:
+      description: Descriptor for a particular cell in the DAR.  Format not yet defined.
       type: object
-    SAMCellUpdate:
-      description: Updated data stored internally in SAM cells within the DSS.  Must
+    DARCellUpdate:
+      description: Updated data stored internally in DAR cells within the DSS.  Must
         be exchanged in a standardized format between DSS instances to maintain a
-        shared airspace model.
+        DSS airspace representation.
       required:
       - entity_summaries
       - subscriptions
@@ -1517,7 +1516,7 @@ components:
       properties:
         entity_summaries:
           description: References to all the Entities in the airspace contained in
-            this SAM cell.
+            this DAR cell.
           type: array
           items:
             $ref: '#/components/schemas/InternalEntitySummary'
@@ -1528,16 +1527,16 @@ components:
           items:
             $ref: '#/components/schemas/InternalSubscription'
         cell:
-          description: The SAM cell containing this information.
+          description: The DAR cell containing this information.
           allOf:
-          - $ref: '#/components/schemas/SAMCellID'
+          - $ref: '#/components/schemas/DARCellID'
         version:
           description: The previous version of the contents of this cell.  An update
             will only be successful if the cell contents have not changed since the
             request was formed.
           type: integer
-    PutSAMCellsResponse:
-      description: Response to a request to update cells in the SAM.
+    PutDARCellsResponse:
+      description: Response to a request to update cells in the DAR.
       type: object
       properties:
         conflicted_cells:
@@ -1546,7 +1545,7 @@ components:
             in the case of a 409 Conflict response.
           type: array
           items:
-            $ref: '#/components/schemas/SAMCellID'
+            $ref: '#/components/schemas/DARCellID'
     PutEntityParameters:
       description: Parameters for a request to create or update a reference to an
         Entity in the DSS.
@@ -1558,7 +1557,7 @@ components:
       properties:
         extents:
           description: The bounding spacetime extents of this Entity.  Start and end
-            times must be specified.  Spatial information is translated into SAM cells
+            times must be specified.  Spatial information is translated into DAR cells
             internally by the DSS then discarded.
           allOf:
           - $ref: '#/components/schemas/Volume4D'
@@ -1583,13 +1582,13 @@ components:
         rid_provider:
           $ref: '#/components/schemas/PutRIDProviderParameters'
           description: Parameters specific to RIDProvider Entities.
-    PutSAMConstraintResponse:
+    PutDARConstraintResponse:
       description: Response to a request to create or update Constraint details in
-        the SAM.
+        the DAR.
       type: object
     InternalConstraint:
-      description: Data stored in the SAM for a Constraint whose details are stored
-        in the SAM and provided by the DSS.
+      description: Data stored in the DAR for a Constraint whose details are stored
+        in the DAR and provided by the DSS.
       required:
       - constraint
       - signature
@@ -1599,36 +1598,21 @@ components:
           $ref: '#/components/schemas/Entity'
         signature:
           $ref: '#/components/schemas/EntitySignature'
-    PutSAMConstraintParameters:
+    PutDARConstraintParameters:
       description: Parameters for a request to create or update a Constraint stored
-        in the shared airspace model.
+        in the DSS airspace representation.
       required:
       - constraint
       type: object
       properties:
         constraint:
-          description: Entity details of Constraint to store in the shared airspace
-            model.
+          description: Entity details of Constraint to store in the DSS airspace representation.
           allOf:
           - $ref: '#/components/schemas/InternalConstraint'
         version:
-          description: The previous version of this Constraint in the SAM.  Omit this
-            property if the Constraint did not previously exist in the SAM.
+          description: The previous version of this Constraint in the DAR.  Omit this
+            property if the Constraint did not previously exist in the DAR.
           type: integer
-    GetRIDProvidersParameters:
-      description: Parameters of a message requesting remote ID provider URLs from
-        the DSS.
-      required:
-      - views
-      type: object
-      properties:
-        views:
-          description: The set of views (one per client) for which the calling display
-            provider would like to receive endpoints of possibly-relevant remote ID
-            service providers.
-          type: array
-          items:
-            $ref: '#/components/schemas/RIDViewArea'
     GetRIDProvidersResponse:
       description: Response to DSS query for remote ID service providers in an area
         of interest.
@@ -1642,6 +1626,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/RIDProviderInViews'
+        subscription:
+          $ref: '#/components/schemas/SubscriptionUUID'
+          description: The ID of a DSS subscription for changes in remote ID service
+            providers, if one was created.
     RIDProviderInViews:
       description: A remote ID provider relevant to one or more view ports.
       required:
@@ -1665,6 +1653,25 @@ components:
       properties:
         flights_url:
           $ref: '#/components/schemas/RIDFlightsURL'
+    GetRIDProvidersParameters:
+      description: Parameters of a message requesting remote ID provider URLs from
+        the DSS.
+      required:
+      - views
+      type: object
+      properties:
+        views:
+          description: The set of views (one per client) for which the calling display
+            provider would like to receive endpoints of possibly-relevant remote ID
+            service providers.
+          type: array
+          items:
+            $ref: '#/components/schemas/RIDViewArea'
+        subscription_callback:
+          description: If specified, have the DSS create a subscription that notifies
+            this endpoint upon a remote ID service provider change in the DSS.
+          allOf:
+          - $ref: '#/components/schemas/EntityDetailsURL'
   securitySchemes:
     AuthFromJurisdictionalAuthority:
       type: oauth2
@@ -1707,6 +1714,6 @@ tags:
   description: Endpoints exposed by DSS clients for peer-peer communication.
 - name: rid
   description: Endpoints exposed by remote ID providers for peer-peer communication.
-- name: sam
-  description: Pseudo-endpoint actions used by DSS instances to synchronize shared
-    airspace model cell information.
+- name: dar
+  description: Pseudo-endpoint actions used by DSS instances to synchronize DSS airspace
+    representation cell information.

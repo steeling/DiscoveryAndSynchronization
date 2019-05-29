@@ -1445,6 +1445,13 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/RIDViewArea'
+        last_poll:
+          format: date-time
+          description: If specified, the timestamp of the last time this endpoint
+            was polled by the requesting display provider.  Only changes since this
+            time will be returned by the service provider (see details mentioning
+            `last_poll` below)
+          type: string
     LatLngBox:
       description: Rectangular geographic area in lat-lng space.
       required:
@@ -1546,42 +1553,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/DARCellID'
-    PutEntityParameters:
-      description: Parameters for a request to create or update a reference to an
-        Entity in the DSS.
-      required:
-      - extents
-      - signature
-      - type
-      type: object
-      properties:
-        extents:
-          description: The bounding spacetime extents of this Entity.  Start and end
-            times must be specified.  Spatial information is translated into DAR cells
-            internally by the DSS then discarded.
-          allOf:
-          - $ref: '#/components/schemas/Volume4D'
-        signature:
-          description: Signature for this version of this Entity.  May be used to
-            verify that peer clients have retrieved the details of this Operation
-            before being allowed to place deconflicted Entities into the airspace.
-          allOf:
-          - $ref: '#/components/schemas/EntitySignature'
-        operation:
-          description: Parameters specific to Operation Entities.
-          allOf:
-          - $ref: '#/components/schemas/PutOperationParameters'
-        type:
-          $ref: '#/components/schemas/EntityType'
-        url:
-          $ref: '#/components/schemas/EntityDetailsURL'
-          description: |-
-            The URL at which a peer client can retrieve details for this Entity via GET.  For Entities that must receive flight-critical notifications (Operation, RogueOperation, AirspaceAwarenessProvider), this endpoint must also support PUT according to the `client` Entities endpoint.
-
-            Required unless adding a public Constraint via the separate /constraints/{id} DSS endpoint.
-        rid_provider:
-          $ref: '#/components/schemas/PutRIDProviderParameters'
-          description: Parameters specific to RIDProvider Entities.
     PutDARConstraintResponse:
       description: Response to a request to create or update Constraint details in
         the DAR.
@@ -1672,6 +1643,42 @@ components:
             this endpoint upon a remote ID service provider change in the DSS.
           allOf:
           - $ref: '#/components/schemas/EntityDetailsURL'
+    PutEntityParameters:
+      description: Parameters for a request to create or update a reference to an
+        Entity in the DSS.
+      required:
+      - extents
+      - signature
+      - type
+      type: object
+      properties:
+        extents:
+          description: The bounding spacetime extents of this Entity.  Start and end
+            times must be specified.  Spatial information is translated into DAR cells
+            internally by the DSS then discarded.
+          allOf:
+          - $ref: '#/components/schemas/Volume4D'
+        signature:
+          description: Signature for this version of this Entity.  May be used to
+            verify that peer clients have retrieved the details of this Operation
+            before being allowed to place deconflicted Entities into the airspace.
+          allOf:
+          - $ref: '#/components/schemas/EntitySignature'
+        operation:
+          description: Parameters specific to Operation and RogueOperation Entities.
+          allOf:
+          - $ref: '#/components/schemas/PutOperationParameters'
+        type:
+          $ref: '#/components/schemas/EntityType'
+        url:
+          $ref: '#/components/schemas/EntityDetailsURL'
+          description: |-
+            The URL at which a peer client can retrieve details for this Entity via GET.  For Entities that must receive flight-critical notifications (Operation, RogueOperation, AirspaceAwarenessProvider), this endpoint must also support PUT according to the `client` Entities endpoint.
+
+            Required unless adding a public Constraint via the separate /constraints/{id} DSS endpoint.
+        rid_provider:
+          $ref: '#/components/schemas/PutRIDProviderParameters'
+          description: Parameters specific to RIDProvider Entities.
   securitySchemes:
     AuthFromJurisdictionalAuthority:
       type: oauth2

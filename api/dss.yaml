@@ -324,9 +324,9 @@ paths:
       tags:
       - dss
       summary: 'DSS: /entityrefs/{id}'
-      description: Delete reference to a future Entity.  Deletion is not allowed if
-        the EntitySummary’s start time is after the current time (in that case, the
-        `time_end` should be mutated in PUT).
+      description: Delete reference to an Entity.  Deletion of RIDProvider Entities
+        is not allowed if the EntitySummary’s start time is after the current time
+        (in that case, the `time_end` should be mutated in PUT).
       parameters:
       - name: location
         in: query
@@ -930,7 +930,14 @@ components:
       type: object
     OperationDetails:
       description: Operation-specific Entity details.
+      required:
+      - rid_flight_id
       type: object
+      properties:
+        rid_flight_id:
+          description: This flight ID may be used to request real-time position updates
+            for the aircraft in this Operation through the remote ID interface.
+          type: string
     RIDProviderDetails:
       description: Entity details specific to a remote ID provider.
       required:
@@ -1431,27 +1438,6 @@ components:
         endpoint.
       type: string
       example: https://example.com/flights
-    GetFlightsParameters:
-      description: Parameters of a message requesting remote ID flights.  Usually
-        polled by a remote ID display provider to provide ongoing updates in areas
-        currently being viewed by their clients.
-      required:
-      - views
-      type: object
-      properties:
-        views:
-          description: The set of views (one per client) in which the calling display
-            provider would like to receive up-to-date remote ID flight information.
-          type: array
-          items:
-            $ref: '#/components/schemas/RIDViewArea'
-        last_poll:
-          format: date-time
-          description: If specified, the timestamp of the last time this endpoint
-            was polled by the requesting display provider.  Only changes since this
-            time will be returned by the service provider (see details mentioning
-            `last_poll` below)
-          type: string
     LatLngBox:
       description: Rectangular geographic area in lat-lng space.
       required:
@@ -1481,21 +1467,6 @@ components:
           description: Area is west of this longitude in degrees.
           required: true
           type: number
-    RIDViewArea:
-      description: Area in which remote ID flights are being viewed.
-      required:
-      - box
-      type: object
-      properties:
-        box:
-          $ref: '#/components/schemas/LatLngBox'
-          description: The area of this view.  Size may not exceed a certain diagonal
-            length specified in the standard.
-        id:
-          description: Identity of remote ID view, as assigned by the querying display
-            client.  A remote ID display provider may indicate to which views each
-            remote ID flight belongs.
-          type: string
     PutDARCellsParameters:
       description: Parameters for a request to update cells in the DSS airspace representation.
       required:
@@ -1679,6 +1650,46 @@ components:
         rid_provider:
           $ref: '#/components/schemas/PutRIDProviderParameters'
           description: Parameters specific to RIDProvider Entities.
+    RIDViewArea:
+      description: Area in which remote ID flights are being viewed.
+      required:
+      - box
+      type: object
+      properties:
+        box:
+          $ref: '#/components/schemas/LatLngBox'
+          description: The area of this view.  Size may not exceed a certain diagonal
+            length specified in the standard.
+        last_poll:
+          format: date-time
+          description: If specified, the timestamp of the last time this box was polled
+            by the requesting display provider.  Only changes since this time will
+            be returned by the service provider (see details mentioning `last_poll`
+            below)
+          type: string
+        id:
+          description: Identity of remote ID view, as assigned by the querying display
+            client.  A remote ID display provider may indicate to which views each
+            remote ID flight belongs.
+          type: string
+    GetFlightsParameters:
+      description: Parameters of a message requesting remote ID flights.  Usually
+        polled by a remote ID display provider to provide ongoing updates in areas
+        currently being viewed by their clients.
+      type: object
+      properties:
+        views:
+          description: The set of views (one per client) in which the calling display
+            provider would like to receive up-to-date remote ID flight information.
+          type: array
+          items:
+            $ref: '#/components/schemas/RIDViewArea'
+        flight_ids:
+          description: List of specific flight IDs to include in results.  Used to
+            track specific aircraft that the consumer is aware of via UTM Operations.
+          type: array
+          items:
+            type: string
   securitySchemes:
     AuthFromJurisdictionalAuthority:
       type: oauth2

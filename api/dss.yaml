@@ -87,9 +87,9 @@ paths:
       tags:
       - dss
       summary: 'DSS: /constraints/{id}'
-      description: Retrieve the details of a public Constraint Entity stored in the
-        DAR and exposed by DSS instances.  This path's GET API is compatible with
-        a GET for an EntityDetailsURLs.
+      description: '`[UTM only]` Retrieve the details of a public Constraint Entity
+        stored in the DAR and exposed by DSS instances.  This path''s GET API is compatible
+        with a GET for an EntityDetailsURLs.'
       responses:
         200:
           description: The Constraint details were retrieved successfully.
@@ -106,9 +106,9 @@ paths:
       tags:
       - dss
       summary: 'DSS: /constraints/{id}'
-      description: Publish a new public Constraint that will be stored in the DAR
-        and exposed by DSS instances (details do not need to be hosted by the requesting
-        client).
+      description: '`[UTM only]` Publish a new public Constraint that will be stored
+        in the DAR and exposed by DSS instances (details do not need to be hosted
+        by the requesting client).'
       requestBody:
         content:
           application/json:
@@ -129,8 +129,8 @@ paths:
       tags:
       - dss
       summary: 'DSS: /constraints/{id}'
-      description: Delete a public Constraint stored in the DAR and served from the
-        DSS.
+      description: '`[UTM only]` Delete a public Constraint stored in the DAR and
+        served from the DSS.'
       responses:
         200:
           description: Constraint was successfully deleted from DSS.
@@ -282,7 +282,7 @@ paths:
       description: |-
         Create or update reference to an Entity.  Note that an authorization scope with appropriate permissions must be provided according to the type of Entity being created or updated.
 
-        For remote ID Entities, the DSS automatically adds `retention_period` to `time_end` in EntitySummary before storing it.  Updating `time_start` is not allowed if it is before the current time.
+        For remote ID Entities, the DSS assumes the USS has already added the appropriate retention period to operation end time in EntitySummary's `time_end` extents field before storing it.  Updating `time_start` is not allowed if it is before the current time.
 
         Operation Entities require additional parameters in `operation`.  If an Entity is declared a RogueOperation, a `key` is not necessary to mutate it.
       parameters:
@@ -318,9 +318,8 @@ paths:
       tags:
       - dss
       summary: 'DSS: /entities/{id}'
-      description: Delete reference to an Entity.  Deletion of RIDProvider Entities
-        is not allowed if the EntitySummary’s start time is after the current time
-        (in that case, the `time_end` should be mutated in PUT).
+      description: Delete reference to an Entity.  USSs should not delete RIDProvider
+        Entities before the end of the last managed flight plus the retention period.
       parameters:
       - name: location
         in: query
@@ -447,9 +446,9 @@ paths:
       tags:
       - utmclient
       summary: 'Client: /entity_details/{id}'
-      description: Retrieve the details of an Entity owned by the client.  Note that
-        this request should be denied if the authorization scope does not provide
-        access to the type of Entity being requested.
+      description: '`[UTM only]` Retrieve the details of an Entity owned by the client.  Note
+        that this request should be denied if the authorization scope does not provide
+        access to the type of Entity being requested.'
       responses:
         200:
           description: The Entity details were retrieved successfully.
@@ -466,7 +465,7 @@ paths:
         - dss.write.operations
     put:
       tags:
-      - utmclient
+      - client
       summary: 'Client: /entity_details/{id}'
       description: Publish new information about an Entity to this client (usually
         because of instructions from the DSS triggered by a subscription).
@@ -596,7 +595,6 @@ paths:
       required: true
       schema:
         type: string
-      type: string
     - name: last_poll
       in: query
       description: If specified, the timestamp of the last time this box was polled
@@ -864,7 +862,6 @@ components:
       required:
       - subscriptions
       - url
-      - entity
       type: object
       properties:
         subscriptions:
@@ -872,10 +869,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/SubscriptionState'
-        entity:
-          description: ID of the Entity that should be included in the notification.
-          allOf:
-          - $ref: '#/components/schemas/EntityUUID'
         url:
           description: The endpoint that the client mutating the airspace should provide
             the updated Entity to.
@@ -1467,42 +1460,6 @@ components:
       description: Additional parameters for a request to create or update a reference
         to an Constraint Entity in the DSS.
       type: object
-    PutEntityParameters:
-      description: Parameters for a request to create or update a reference to an
-        Entity in the DSS.
-      required:
-      - extents
-      - type
-      type: object
-      properties:
-        extents:
-          description: The bounding spacetime extents of this Entity.  Start and end
-            times must be specified.  Spatial information is translated into DAR cells
-            internally by the DSS then discarded.
-          allOf:
-          - $ref: '#/components/schemas/Volume4D'
-        signature:
-          description: Signature for this version of this Entity.  May be used to
-            verify that peer clients have retrieved the details of this Operation
-            before being allowed to place deconflicted Entities into the airspace.
-          allOf:
-          - $ref: '#/components/schemas/EntitySignature'
-        operation:
-          description: Parameters specific to Operation Entities.
-          allOf:
-          - $ref: '#/components/schemas/PutOperationParameters'
-        constraint:
-          description: Parameters specific to Constraint Entities.
-          allOf:
-          - $ref: '#/components/schemas/PutConstraintParameters'
-        type:
-          $ref: '#/components/schemas/EntityType'
-        url:
-          $ref: '#/components/schemas/EntityDetailsURL'
-          description: |-
-            The URL at which a peer client can retrieve further information about this Entity via GET.  For Entities that must receive flight-critical notifications (Operation, AirspaceAwarenessProvider), this endpoint must also support PUT according to the `client` Entities endpoint.
-
-            Required unless adding a public Constraint via the separate /constraints/{id} DSS endpoint.
     RIDFlightsURL:
       description: The URL at which the remote ID flights and their details may be
         retrieved.  See /flights and /flights/{id} paths for specification of this
@@ -1541,29 +1498,6 @@ components:
           description: Identity of remote ID view, as assigned by the querying display
             client.  A remote ID display provider may indicate to which views each
             remote ID flight belongs.
-          type: string
-    GetRIDProvidersParameters:
-      description: Parameters of a message requesting remote ID provider URLs from
-        the DSS.
-      required:
-      - views
-      type: object
-      properties:
-        extents:
-          description: The bounding spacetime extents of interest to search for remote
-            ID providers.  Spatial information is snapped to DAR cells internally
-            by the DSS.
-          allOf:
-          - $ref: '#/components/schemas/Volume4D'
-        subscription_callback:
-          description: If specified, have the DSS create a subscription that notifies
-            this endpoint upon a remote ID service provider change in the DSS.
-          allOf:
-          - $ref: '#/components/schemas/EntityDetailsURL'
-        subscription_expiration:
-          format: date-time
-          description: If a subscription is requested, the time at which the created
-            subscription should expire.
           type: string
     RIDFlightDetails:
       description: Details about a flight reported by a remote ID service provider.  At
@@ -1705,6 +1639,77 @@ components:
           description: An approximate location of the Subscription, which must be
             specified to find it in the DSS in a future PUT or DELETE call.  Returned
             in the form of "latitude,longitude".
+          type: string
+    PutEntityParameters:
+      description: Parameters for a request to create or update a reference to an
+        Entity in the DSS.
+      required:
+      - extents
+      - type
+      type: object
+      properties:
+        extents:
+          description: The bounding spacetime extents of this Entity.  Start and end
+            times must be specified.  Spatial information is translated into DAR cells
+            internally by the DSS then discarded.
+          allOf:
+          - $ref: '#/components/schemas/Volume4D'
+        signature:
+          description: Signature for this version of this Entity.  May be used to
+            verify that peer clients have retrieved the details of this Operation
+            before being allowed to place deconflicted Entities into the airspace.
+          allOf:
+          - $ref: '#/components/schemas/EntitySignature'
+        operation:
+          description: Parameters specific to Operation Entities.
+          allOf:
+          - $ref: '#/components/schemas/PutOperationParameters'
+        constraint:
+          description: Parameters specific to Constraint Entities.
+          allOf:
+          - $ref: '#/components/schemas/PutConstraintParameters'
+        type:
+          $ref: '#/components/schemas/EntityType'
+        url:
+          $ref: '#/components/schemas/EntityDetailsURL'
+          description: |-
+            The URL at which a peer client can retrieve further information about this Entity via GET.  For Entities that must receive flight-critical notifications (Operation, AirspaceAwarenessProvider), this endpoint must also support PUT according to the `client` Entities endpoint.
+
+            Required unless adding a public Constraint via the separate /constraints/{id} DSS endpoint.
+        awareness_provider:
+          description: If this Entity is an airspace awareness provider, this property
+            contains details about that provider.
+          allOf:
+          - $ref: '#/components/schemas/AirspaceAwarenessProviderDetails'
+        rid_provider:
+          description: If this Entity is a remote ID provider, this property contains
+            details about the remote ID provider.
+          allOf:
+          - $ref: '#/components/schemas/RIDProviderDetails'
+    GetRIDProvidersParameters:
+      description: Parameters of a message requesting remote ID provider URLs from
+        the DSS.
+      required:
+      - views
+      - extents
+      type: object
+      properties:
+        extents:
+          description: The bounding spacetime extents of interest to search for remote
+            ID providers.  Spatial information is snapped to DAR cells internally
+            by the DSS.
+          allOf:
+          - $ref: '#/components/schemas/Volume4D'
+        subscription_callback:
+          description: If specified, have the DSS create a subscription that notifies
+            this endpoint upon a remote ID service provider change in the DSS.  Implements
+            PUT /entity_details API.
+          allOf:
+          - $ref: '#/components/schemas/EntityDetailsURL'
+        subscription_expiration:
+          format: date-time
+          description: If a subscription is requested, the time at which the created
+            subscription should expire.
           type: string
   securitySchemes:
     AuthFromJurisdictionalAuthority:

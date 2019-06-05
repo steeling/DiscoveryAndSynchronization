@@ -120,43 +120,6 @@ paths:
         - dss.read.airspace_awareness
         - dss.write.airspace_awareness
         - dss.write.operations
-  /flights:
-    summary: Basic operation details to meet remote ID requirements.
-    description: This endpoint may be polled by remote ID display providers to display
-      basic aircraft activity near a user in real time.
-    post:
-      tags:
-      - rid
-      summary: 'RIDProvider: /flights'
-      description: Retrieve basic flight information to meet remote ID requirements.  This
-        endpoint may be polled by remote ID display providers to display basic aircraft
-        activity near a user in real time.  POST verb used due to complex request
-        parameters.
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/GetFlightsParameters'
-        required: true
-      responses:
-        200:
-          description: Flight information was successfully retrieved.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GetFlightsResponse'
-        404:
-          description: All of the requested views are outside any remote ID service
-            provision areas (RIDProvider Entity volumes) this provider has.  A display
-            provider receiving this response should discontinue polling for this endpoint
-            for the set of view ports requested until otherwise directed by DSS interactions.
-      security:
-      - AuthFromJurisdictionalAuthority:
-        - dss.read.rid_entities
-        - dss.write.rid_entities
-        - dss.read.airspace_awareness
-        - dss.write.airspace_awareness
-        - dss.write.operations
   /cells:
     summary: Geographic segmentation cells of DSS airspace representation internal
       to the DSS constellation.
@@ -576,6 +539,53 @@ paths:
       required: true
       schema:
         type: string
+  /flights:
+    summary: Basic operation details to meet remote ID requirements.
+    description: This endpoint may be polled by remote ID display providers to display
+      basic aircraft activity near a user in real time.
+    get:
+      tags:
+      - rid
+      summary: 'RIDProvider: /flights'
+      description: Retrieve basic flight information to meet remote ID requirements.  This
+        endpoint may be polled by remote ID display providers to display basic aircraft
+        activity near a user in real time.
+      responses:
+        200:
+          description: Flight information was successfully retrieved.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetFlightsResponse'
+        404:
+          description: All of the requested views are outside any remote ID service
+            provision areas (RIDProvider Entity volumes) this provider has.  A display
+            provider receiving this response should discontinue polling for this endpoint
+            for the set of view ports requested until otherwise directed by DSS interactions.
+      security:
+      - AuthFromJurisdictionalAuthority:
+        - dss.read.rid_entities
+        - dss.write.rid_entities
+        - dss.read.airspace_awareness
+        - dss.write.airspace_awareness
+        - dss.write.operations
+    parameters:
+    - name: box
+      in: query
+      description: The area of this view;:latmin,lngmin,latmax,lngmax.  Size may not
+        exceed a certain diagonal length specified in the standard.
+      required: true
+      schema:
+        type: string
+      type: string
+    - name: last_poll
+      in: query
+      description: If specified, the timestamp of the last time this box was polled
+        by the requesting display provider.  Only changes since this time will be
+        returned by the service provider (see details mentioning `last_poll` below)
+      schema:
+        format: date-time
+        type: string
 components:
   schemas:
     Token:
@@ -786,9 +796,10 @@ components:
           allOf:
           - $ref: '#/components/schemas/EntitySummary'
         signature:
-          description: Provided by client upon creation.  Used to check the validity
-            of a Key provided for airspace that includes this EntitySummary, and to
-            ensure proper version incrementation upon Entity updates.
+          description: Provided by client upon declaration of a UTM Entity.  Used
+            to check the validity of a Key provided for airspace that includes this
+            EntitySummary, and to ensure proper version incrementation upon Entity
+            updates.
           allOf:
           - $ref: '#/components/schemas/EntitySignature'
         affected_cells:
@@ -808,10 +819,6 @@ components:
             (no subscription necessary in that case).
           allOf:
           - $ref: '#/components/schemas/SubscriptionUUID'
-        flights_url:
-          $ref: '#/components/schemas/RIDFlightsURL'
-          description: If this Entity is a RIDProvider, the URL at which remote ID
-            display providers may poll for flights.
     SubscriptionState:
       description: State of AreaSubscription which is causing a notification to be
         sent.
@@ -1186,77 +1193,6 @@ components:
           description: The maximum number of meters of error that are likely to be
             present in this reported position.
           type: number
-    RIDFlightDetails:
-      description: Details about a flight reported by a remote ID service provider.
-      required:
-      - id
-      - aircraft_type
-      - registration
-      type: object
-      properties:
-        id:
-          description: ID for this flight, matching argument in request.
-          type: string
-          example: a3423b-213401-0023
-        registration:
-          description: Country/State registration number of the aircraft.
-          type: string
-          example: FA12345897
-        serial:
-          description: Serial number of the aircraft.
-          type: string
-          example: INTCJ123-4567-890
-        responsible_party_name:
-          description: Display name of responsible party for this flight.
-          type: string
-          example: My USS
-        responsible_party_url:
-          description: URL where more information about the responsible party for
-            this flight may be found.
-          type: string
-          example: https://myuss.com
-        aircraft_make:
-          description: Manufacturer of aircraft.
-          type: string
-          example: DJI
-        aircraft_model:
-          description: Model of aircraft.
-          type: string
-          example: Inspire 2
-        flight_notes:
-          description: Human-readable notes about operator and flight purpose.
-          type: string
-          example: SafeFlightDrone company doing survey. See my privacy policy www.sfd.com/privacy.
-        accuracy_horizontal:
-          format: float
-          description: The horizontal accuracy of the report position in meters.
-          minimum: 0
-          type: number
-        accuracy_vertical:
-          format: float
-          description: The vertical accuracy of the reported position in meters.
-          minimum: 0
-          type: number
-        operator_location:
-          description: Location of party controlling the aircraft.
-          allOf:
-          - $ref: '#/components/schemas/LatLngPoint'
-        takeoff_location:
-          description: Location of the takeoff point for this flight.
-          allOf:
-          - $ref: '#/components/schemas/LatLngPoint'
-        immediate_destination_location:
-          description: Location of the current destination of the aircraft.
-          allOf:
-          - $ref: '#/components/schemas/LatLngPoint'
-        ultimate_destination_location:
-          description: Location where the aircraft will be at the end of this flight.
-          allOf:
-          - $ref: '#/components/schemas/LatLngPoint'
-        aircraft_type:
-          description: Generic type of drone
-          allOf:
-          - $ref: '#/components/schemas/RIDAircraftType'
     RIDAircraftType:
       description: Type of aircraft for the purposes of remote ID.
       enum:
@@ -1313,18 +1249,12 @@ components:
         be exchanged in a standardized format between DSS instances to maintain a
         DSS airspace representation.
       required:
-      - entity_summaries
+      - entities
       - subscriptions
       - cell
       - version
       type: object
       properties:
-        entity_summaries:
-          description: References to all the Entities in the airspace contained in
-            this DAR cell.
-          type: array
-          items:
-            $ref: '#/components/schemas/InternalEntitySummary'
         subscriptions:
           description: Details of everyone who must be notified when a client changes
             the airspace.
@@ -1340,6 +1270,12 @@ components:
             will only be successful if the cell contents have not changed since the
             request was formed.
           type: integer
+        entities:
+          description: References to all the Entities in the airspace contained in
+            this DAR cell.
+          type: array
+          items:
+            $ref: '#/components/schemas/InternalEntitySummary'
     PutDARCellsResponse:
       description: Response to a request to update cells in the DAR.
       type: object
@@ -1410,65 +1346,6 @@ components:
         views:
           description: Set of requested display provider views to which this remote
             ID service provider flights URL pertains.
-          type: array
-          items:
-            type: string
-    GetRIDProvidersParameters:
-      description: Parameters of a message requesting remote ID provider URLs from
-        the DSS.
-      required:
-      - views
-      type: object
-      properties:
-        views:
-          description: The set of views (one per client) for which the calling display
-            provider would like to receive endpoints of possibly-relevant remote ID
-            service providers.
-          type: array
-          items:
-            $ref: '#/components/schemas/RIDViewArea'
-        subscription_callback:
-          description: If specified, have the DSS create a subscription that notifies
-            this endpoint upon a remote ID service provider change in the DSS.
-          allOf:
-          - $ref: '#/components/schemas/EntityDetailsURL'
-    RIDViewArea:
-      description: Area in which remote ID flights are being viewed.
-      required:
-      - box
-      type: object
-      properties:
-        box:
-          $ref: '#/components/schemas/LatLngBox'
-          description: The area of this view.  Size may not exceed a certain diagonal
-            length specified in the standard.
-        last_poll:
-          format: date-time
-          description: If specified, the timestamp of the last time this box was polled
-            by the requesting display provider.  Only changes since this time will
-            be returned by the service provider (see details mentioning `last_poll`
-            below)
-          type: string
-        id:
-          description: Identity of remote ID view, as assigned by the querying display
-            client.  A remote ID display provider may indicate to which views each
-            remote ID flight belongs.
-          type: string
-    GetFlightsParameters:
-      description: Parameters of a message requesting remote ID flights.  Usually
-        polled by a remote ID display provider to provide ongoing updates in areas
-        currently being viewed by their clients.
-      type: object
-      properties:
-        views:
-          description: The set of views (one per client) in which the calling display
-            provider would like to receive up-to-date remote ID flight information.
-          type: array
-          items:
-            $ref: '#/components/schemas/RIDViewArea'
-        flight_ids:
-          description: List of specific flight IDs to include in results.  Used to
-            track specific aircraft that the consumer is aware of via UTM Operations.
           type: array
           items:
             type: string
@@ -1678,6 +1555,116 @@ components:
             for the rogue aircraft in this Constraint through the specified remote
             ID interface.
           type: string
+    RIDViewArea:
+      description: Area in which remote ID flights are being viewed.
+      required:
+      - box
+      type: object
+      properties:
+        box:
+          $ref: '#/components/schemas/LatLngBox'
+          description: The area of this view.  Size may not exceed a certain diagonal
+            length specified in the standard.
+        last_poll:
+          format: date-time
+          description: If specified, the timestamp of the last time this box was polled
+            by the requesting display provider.  Only changes since this time will
+            be returned by the service provider (see details mentioning `last_poll`
+            below)
+          type: string
+        id:
+          description: Identity of remote ID view, as assigned by the querying display
+            client.  A remote ID display provider may indicate to which views each
+            remote ID flight belongs.
+          type: string
+    GetRIDProvidersParameters:
+      description: Parameters of a message requesting remote ID provider URLs from
+        the DSS.
+      required:
+      - views
+      type: object
+      properties:
+        extents:
+          description: The bounding spacetime extents of interest to search for remote
+            ID providers.  Spatial information is snapped to DAR cells internally
+            by the DSS.
+          allOf:
+          - $ref: '#/components/schemas/Volume4D'
+        subscription_callback:
+          description: If specified, have the DSS create a subscription that notifies
+            this endpoint upon a remote ID service provider change in the DSS.
+          allOf:
+          - $ref: '#/components/schemas/EntityDetailsURL'
+    RIDFlightDetails:
+      description: Details about a flight reported by a remote ID service provider.
+      required:
+      - id
+      - aircraft_type
+      type: object
+      properties:
+        id:
+          description: ID for this flight, matching argument in request.
+          type: string
+          example: a3423b-213401-0023
+        registration:
+          description: Country/State registration number of the aircraft.
+          type: string
+          example: FA12345897
+        serial:
+          description: Serial number of the aircraft.
+          type: string
+          example: INTCJ123-4567-890
+        responsible_party_name:
+          description: Display name of responsible party for this flight.
+          type: string
+          example: My USS
+        responsible_party_url:
+          description: URL where more information about the responsible party for
+            this flight may be found.
+          type: string
+          example: https://myuss.com
+        aircraft_make:
+          description: Manufacturer of aircraft.
+          type: string
+          example: DJI
+        aircraft_model:
+          description: Model of aircraft.
+          type: string
+          example: Inspire 2
+        flight_notes:
+          description: Human-readable notes about operator and flight purpose.
+          type: string
+          example: SafeFlightDrone company doing survey. See my privacy policy www.sfd.com/privacy.
+        accuracy_horizontal:
+          format: float
+          description: The horizontal accuracy of the report position in meters.
+          minimum: 0
+          type: number
+        accuracy_vertical:
+          format: float
+          description: The vertical accuracy of the reported position in meters.
+          minimum: 0
+          type: number
+        operator_location:
+          description: Location of party controlling the aircraft.
+          allOf:
+          - $ref: '#/components/schemas/LatLngPoint'
+        takeoff_location:
+          description: Location of the takeoff point for this flight.
+          allOf:
+          - $ref: '#/components/schemas/LatLngPoint'
+        immediate_destination_location:
+          description: Location of the current destination of the aircraft.
+          allOf:
+          - $ref: '#/components/schemas/LatLngPoint'
+        ultimate_destination_location:
+          description: Location where the aircraft will be at the end of this flight.
+          allOf:
+          - $ref: '#/components/schemas/LatLngPoint'
+        aircraft_type:
+          description: Generic type of drone
+          allOf:
+          - $ref: '#/components/schemas/RIDAircraftType'
   securitySchemes:
     AuthFromJurisdictionalAuthority:
       type: oauth2

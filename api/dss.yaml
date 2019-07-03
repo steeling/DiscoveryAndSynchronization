@@ -2,523 +2,467 @@
 openapi: 3.0.2
 info:
   title: Discovery and Synchronization Service
-  description: Interface to Discovery and Synchronization Service and service providers
-    used by participating clients to discover and inform other service providers.
   version: 0.0.1
+  description: |-
+    Interface to Discovery and Synchronization Service and service providers used by participating clients to discover and inform other service providers.
+
+    Unless otherwise specified, fields specified in a message but not declared in the API shall be ignored.
 paths:
   /subscriptions:
     summary: Subscriptions for airspace updates to a volume of interest.
     get:
       tags:
       - dss
-      summary: 'DSS: /subscriptions'
-      description: Retrieve subscriptions intersecting an area of interest.
       parameters:
       - name: polygon
-        in: query
         description: At least three geographic points describing a closed polygon
           on the earth.  Each point consists of latitude,longitude in degrees.  Points
           are also comma-delimited, so this parameter will look like `lat1,lng1,lat2,lng2,lat3,lng3,...`  Only
           subscriptions that include this area should be returned.
-        required: true
         schema:
           type: string
-      - name: min_altitude
         in: query
+        required: true
+      - name: min_altitude
         description: If specified, indicates non-interest in subscriptions for volumes
           entirely below this altitude in meters above the WGS84 datum.
         schema:
           type: number
-      - name: max_altitude
         in: query
+      - name: max_altitude
         description: If specified, indicates non-interest in subscriptions for volumes
           entirely above this altitude in meters above the WGS84 datum.
         schema:
           type: number
+        in: query
       responses:
         200:
-          description: Subscriptions were retrieved successfully.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/GetSubscriptionsResponse'
+          description: Subscriptions were retrieved successfully.
       security:
       - AuthFromJurisdictionalAuthority:
-        - dss.read.rid_entities
-        - dss.write.rid_entities
+        - dss.read.position_reporting_entities
+        - dss.write.position_reporting_entities
         - dss.read.airspace_awareness
         - dss.write.airspace_awareness
         - dss.write.operations
+      summary: 'DSS: /subscriptions'
+      description: Retrieve subscriptions intersecting an area of interest.
   /cells:
     summary: Geographic segmentation cells of DSS airspace representation internal
       to the DSS constellation.
     put:
-      tags:
-      - dar
-      summary: 'DAR: /cells'
-      description: Update the contents in the DSS airspace representation for a set
-        of cells.  Note that this operation will probably not be hosted at a standard
-        endpoint; instead, the idea of writing information to an endpoint like this
-        will be accomplished via the DAR synchronization interface which may be an
-        atomic broadcast system like Apache Zookeeper.
       requestBody:
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/PutDARCellsParameters'
         required: true
+      tags:
+      - dar
       responses:
         200:
-          description: The specified DAR cells were updated successfully.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/PutDARCellsResponse'
+          description: The specified DAR cells were updated successfully.
         409:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PutDARCellsResponse'
           description: DAR cells could not be updated because at least one cell had
             been changed before this transaction could be executed.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PutDARCellsResponse'
+      summary: 'DAR: /cells'
+      description: Update the contents in the DSS airspace representation for a set
+        of cells.  Note that this operation will probably not be hosted at a standard
+        endpoint; instead, the idea of writing information to an endpoint like this
+        will be accomplished via the DAR synchronization interface which may be an
+        atomic broadcast system like Apache Zookeeper.
   /constraints/{id}:
     summary: Public Constraint Entities stored in the DSS.
     get:
       tags:
       - dss
-      summary: 'DSS: /constraints/{id}'
-      description: '`[UTM only]` Retrieve the details of a public Constraint Entity
-        stored in the DAR and exposed by DSS instances.  This path''s GET API is compatible
-        with a GET for an EntityDetailsURLs.'
       responses:
         200:
-          description: The Constraint details were retrieved successfully.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/EntityDetails'
+          description: The Constraint details were retrieved successfully.
       security:
       - AuthFromJurisdictionalAuthority:
         - dss.read.airspace_awareness
         - dss.write.airspace_awareness
         - dss.write.operations
-    put:
-      tags:
-      - dss
       summary: 'DSS: /constraints/{id}'
-      description: '`[UTM only]` Publish a new public Constraint that will be stored
-        in the DAR and exposed by DSS instances (details do not need to be hosted
-        by the requesting client).'
+      description: '`[UTM only]` Retrieve the details of a public Constraint Entity
+        stored in the DAR and exposed by DSS instances.  This path''s GET API is compatible
+        with a GET for an EntityDetailsURLs.'
+    put:
       requestBody:
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/PutEntityParameters'
         required: true
+      tags:
+      - dss
       responses:
         200:
-          description: Constraint was successfully added to the airspace.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/PutEntityResponse'
+          description: Constraint was successfully added to the airspace.
       security:
       - AuthFromJurisdictionalAuthority:
         - dss.write.constraints
+      summary: 'DSS: /constraints/{id}'
+      description: '`[UTM only]` Publish a new public Constraint that will be stored
+        in the DAR and exposed by DSS instances (details do not need to be hosted
+        by the requesting client).'
     delete:
       tags:
       - dss
-      summary: 'DSS: /constraints/{id}'
-      description: '`[UTM only]` Delete a public Constraint stored in the DAR and
-        served from the DSS.'
       responses:
         200:
-          description: Constraint was successfully deleted from DSS.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/DeleteEntityResponse'
+          description: Constraint was successfully deleted from DSS.
       security:
       - AuthFromJurisdictionalAuthority:
         - dss.write.constraints
+      summary: 'DSS: /constraints/{id}'
+      description: '`[UTM only]` Delete a public Constraint stored in the DAR and
+        served from the DSS.'
     parameters:
     - name: id
-      in: path
       description: EntityUUID of the Constraint.
-      required: true
       schema:
         type: string
+      in: path
+      required: true
   /dar_constraints/{id}:
     summary: Constraints stored directly in the DSS airspace representation internal
       to the DSS constellation.
     put:
-      tags:
-      - dar
-      summary: 'DAR: /dar_constraints'
-      description: Update the contents in the DSS airspace representation for a particular
-        constraint.  Note that this operation will probably not be hosted at a standard
-        endpoint; instead, the idea of writing information to an endpoint like this
-        will be accomplished via the DAR synchronization interface which may be an
-        atomic broadcast system like Apache Zookeeper.
       requestBody:
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/PutDARConstraintParameters'
         required: true
+      tags:
+      - dar
       responses:
         200:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PutDARConstraintResponse'
           description: The specified Constraint was propagated to the DAR successfully.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PutDARConstraintResponse'
         409:
-          description: Constraint could not be updated because it had changed remotely.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/PutDARConstraintResponse'
+          description: Constraint could not be updated because it had changed remotely.
+      summary: 'DAR: /dar_constraints'
+      description: Update the contents in the DSS airspace representation for a particular
+        constraint.  Note that this operation will probably not be hosted at a standard
+        endpoint; instead, the idea of writing information to an endpoint like this
+        will be accomplished via the DAR synchronization interface which may be an
+        atomic broadcast system like Apache Zookeeper.
     parameters:
     - name: id
-      in: path
       description: EntityUUID of the Constraint.
-      required: true
       schema:
         type: string
+      in: path
+      required: true
   /rid_providers:
     description: ""
     post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetPositionReportingsParameters'
+        required: true
       tags:
       - dss
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetPositionReportingsResponse'
+          description: Remote ID service providers were successfully retrieved.
+      security:
+      - AuthFromJurisdictionalAuthority:
+        - dss.read.position_reporting_entities
       summary: 'DSS: /rid_providers'
       description: |-
         Endpoint to retrieve just remote ID service provider polling endpoints directly without involving the concept of DSS Entities.  Also creates a subscription to be notified if any remote ID entities change in the DSS.
 
         Note that some providers returned by this call may be guaranteed not to have any flights within the requested view ports because the DSS cannot filter results on a sub-cell basis.  These irrelevant service providers will return 404 at their flights endpoint upon the first poll, and the display provider should not poll that endpoint for the corresponding views any more until/unless directed by DSS interactions.
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/GetRIDProvidersParameters'
-        required: true
-      responses:
-        200:
-          description: Remote ID service providers were successfully retrieved.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GetRIDProvidersResponse'
-      security:
-      - AuthFromJurisdictionalAuthority:
-        - dss.read.rid_entities
-  /entities:
-    summary: Set of airspace Entities in the DSS.
-    description: ""
-    get:
-      tags:
-      - dss
-      summary: 'DSS: /entities'
-      description: Retrieve references to all visible airspace Entities in the DAR
-        for a given area during the given time.  Note that some Entities will lie
-        entirely outside the requested area because an individual DAR cell cannot
-        filter EntitySummaries by exact geography.  Note that some Entities may not
-        be visible for a given authorization scope.
-      parameters:
-      - name: polygon
-        in: query
-        description: At least three geographic points describing a closed polygon
-          on the earth.  Each point consists of latitude,longitude in degrees.  Points
-          are also comma-delimited, so this parameter will look like `lat1,lng1,lat2,lng2,lat3,lng3,...`
-        required: true
-        schema:
-          type: string
-      - name: earliest_time
-        in: query
-        description: If specified, indicates non-interest in any Entities that end
-          before this time.
-        schema:
-          format: date-time
-          type: string
-      - name: latest_time
-        in: query
-        description: If specified, indicates non-interest in any Entities that start
-          after this time.
-        schema:
-          format: date-time
-          type: string
-      - name: min_altitude
-        in: query
-        description: If specified, indicates non-interest in Entities entirely below
-          this altitude in meters above the WGS84 datum.
-        schema:
-          type: number
-      - name: max_altitude
-        in: query
-        description: If specified, indicates non-interest in Entities entirely above
-          this altitude in meters above the WGS84 datum.
-        schema:
-          type: number
-      responses:
-        200:
-          description: Declarations of Entities were successfully retrieved.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GetEntitiesResponse'
-      security:
-      - AuthFromJurisdictionalAuthority:
-        - dss.read.rid_entities
-        - dss.write.rid_entities
-        - dss.write.airspace_awareness
-        - dss.write.operations
-        - dss.read.airspace_awareness
   /entities/{id}:
     summary: An Entity reference in the DSS (does not include all Entity details).
     put:
-      tags:
-      - dss
-      summary: 'DSS: /entities/{id}'
-      description: |-
-        Create or update reference to an Entity.  Note that an authorization scope with appropriate permissions must be provided according to the type of Entity being created or updated.
-
-        For remote ID Entities, the DSS assumes the USS has already added the appropriate retention period to operation end time in EntitySummary's `time_end` extents field before storing it.  Updating `time_start` is not allowed if it is before the current time.
-
-        Operation Entities require additional parameters in `operation`.  If an Entity is declared a RogueOperation, a `key` is not necessary to mutate it.
-      parameters:
-      - name: id
-        in: path
-        description: EntityUUID of the Entity.  If creating (declaring for the first
-          time) an Entity, the client must create this ID themselves because they
-          must be ready to respond to requests for details about it as soon as the
-          PUT request is issued (before a response is received from the DSS).
-        required: true
-        schema:
-          type: string
       requestBody:
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/PutEntityParameters'
         required: true
+      tags:
+      - dss
+      parameters:
+      - name: id
+        description: EntityUUID of the Entity.  If creating (declaring for the first
+          time) an Entity that follows the details workflow (this excludes PositionReporting
+          Entities), the client must be ready to respond to requests for details about
+          it as soon as the PUT request is issued (before a response is received from
+          the DSS).
+        schema:
+          type: string
+        in: path
+        required: true
       responses:
         200:
-          description: The Entity reference was created or updated successfully in
-            the DSS.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/PutEntityResponse'
+          description: The Entity reference was created or updated successfully in
+            the DSS.
       security:
       - AuthFromJurisdictionalAuthority:
-        - dss.write.rid_entities
+        - dss.write.position_reporting_entities
         - dss.write.airspace_awareness
         - dss.write.operations
+      summary: 'DSS: /entities/{id}'
+      description: |-
+        Create or update reference to an Entity.  Unless otherwise specified, the EntityType of an existing Entity may not be changed.
+
+        `PositionReporting Entities`:
+        Authorization scope `dss.write.position_reporting_entities` is required.  The DSS assumes the USS has already added the appropriate retention period to operation end time in EntitySummary's `time_end` extents field before storing it.  Updating `time_start` is not allowed if it is before the current time.
+
+        `Operation Entities`:
+        Operation Entities require additional parameters in `operation`.  If an Entity is declared a RogueOperation, a `key` is not necessary to mutate it.
     delete:
       tags:
       - dss
-      summary: 'DSS: /entities/{id}'
-      description: Delete reference to an Entity.  USSs should not delete RIDProvider
-        Entities before the end of the last managed flight plus the retention period.
       parameters:
       - name: location
-        in: query
         description: The approximate location of the Entity reference must be specified
           to find it in the DSS.  This point may lie anywhere within the Entity's
           extents, and must be specified in the form "latitude,longitude".
-        required: true
         schema:
           type: string
+        in: query
+        required: true
       responses:
         200:
-          description: Reference to Entity was successfully deleted from DSS.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/DeleteEntityResponse'
+          description: Reference to Entity was successfully deleted from DSS.
       security:
       - AuthFromJurisdictionalAuthority:
-        - dss.write.rid_entities
+        - dss.write.position_reporting_entities
         - dss.write.airspace_awareness
         - dss.write.operations
+      summary: 'DSS: /entities/{id}'
+      description: Delete reference to an Entity.  USSs should not delete PositionReporting
+        Entities before the end of the last managed flight plus the retention period.
     parameters:
     - name: id
-      in: path
       description: EntityUUID of the Entity.
-      required: true
       schema:
         type: string
+      in: path
+      required: true
   /subscriptions/{id}:
     summary: Subscription for airspace updates to a volume of interest.
     get:
       tags:
       - dss
-      summary: 'DSS: /subscriptions/{id}'
-      description: Verify the existence/valdity and state of a particular subscription.
       parameters:
       - name: location
-        in: query
         description: The approximate location of the Subscription must be specified
           to find it in the DSS.  This point may lie anywhere within the Subscription's
           extents, and must be specified in the form "latitude,longitude".
-        required: true
         schema:
           type: string
+        in: query
+        required: true
       responses:
         200:
-          description: Subscription information was retrieved successfully.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Subscription'
+          description: Subscription information was retrieved successfully.
       security:
       - AuthFromJurisdictionalAuthority:
-        - dss.read.rid_entities
-        - dss.write.rid_entities
+        - dss.read.position_reporting_entities
+        - dss.write.position_reporting_entities
         - dss.read.airspace_awareness
         - dss.write.airspace_awareness
         - dss.write.operations
-    put:
-      tags:
-      - dss
       summary: 'DSS: /subscriptions/{id}'
-      description: |-
-        Create or update a subscription.
-
-        Note that the types of content that should be sent to the created subscription depends on the scope in the provided access token.
+      description: Verify the existence/valdity and state of a particular subscription.
+    put:
       requestBody:
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/PutSubscriptionParameters'
         required: true
+      tags:
+      - dss
       responses:
         200:
-          description: Subscription was created or updated successfully.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/PutSubscriptionResponse'
+          description: Subscription was created or updated successfully.
       security:
       - AuthFromJurisdictionalAuthority:
-        - dss.read.rid_entities
-        - dss.write.rid_entities
+        - dss.read.position_reporting_entities
+        - dss.write.position_reporting_entities
         - dss.read.airspace_awareness
         - dss.write.operations
         - dss.write.airspace_awareness
+      summary: 'DSS: /subscriptions/{id}'
+      description: |-
+        Create or update a subscription.
+
+        Note that the types of content that should be sent to the created subscription depends on the scope in the provided access token.
     delete:
       tags:
       - dss
-      summary: 'DSS: /subscriptions/{id}'
-      description: Delete a subscription.
       parameters:
       - name: location
-        in: query
         description: The approximate location of the Subscription must be specified
           to find it in the DSS.  This point may lie anywhere within the Subscription's
           extents, and must be specified in the form "latitude,longitude".
-        required: true
         schema:
           type: string
+        in: query
+        required: true
       responses:
         204:
           description: Subscription was deleted successfully.
       security:
       - AuthFromJurisdictionalAuthority:
-        - dss.read.rid_entities
-        - dss.write.rid_entities
+        - dss.read.position_reporting_entities
+        - dss.write.position_reporting_entities
         - dss.read.airspace_awareness
         - dss.write.airspace_awareness
         - dss.write.operations
+      summary: 'DSS: /subscriptions/{id}'
+      description: Delete a subscription.
     parameters:
     - name: id
-      in: path
       description: SubscriptionUUID of the subscription of interest.  Must be created
         by client before `PUT` call to create AreaSubscription in DSS because the
         client may receive a notification at that subscription before receiving a
         response from the DSS.
-      required: true
       schema:
         type: string
+      in: path
+      required: true
   /entity_details/{id}:
     summary: Details of a UTM Entity.
     get:
       tags:
       - utmclient
-      summary: 'Client: /entity_details/{id}'
-      description: '`[UTM only]` Retrieve the details of an Entity owned by the client.  Note
-        that this request should be denied if the authorization scope does not provide
-        access to the type of Entity being requested.'
       responses:
         200:
-          description: The Entity details were retrieved successfully.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/EntityDetails'
+          description: The Entity details were retrieved successfully.
       security:
       - AuthFromJurisdictionalAuthority:
-        - dss.read.rid_entities
-        - dss.write.rid_entities
+        - dss.read.position_reporting_entities
+        - dss.write.position_reporting_entities
         - dss.read.airspace_awareness
         - dss.write.airspace_awareness
         - dss.write.operations
-    put:
-      tags:
-      - client
       summary: 'Client: /entity_details/{id}'
-      description: Publish new information about an Entity to this client (usually
-        because of instructions from the DSS triggered by a subscription).
+      description: '`[UTM only]` Retrieve the details of an Entity owned by the client.  Note
+        that this request should be denied if the authorization scope does not provide
+        access to the type of Entity being requested.'
+    put:
       requestBody:
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/PutEntityNotificationParameters'
         required: true
+      tags:
+      - client
       responses:
         204:
           description: Entity details were received successfully.
       security:
       - AuthFromJurisdictionalAuthority:
-        - dss.write.rid_entities
+        - dss.write.position_reporting_entities
         - dss.write.airspace_awareness
         - dss.write.operations
+      summary: 'Client: /entity_details/{id}'
+      description: Publish new information about an Entity to this client (usually
+        because of instructions from the DSS triggered by a subscription).
     parameters:
     - name: id
-      in: path
       description: EntityUUID of the Entity details.
-      required: true
       schema:
         type: string
+      in: path
+      required: true
   /flights/{id}/details:
     summary: A remote ID flight reported by a remote ID service provider.
     get:
       tags:
       - ridclient
-      summary: 'RIDProvider: /flights/{id}/details'
-      description: Retrieve details of a flight to meet remote ID requirements.
       responses:
         200:
-          description: Flight details were successfully retrieved.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/GetFlightDetailsResponse'
+          description: Flight details were successfully retrieved.
       security:
       - AuthFromJurisdictionalAuthority:
-        - dss.read.rid_entities
-        - dss.write.rid_entities
+        - dss.read.position_reporting_entities
+        - dss.write.position_reporting_entities
         - dss.read.airspace_awareness
         - dss.write.airspace_awareness
         - dss.write.operations
+      summary: 'PositionReporting: /flights/{id}/details'
+      description: Retrieve details of a flight to meet remote ID requirements.
     parameters:
     - name: id
-      in: path
       description: Remote ID flight ID for this flight; may be obtained in general
         /flights query.
-      required: true
       schema:
         type: string
+      in: path
+      required: true
   /flights/{id}:
     summary: Basic operation details to meet remote ID requirements.
     description: This endpoint may be polled by remote ID display providers to display
@@ -526,37 +470,38 @@ paths:
     get:
       tags:
       - ridclient
-      summary: 'RIDProvider: /flights/{id}'
-      description: Retrieve basic flight information to meet remote ID requirements
-        for a specific flight.  This endpoint may be polled by remote ID display providers
-        to display basic aircraft activity for a specific flight.
       responses:
         200:
-          description: Flight information was successfully retrieved.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/GetFlightsResponse'
+          description: Flight information was successfully retrieved.
         404:
           description: All of the requested views are outside any remote ID service
-            provision areas (RIDProvider Entity volumes) this provider has.  A display
-            provider receiving this response should discontinue polling for this endpoint
-            for the set of view ports requested until otherwise directed by DSS interactions.
+            provision areas (PositionReporting Entity volumes) this provider has.  A
+            display provider receiving this response should discontinue polling for
+            this endpoint for the set of view ports requested until otherwise directed
+            by DSS interactions.
       security:
       - AuthFromJurisdictionalAuthority:
-        - dss.read.rid_entities
-        - dss.write.rid_entities
+        - dss.read.position_reporting_entities
+        - dss.write.position_reporting_entities
         - dss.read.airspace_awareness
         - dss.write.airspace_awareness
         - dss.write.operations
+      summary: 'PositionReporting: /flights/{id}'
+      description: Retrieve basic flight information to meet remote ID requirements
+        for a specific flight.  This endpoint may be polled by remote ID display providers
+        to display basic aircraft activity for a specific flight.
     parameters:
     - name: id
-      in: path
       description: Remote ID flight ID for this flight; may be obtained in general
         /flights query.
-      required: true
       schema:
         type: string
+      in: path
+      required: true
   /flights:
     summary: Basic operation details to meet remote ID requirements.
     description: This endpoint may be polled by remote ID display providers to display
@@ -564,45 +509,105 @@ paths:
     get:
       tags:
       - ridclient
-      summary: 'RIDProvider: /flights'
-      description: Retrieve basic flight information to meet remote ID requirements.  This
-        endpoint may be polled by remote ID display providers to display basic aircraft
-        activity near a user in real time.
       responses:
         200:
-          description: Flight information was successfully retrieved.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/GetFlightsResponse'
+          description: Flight information was successfully retrieved.
         404:
           description: All of the requested views are outside any remote ID service
-            provision areas (RIDProvider Entity volumes) this provider has.  A display
-            provider receiving this response should discontinue polling for this endpoint
-            for the set of view ports requested until otherwise directed by DSS interactions.
+            provision areas (PositionReporting Entity volumes) this provider has.  A
+            display provider receiving this response should discontinue polling for
+            this endpoint for the set of view ports requested until otherwise directed
+            by DSS interactions.
       security:
       - AuthFromJurisdictionalAuthority:
-        - dss.read.rid_entities
-        - dss.write.rid_entities
+        - dss.read.position_reporting_entities
+        - dss.write.position_reporting_entities
         - dss.read.airspace_awareness
         - dss.write.airspace_awareness
         - dss.write.operations
+      summary: 'PositionReporting: /flights'
+      description: Retrieve basic flight information to meet remote ID requirements.  This
+        endpoint may be polled by remote ID display providers to display basic aircraft
+        activity near a user in real time.
     parameters:
     - name: box
-      in: query
       description: The area of this view;:latmin,lngmin,latmax,lngmax.  Size may not
         exceed a certain diagonal length specified in the standard.
-      required: true
       schema:
         type: string
-    - name: last_poll
       in: query
+      required: true
+    - name: last_poll
       description: If specified, the timestamp of the last time this box was polled
         by the requesting display provider.  Only changes since this time will be
         returned by the service provider (see details mentioning `last_poll` below)
       schema:
         format: date-time
         type: string
+      in: query
+  /entities:
+    summary: Set of airspace Entities in the DSS.
+    description: ""
+    get:
+      tags:
+      - dss
+      parameters:
+      - name: polygon
+        description: At least three geographic points describing a closed polygon
+          on the earth.  Each point consists of latitude,longitude in degrees.  Points
+          are also comma-delimited, so this parameter will look like `lat1,lng1,lat2,lng2,lat3,lng3,...`
+        schema:
+          type: string
+        in: query
+        required: true
+      - name: earliest_time
+        description: If specified, indicates non-interest in any Entities that end
+          before this time.
+        schema:
+          format: date-time
+          type: string
+        in: query
+      - name: latest_time
+        description: If specified, indicates non-interest in any Entities that start
+          after this time.
+        schema:
+          format: date-time
+          type: string
+        in: query
+      - name: min_altitude
+        description: If specified, indicates non-interest in Entities entirely below
+          this altitude in meters above the WGS84 datum.
+        schema:
+          type: number
+        in: query
+      - name: max_altitude
+        description: If specified, indicates non-interest in Entities entirely above
+          this altitude in meters above the WGS84 datum.
+        schema:
+          type: number
+        in: query
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetEntitiesResponse'
+          description: Declarations of Entities were successfully retrieved.
+      security:
+      - AuthFromJurisdictionalAuthority:
+        - dss.read.position_reporting_entities
+        - dss.write.airspace_awareness
+        - dss.write.operations
+        - dss.read.airspace_awareness
+      summary: 'DSS: /entities'
+      description: |-
+        Retrieve references to all visible airspace Entities in the DAR for a given area during the given time.  Note that some Entities will lie entirely outside the requested area because an individual DAR cell cannot filter EntitySummaries by exact geography.
+
+        Only PositionReporting Entities shall be visible to clients providing the `dss.read.position_reporting_entities` scope.
 components:
   schemas:
     Token:
@@ -832,7 +837,7 @@ components:
           description: The subscription that provides the airspace awareness for this
             EntitySummary.  If no subscription was provided upon creation, the DSS
             will create an appropriate AreaSubscription to provide flight-critical
-            notifications like rogue aircraft or UVRs, unless EntityType is RIDProvider
+            notifications like rogue aircraft or UVRs, unless EntityType is PositionReporting
             (no subscription necessary in that case).
           allOf:
           - $ref: '#/components/schemas/SubscriptionUUID'
@@ -889,9 +894,9 @@ components:
       description: Entity details specific to an airspace awareness provider.
       type: object
     EntityDetailsURL:
-      description: The URL at which the details and signature for an Entity may be
-        retrieved via GET or delivered via PUT.  See /entity_details/{id} path for
-        specification of this endpoint.
+      description: The URL at which further communication regarding this Entity will
+        be conducted.  The API for this URL depends on the EntityType of the Entity;
+        see EntityType documentation for more details.
       type: string
       example: https://example.com/entity_details
     PutSubscriptionParameters:
@@ -1129,44 +1134,6 @@ components:
           minimum: 0
           type: number
           example: 285
-    RIDAircraftPosition:
-      description: Position of an aircraft as reported for remote ID purposes.
-      type: object
-      properties:
-        timestamp:
-          format: date-time
-          description: The time at which this position applied.
-          type: string
-        lat:
-          format: double
-          description: Latitude, degrees north of the equator.
-          maximum: 90
-          minimum: -90
-          type: number
-          example: 37.4096
-        lng:
-          format: double
-          description: Longitude, degrees east of the prime meridian.
-          maximum: 180
-          minimum: -180
-          type: number
-          example: -122.1062
-        height:
-          format: float
-          description: Height in WGS84 meters (NOT altitude above launch, altitude
-            above ground, or EGM96).
-          type: number
-          example: 1321.2
-        extrapolated:
-          description: True if this position was generated primarily by computation
-            rather than primarily from a direct instrument measurement.  Assumed false
-            if not specified.
-          type: boolean
-        accuracy:
-          format: float
-          description: The maximum number of meters of error that are likely to be
-            present in this reported position.
-          type: number
     RIDAircraftType:
       description: Type of aircraft for the purposes of remote ID.
       enum:
@@ -1187,22 +1154,18 @@ components:
         lat_lo:
           format: double
           description: Area is north of this latitude in degrees.
-          required: true
           type: number
         lat_hi:
           format: double
           description: Area is south of this latitude in degrees.
-          required: true
           type: number
         lng_lo:
           format: double
           description: Area is east of this longitude in degrees.
-          required: true
           type: number
         lng_hi:
           format: double
           description: Area is west of this longitude in degrees.
-          required: true
           type: number
     PutDARCellsParameters:
       description: Parameters for a request to update cells in the DSS airspace representation.
@@ -1216,8 +1179,10 @@ components:
           items:
             $ref: '#/components/schemas/DARCellUpdate'
     DARCellID:
-      description: Descriptor for a particular cell in the DAR.  Format not yet defined.
+      description: Descriptor for a particular cell in the DAR.  64-bit S2 cell ID;
+        see https://s2geometry.io
       type: object
+      example: '"80cac31c"'
     DARCellUpdate:
       description: Updated data stored internally in DAR cells within the DSS.  Must
         be exchanged in a standardized format between DSS instances to maintain a
@@ -1292,20 +1257,6 @@ components:
           description: The previous version of this Constraint in the DAR.  Omit this
             property if the Constraint did not previously exist in the DAR.
           type: integer
-    RIDProviderInViews:
-      description: A remote ID provider relevant to one or more view ports.
-      required:
-      - url
-      type: object
-      properties:
-        url:
-          $ref: '#/components/schemas/RIDFlightsURL'
-        views:
-          description: Set of requested display provider views to which this remote
-            ID service provider flights URL pertains.
-          type: array
-          items:
-            type: string
     EntitySummary:
       description: A declaration of an Entity.  The DSS reports only these EntitySummaries
         and clients must obtain full details peer-to-peer from the creator/owner.
@@ -1339,10 +1290,10 @@ components:
           type: string
         version:
           format: int32
-          description: Extracted from the EntitySignature and increased by the client
-            when they indicate that an Entity has changed (allows client to optimize
-            full Entity retrieval for only those Entities which have changed since
-            client’s cache).
+          description: Extracted from the EntitySignature if specified, or assigned
+            and incremented automatically otherwise.  When increased, indicates that
+            an Entity has changed (allows another client client to optimize full Entity
+            retrieval for only those Entities which have changed since client’s cache).
           type: integer
         time_end:
           format: date-time
@@ -1387,11 +1338,6 @@ components:
             about the Operation.
           allOf:
           - $ref: '#/components/schemas/OperationDetails'
-        rid_provider:
-          description: If this Entity is a remote ID provider, this property contains
-            details about the remote ID provider.
-          allOf:
-          - $ref: '#/components/schemas/RIDProviderDetails'
         awareness_provider:
           description: If this Entity is an airspace awareness provider, this property
             contains details about that provider.
@@ -1402,25 +1348,21 @@ components:
             about the version of this Entity.
           allOf:
           - $ref: '#/components/schemas/EntitySignature'
-    RIDProviderDetails:
-      description: Entity details specific to a remote ID provider.
-      required:
-      - flights_url
-      type: object
-      properties:
-        flights_url:
-          $ref: '#/components/schemas/RIDFlightsURL'
     EntityType:
-      description: Type of Entity.
+      description: |-
+        Type of Entity.  The API of the URL associated with an Entity depends on its EntityType.
+
+        `PositionReporting`: An spacetime volume in which a remote ID service provider will provide remote ID services.  The API for the URL associated with a PositionReporting Entity is all endpoints beginning with /flights in this document.  The /flights path is NOT appended to the provided URL; if https://example.com/rid were provided, flights would be polled at https://example.com/rid and flight details could be found at https://example.com/rid/{id}/details.
+
+        `Operation`: A single deconflicted UTM operation.  The API for the URL associated with an Operation Entity is /entity_details in this document.
+
+        For Entities that must receive flight-critical notifications (Operation, AirspaceAwarenessProvider), this endpoint must also support PUT according to the `client` Entities endpoint.
       enum:
       - Operation
       - Constraint
-      - RIDProvider
+      - PositionReporting
       - AirspaceAwarenessProvider
       type: string
-    DeleteEntityResponse:
-      description: Response for a request to delete an Entity.
-      type: object
     GetFlightDetailsResponse:
       description: Response to remote ID provider query for details about a specific
         flight.
@@ -1440,10 +1382,10 @@ components:
       type: object
       properties:
         rogue_flight:
-          description: If this Constraint contains a rogue flight, this field contains
-            the details of that flight.
           oneOf:
           - $ref: '#/components/schemas/RogueFlight'
+          description: If this Constraint contains a rogue flight, this field contains
+            the details of that flight.
     PutOperationParameters:
       description: Additional parameters for a request to create or update a reference
         to an Operation Entity in the DSS.
@@ -1595,7 +1537,7 @@ components:
             to find it in the DSS in a future PUT or DELETE call.  Returned in the
             form of "latitude,longitude".
           type: string
-    GetRIDProvidersResponse:
+    GetPositionReportingsResponse:
       description: Response to DSS query for remote ID service providers in an area
         of interest.
       required:
@@ -1673,7 +1615,7 @@ components:
         url:
           $ref: '#/components/schemas/EntityDetailsURL'
           description: |-
-            The URL at which a peer client can retrieve further information about this Entity via GET.  For Entities that must receive flight-critical notifications (Operation, AirspaceAwarenessProvider), this endpoint must also support PUT according to the `client` Entities endpoint.
+            The URL at which a peer client can retrieve further information about this Entity via GET.  The API of this endpoint depends on the EntityType; see EntityType definition for more details.
 
             Required unless adding a public Constraint via the separate /constraints/{id} DSS endpoint.
         awareness_provider:
@@ -1681,12 +1623,7 @@ components:
             contains details about that provider.
           allOf:
           - $ref: '#/components/schemas/AirspaceAwarenessProviderDetails'
-        rid_provider:
-          description: If this Entity is a remote ID provider, this property contains
-            details about the remote ID provider.
-          allOf:
-          - $ref: '#/components/schemas/RIDProviderDetails'
-    GetRIDProvidersParameters:
+    GetPositionReportingsParameters:
       description: Parameters of a message requesting remote ID provider URLs from
         the DSS.
       required:
@@ -1711,24 +1648,79 @@ components:
           description: If a subscription is requested, the time at which the created
             subscription should expire.
           type: string
+    RIDAircraftPosition:
+      description: Position of an aircraft as reported for remote ID purposes.
+      type: object
+      properties:
+        timestamp:
+          format: date-time
+          description: The time at which this position applied.
+          type: string
+        lat:
+          format: double
+          description: Latitude, degrees north of the equator.
+          maximum: 90
+          minimum: -90
+          type: number
+          example: 37.4096
+        lng:
+          format: double
+          description: Longitude, degrees east of the prime meridian.
+          maximum: 180
+          minimum: -180
+          type: number
+          example: -122.1062
+        height:
+          format: float
+          description: Height in WGS84 meters (NOT altitude above launch, altitude
+            above ground, or EGM96).
+          type: number
+          example: 1321.2
+        extrapolated:
+          description: True if this position was generated primarily by computation
+            rather than primarily from a direct instrument measurement.  Assumed false
+            if not specified.
+          type: boolean
+        accuracy_h:
+          format: float
+          description: The maximum number of meters of horizontal error that are likely
+            to be present in this reported position.  Must be specified if `extrapolated`
+            field is true.
+          type: number
+        accuracy_v:
+          format: float
+          description: The maximum number of meters of vertical error that are likely
+            to be present in this reported position.  Must be specified if `extrapolated`
+            field is true.
+          type: number
+    DeleteEntityResponse:
+      description: Response for a request to delete an Entity.
+      required:
+      - subscribers
+      type: object
+      properties:
+        subscribers:
+          description: DSS subscribers that this client now has the obligation to
+            notify of the Entity just deleted.
+          type: array
+          items:
+            $ref: '#/components/schemas/SubscriberToNotify'
   securitySchemes:
     AuthFromJurisdictionalAuthority:
-      type: oauth2
-      description: Authorization from, or on behalf of, a jurisdiction-having authority.  The
-        `aud` field in access tokens from this authority must be specified.
       flows:
         clientCredentials:
           tokenUrl: https://example.com/oauth/token
           scopes:
-            dss.read.rid_entities: Client may query or read remote ID Entities.  Does
-              not provide access to UTM-related Entities.  A remote ID display provider
+            dss.read.position_reporting_entities: Client may query, read, or create
+              subscriptions for PositionReporting Entities for remote ID.  Does not
+              provide access to UTM-related Entities.  A remote ID display provider
               would use this scope.
-            dss.write.rid_entities: In addition to `dss.read.rid_entities`, client
-              may create remote ID provider Entities.  A remote ID service provider
+            dss.write.position_reporting_entities: Client may create, edit, and delete
+              PositionReporting Entities for remote ID.  A remote ID service provider
               would use this scope.
-            dss.read.airspace_awareness: In addition to `dss.read.rid_entities`, client
-              may query or read Entities related to airspace awareness.  A VLOS airspace
-              awareness provider might use this scope.
+            dss.read.airspace_awareness: In addition to `dss.read.position_reporting_entities`,
+              client may query or read Entities related to airspace awareness.  A
+              VLOS airspace awareness provider might use this scope.
             dss.write.airspace_awareness: In addition to `dss.read.airspace_awareness`,
               client may create airspace awareness Entities.  A VLOS airspace awareness
               provider would likely use this scope.
@@ -1738,10 +1730,13 @@ components:
             dss.write.constraints: Client may create un-deconflicted constraints in
               the airspace.  A client acting on behalf of a governmental organization
               would use this scope.
+      type: oauth2
+      description: Authorization from, or on behalf of, a jurisdiction-having authority.  The
+        `aud` field in access tokens from this authority must be specified.
 security:
 - AuthFromJurisdictionalAuthority:
-  - dss.read.rid_entities
-  - dss.write.rid_entities
+  - dss.read.position_reporting_entities
+  - dss.write.position_reporting_entities
   - dss.read.airspace_awareness
   - dss.write.airspace_awareness
   - dss.write.operations
@@ -1750,9 +1745,11 @@ tags:
 - name: dss
   description: Endpoints exposed by the DSS server.
 - name: utmclient
-  description: Endpoints exposed by DSS clients for peer-peer communication.
+  description: Endpoints exposed by UTM DSS clients for peer-peer communication.
 - name: ridclient
   description: Endpoints exposed by remote ID providers for peer-peer communication.
 - name: dar
   description: Pseudo-endpoint actions used by DSS instances to synchronize DSS airspace
     representation cell information.
+- name: client
+  description: Endpoints exposed by DSS clients for peer-peer communication.

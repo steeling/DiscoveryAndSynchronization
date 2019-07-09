@@ -188,32 +188,6 @@ paths:
         type: string
       in: path
       required: true
-  /rid_providers:
-    description: ""
-    post:
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/GetPositionReportingsParameters'
-        required: true
-      tags:
-      - dss
-      responses:
-        200:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GetPositionReportingsResponse'
-          description: Remote ID service providers were successfully retrieved.
-      security:
-      - AuthFromJurisdictionalAuthority:
-        - dss.read.position_reporting_entities
-      summary: 'DSS: /rid_providers'
-      description: |-
-        Endpoint to retrieve just remote ID service provider polling endpoints directly without involving the concept of DSS Entities.  Also creates a subscription to be notified if any remote ID entities change in the DSS.
-
-        Note that some providers returned by this call may be guaranteed not to have any flights within the requested view ports because the DSS cannot filter results on a sub-cell basis.  These irrelevant service providers will return 404 at their flights endpoint upon the first poll, and the display provider should not poll that endpoint for the corresponding views any more until/unless directed by DSS interactions.
   /entities/{id}:
     summary: An Entity reference in the DSS (does not include all Entity details).
     put:
@@ -1537,28 +1511,6 @@ components:
             to find it in the DSS in a future PUT or DELETE call.  Returned in the
             form of "latitude,longitude".
           type: string
-    GetPositionReportingsResponse:
-      description: Response to DSS query for remote ID service providers in an area
-        of interest.
-      required:
-      - polling_urls
-      type: object
-      properties:
-        polling_urls:
-          description: A superset of the remote ID service providers' URLs relevant
-            to the requested areas.
-          type: array
-          items:
-            $ref: '#/components/schemas/RIDFlightsURL'
-        subscription:
-          $ref: '#/components/schemas/Subscription'
-          description: The ID of a DSS subscription for changes in remote ID service
-            providers, if one was created.
-        subscription_location:
-          description: An approximate location of the Subscription, which must be
-            specified to find it in the DSS in a future PUT or DELETE call.  Returned
-            in the form of "latitude,longitude".
-          type: string
     PutSubscriptionResponse:
       description: Response for a request to create or update a subscription.
       required:
@@ -1623,31 +1575,6 @@ components:
             contains details about that provider.
           allOf:
           - $ref: '#/components/schemas/AirspaceAwarenessProviderDetails'
-    GetPositionReportingsParameters:
-      description: Parameters of a message requesting remote ID provider URLs from
-        the DSS.
-      required:
-      - views
-      - extents
-      type: object
-      properties:
-        extents:
-          description: The bounding spacetime extents of interest to search for remote
-            ID providers.  Spatial information is snapped to DAR cells internally
-            by the DSS.
-          allOf:
-          - $ref: '#/components/schemas/Volume4D'
-        subscription_callback:
-          description: If specified, have the DSS create a subscription that notifies
-            this endpoint upon a remote ID service provider change in the DSS.  Implements
-            PUT /entity_details API.
-          allOf:
-          - $ref: '#/components/schemas/EntityDetailsURL'
-        subscription_expiration:
-          format: date-time
-          description: If a subscription is requested, the time at which the created
-            subscription should expire.
-          type: string
     RIDAircraftPosition:
       description: Position of an aircraft as reported for remote ID purposes.
       type: object

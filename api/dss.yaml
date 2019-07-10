@@ -107,94 +107,6 @@ paths:
         type: string
       in: path
       required: true
-  /dar_constraints/{id}:
-    summary: Constraints stored directly in the DSS airspace representation internal
-      to the DSS constellation.
-    put:
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PutDARConstraintParameters'
-        required: true
-      tags:
-      - dar
-      responses:
-        200:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PutDARConstraintResponse'
-          description: The specified Constraint was propagated to the DAR successfully.
-        409:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PutDARConstraintResponse'
-          description: Constraint could not be updated because it had changed remotely.
-      summary: 'DAR: /dar_constraints'
-      description: Update the contents in the DSS airspace representation for a particular
-        constraint.  Note that this operation will probably not be hosted at a standard
-        endpoint; instead, the idea of writing information to an endpoint like this
-        will be accomplished via the DAR synchronization interface which may be an
-        atomic broadcast system like Apache Zookeeper.
-    parameters:
-    - name: id
-      description: EntityUUID of the Constraint.
-      schema:
-        type: string
-      in: path
-      required: true
-  /flights:
-    summary: Basic operation details to meet remote ID requirements.
-    description: This endpoint may be polled by remote ID display providers to display
-      basic aircraft activity near a user in real time.
-    get:
-      tags:
-      - p2p_rid
-      responses:
-        200:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GetFlightsResponse'
-          description: Flight information was successfully retrieved.
-        404:
-          description: The requested view is entirely outside any remote ID service
-            provision areas (PositionReporting Entity volumes) this provider has.  A
-            display provider receiving this response should discontinue polling for
-            this endpoint for the view port requested until otherwise directed by
-            DSS interactions.
-      security:
-      - AuthFromJurisdictionalAuthority:
-        - dss.read.position_reporting_entities
-        - dss.read.airspace_awareness
-        - dss.write.operations
-      summary: 'RID: /flights'
-      description: Retrieve basic flight information to meet remote ID requirements.  This
-        endpoint will be polled by remote ID display providers to display basic aircraft
-        activity near a user in real time.  All flights that have any recent position
-        history (duration defined in standard) inside the requested box must be returned.
-    parameters:
-    - name: view
-      description: 'The area of this view: latmin,lngmin,latmax,lngmax.  Size may
-        not exceed a diagonal length specified in the standard.'
-      schema:
-        pattern: ^-?\d{1,3}(?:\.\d*)?,-?\d{1,3}(?:\.\d*)?,-?\d{1,3}(?:\.\d*)?,-?\d{1,3}(?:\.\d*)?$
-        type: string
-        example: 29.97816,31.13296,29.98025,31.13535
-      in: query
-      required: true
-    - name: last_poll
-      description: If specified, the timestamp of the last time this box was polled
-        by the requesting display provider.  The service provider may limit data returned
-        to only data which has changed since `last_poll` (see details mentioning `last_poll`
-        below).
-      schema:
-        format: date-time
-        type: string
-        example: 2019-07-01T00:01:02.345Z
-      in: query
   /entities:
     summary: Set of airspace Entities in the DSS.
     description: ""
@@ -242,6 +154,32 @@ paths:
               schema:
                 $ref: '#/components/schemas/GetEntitiesResponse'
           description: Declarations of Entities were successfully retrieved.
+        400:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: One or more input parameters were missing or invalid.
+        413:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The requested area was too large.
+        401:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bearer access token was not provided in Authorization header,
+            token could not be decoded, or token was invalid.
+        403:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The access token was decoded successfully but did not include
+            a scope appropriate to this endpoint.
       security:
       - AuthFromJurisdictionalAuthority:
         - dss.read.position_reporting_entities
@@ -250,9 +188,199 @@ paths:
         - dss.read.airspace_awareness
       summary: 'DSS: /entities'
       description: |-
-        Retrieve references to all visible airspace Entities in the DAR for a given area during the given time.  Note that some Entities will lie entirely outside the requested area because an individual DAR cell cannot filter EntitySummaries by exact geography.
+        Retrieve references to all visible airspace Entities in the DAR for a given area during the given time.  Note that some Entities returned will lie entirely outside the requested area because an individual DAR cell cannot filter EntitySummaries by exact geography.
 
         Only PositionReporting Entities shall be visible to clients providing the `dss.read.position_reporting_entities` scope.
+  /flights:
+    summary: Basic operation details to meet remote ID requirements.
+    description: This endpoint may be polled by remote ID display providers to display
+      basic aircraft activity near a user in real time.
+    get:
+      tags:
+      - p2p_rid
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetFlightsResponse'
+          description: Flight information was successfully retrieved.
+        400:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: One or more input parameters were missing or invalid.
+        401:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bearer access token was not provided in Authorization header,
+            token could not be decoded, or token was invalid.
+        403:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The access token was decoded successfully but did not include
+            a scope appropriate to this endpoint.
+        404:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The requested view is entirely outside any remote ID service
+            provision areas (PositionReporting Entity volumes) this provider has.  A
+            display provider receiving this response should discontinue polling for
+            this endpoint for the view port requested until otherwise directed by
+            DSS interactions.
+        413:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The requested view rectangle was too large.
+      security:
+      - AuthFromJurisdictionalAuthority:
+        - dss.read.position_reporting_entities
+        - dss.read.airspace_awareness
+        - dss.write.operations
+      summary: 'RID: /flights'
+      description: Retrieve basic flight information to meet remote ID requirements.  This
+        endpoint will be polled by remote ID display providers to display basic aircraft
+        activity near a user in real time.  All flights that have any recent position
+        history (duration defined in standard) inside the requested box must be returned.
+    parameters:
+    - name: view
+      description: 'The area of this view: latmin,lngmin,latmax,lngmax.  Size may
+        not exceed a diagonal length specified in the standard.'
+      schema:
+        pattern: ^-?\d{1,3}(?:\.\d*)?,-?\d{1,3}(?:\.\d*)?,-?\d{1,3}(?:\.\d*)?,-?\d{1,3}(?:\.\d*)?$
+        type: string
+        example: 29.97816,31.13296,29.98025,31.13535
+      in: query
+      required: true
+    - name: last_poll
+      description: If specified, the timestamp of the last time this box was polled
+        by the requesting display provider.  The service provider may limit data returned
+        to only data which has changed since `last_poll` (see details mentioning `last_poll`
+        below).
+      schema:
+        format: date-time
+        type: string
+        example: 2019-07-01T00:01:02.345Z
+      in: query
+  /flights/{id}:
+    summary: Basic operation details to meet remote ID requirements.
+    description: This endpoint may be polled by remote ID display providers to display
+      basic aircraft activity near a user in real time.
+    get:
+      tags:
+      - p2p_rid
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetFlightsResponse'
+          description: Flight information was successfully retrieved.
+        400:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: One or more input parameters were missing or invalid.
+        401:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bearer access token was not provided in Authorization header,
+            token could not be decoded, or token was invalid.
+        403:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The access token was decoded successfully but did not include
+            a scope appropriate to this endpoint.
+        404:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The requested flight could not be found.
+      security:
+      - AuthFromJurisdictionalAuthority:
+        - dss.read.position_reporting_entities
+        - dss.read.airspace_awareness
+        - dss.write.operations
+      summary: 'RID: /flights/{id}'
+      description: Retrieve basic flight information to meet remote ID requirements
+        for a specific flight.  This endpoint may be polled by remote ID display providers
+        to display basic aircraft activity for a specific flight.
+    parameters:
+    - name: id
+      description: Remote ID flight ID for this flight; may be obtained in general
+        /flights query.
+      schema:
+        $ref: '#/components/schemas/RIDFlightID'
+      in: path
+      required: true
+  /flights/{id}/details:
+    summary: A remote ID flight reported by a remote ID service provider.
+    get:
+      tags:
+      - p2p_rid
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetFlightDetailsResponse'
+          description: Flight details were successfully retrieved.
+        400:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: One or more input parameters were missing or invalid.
+        401:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bearer access token was not provided in Authorization header,
+            token could not be decoded, or token was invalid.
+        403:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The access token was decoded successfully but did not include
+            a scope appropriate to this endpoint.
+        404:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The requested flight could not be found.
+      security:
+      - AuthFromJurisdictionalAuthority:
+        - dss.read.position_reporting_entities
+        - dss.read.airspace_awareness
+        - dss.write.operations
+      summary: 'RID: /flights/{id}/details'
+      description: Retrieve details of a flight to meet remote ID requirements.
+    parameters:
+    - name: id
+      description: Remote ID flight ID for this flight; may be obtained in general
+        /flights query.
+      schema:
+        $ref: '#/components/schemas/RIDFlightID'
+      in: path
+      required: true
   /subscriptions:
     summary: Subscriptions for airspace updates to a volume of interest.  Only Subscriptions
       belonging to the caller are returned.
@@ -286,6 +414,32 @@ paths:
               schema:
                 $ref: '#/components/schemas/GetSubscriptionsResponse'
           description: Subscriptions were retrieved successfully.
+        400:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: One or more input parameters were missing or invalid.
+        401:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bearer access token was not provided in Authorization header,
+            token could not be decoded, or token was invalid.
+        403:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The access token was decoded successfully but did not include
+            a scope appropriate to this endpoint.
+        413:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The requested area was too large.
       security:
       - AuthFromJurisdictionalAuthority:
         - dss.read.position_reporting_entities
@@ -295,168 +449,6 @@ paths:
         - dss.write.operations
       summary: 'DSS: /subscriptions'
       description: Retrieve subscriptions intersecting an area of interest.
-  /entity_details/{id}:
-    summary: Details of a UTM Entity.
-    get:
-      tags:
-      - p2p_entities
-      responses:
-        200:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/EntityDetails'
-          description: The Entity details were retrieved successfully.
-      security:
-      - AuthFromJurisdictionalAuthority:
-        - dss.read.position_reporting_entities
-        - dss.read.airspace_awareness
-        - dss.write.operations
-      summary: 'Entities: /entity_details/{id}'
-      description: |-
-        Retrieve the details of an Entity owned by the client.  Note that this request should be denied if the authorization scope does not provide access to the type of Entity being requested.
-
-        Implementation of this endpoint is not required for remote ID service providers (nor remote ID display providers since they do not create Entities).
-    put:
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PutEntityNotificationParameters'
-        required: true
-      tags:
-      - p2p_entities
-      responses:
-        204:
-          description: Entity details were received successfully.
-      security:
-      - AuthFromJurisdictionalAuthority:
-        - dss.write.position_reporting_entities
-        - dss.write.airspace_awareness
-        - dss.write.operations
-      summary: 'Entities: /entity_details/{id}'
-      description: Publish new information about an Entity to this client (usually
-        because of instructions from the DSS triggered by a subscription).
-    delete:
-      tags:
-      - p2p_entities
-      responses:
-        204:
-          description: Notification of Entity deletion was received successfully.
-      security:
-      - AuthFromJurisdictionalAuthority:
-        - dss.write.position_reporting_entities
-        - dss.write.airspace_awareness
-        - dss.write.operations
-      summary: 'Entities: /entity_details/{id}'
-      description: Publish a notification about the deletion of an Entity to this
-        client (usually because of instructions from the DSS triggered by a subscription).
-    parameters:
-    - name: id
-      description: EntityUUID of the Entity details.
-      schema:
-        $ref: '#/components/schemas/EntityUUID'
-      in: path
-      required: true
-  /subscriptions/{id}:
-    summary: Subscription for airspace updates to a volume of interest.
-    get:
-      tags:
-      - dss
-      parameters:
-      - name: location
-        description: The approximate location of the Subscription must be specified
-          to find it in the DSS.  This point may lie anywhere within the Subscription's
-          extents, and must be specified in the form "latitude,longitude".
-        schema:
-          type: string
-        in: query
-        required: true
-      responses:
-        200:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Subscription'
-          description: Subscription information was retrieved successfully.
-      security:
-      - AuthFromJurisdictionalAuthority:
-        - dss.read.position_reporting_entities
-        - dss.write.position_reporting_entities
-        - dss.read.airspace_awareness
-        - dss.write.airspace_awareness
-        - dss.write.operations
-      summary: 'DSS: /subscriptions/{id}'
-      description: Verify the existence/valdity and state of a particular subscription.
-    put:
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PutSubscriptionParameters'
-        required: true
-      tags:
-      - dss
-      parameters:
-      - name: id
-        description: SubscriptionUUID of the subscription of interest.  Must be created
-          by client before `PUT` call to create AreaSubscription in DSS because the
-          client may receive a notification at that subscription before receiving
-          a response from the DSS.
-        schema:
-          $ref: '#/components/schemas/SubscriptionUUID'
-        in: path
-        required: true
-      responses:
-        200:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PutSubscriptionResponse'
-          description: Subscription was created or updated successfully.
-      security:
-      - AuthFromJurisdictionalAuthority:
-        - dss.read.position_reporting_entities
-        - dss.write.position_reporting_entities
-        - dss.read.airspace_awareness
-        - dss.write.operations
-        - dss.write.airspace_awareness
-      summary: 'DSS: /subscriptions/{id}'
-      description: |-
-        Create or update a subscription.
-
-        Note that the types of content that should be sent to the created subscription depends on the scope in the provided access token.
-    delete:
-      tags:
-      - dss
-      parameters:
-      - name: location
-        description: The approximate location of the Subscription must be specified
-          to find it in the DSS.  This point may lie anywhere within the Subscription's
-          extents.
-        schema:
-          $ref: '#/components/schemas/LocationString'
-        in: query
-        required: true
-      responses:
-        204:
-          description: Subscription was deleted successfully.
-      security:
-      - AuthFromJurisdictionalAuthority:
-        - dss.read.position_reporting_entities
-        - dss.write.position_reporting_entities
-        - dss.read.airspace_awareness
-        - dss.write.airspace_awareness
-        - dss.write.operations
-      summary: 'DSS: /subscriptions/{id}'
-      description: Delete a subscription.
-    parameters:
-    - name: id
-      description: SubscriptionUUID of the subscription of interest.
-      schema:
-        $ref: '#/components/schemas/SubscriptionUUID'
-      in: path
-      required: true
   /entities/{id}:
     summary: An Entity reference in the DSS (does not include all Entity details).
     put:
@@ -487,6 +479,42 @@ paths:
                 $ref: '#/components/schemas/PutEntityResponse'
           description: The Entity reference was created or updated successfully in
             the DSS.
+        400:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: |-
+            * One or more input parameters were missing or invalid.
+            * The request attempted to mutate the Entity in a disallowed way (e.g., changing the Entity type).
+        401:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bearer access token was not provided in Authorization header,
+            token could not be decoded, or token was invalid.
+        403:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The access token was decoded successfully but did not include
+            a scope appropriate to this endpoint.
+        409:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: |-
+            * An Entity with the specified ID already exists and is owned by a different client.
+            * Despite repeated attempts, the DSS was unable to update the DAR because of other simultaneous changes.
+        413:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The area of the Entity is too large.
       security:
       - AuthFromJurisdictionalAuthority:
         - dss.write.position_reporting_entities
@@ -522,6 +550,41 @@ paths:
               schema:
                 $ref: '#/components/schemas/DeleteEntityResponse'
           description: Reference to Entity was successfully deleted from DSS.
+        400:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: One or more input parameters were missing or invalid.
+        401:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bearer access token was not provided in Authorization header,
+            token could not be decoded, or token was invalid.
+        403:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: |-
+            * The access token was decoded successfully but did not include a scope appropriate to this endpoint.
+            * The Entity does not belong to the client requesting deletion.
+        404:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Entity could not be deleted because it could not be found.  This
+            may happen if an incorrect `location` is provided.
+        409:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Despite repeated attempts, the DSS was unable to update the
+            DAR because of other simultaneous changes.
       security:
       - AuthFromJurisdictionalAuthority:
         - dss.write.position_reporting_entities
@@ -537,68 +600,372 @@ paths:
         $ref: '#/components/schemas/EntityUUID'
       in: path
       required: true
-  /flights/{id}:
-    summary: Basic operation details to meet remote ID requirements.
-    description: This endpoint may be polled by remote ID display providers to display
-      basic aircraft activity near a user in real time.
+  /subscriptions/{id}:
+    summary: Subscription for airspace updates to a volume of interest.
     get:
       tags:
-      - p2p_rid
+      - dss
+      parameters:
+      - name: location
+        description: The approximate location of the Subscription must be specified
+          to find it in the DSS.  This point may lie anywhere within the Subscription's
+          extents.
+        schema:
+          $ref: '#/components/schemas/SubscriptionUUID'
+        in: query
+        required: true
       responses:
         200:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GetFlightsResponse'
-          description: Flight information was successfully retrieved.
-        404:
-          description: All of the requested views are outside any remote ID service
-            provision areas (PositionReporting Entity volumes) this provider has.  A
-            display provider receiving this response should discontinue polling for
-            this endpoint for the set of view ports requested until otherwise directed
-            by DSS interactions.
+                $ref: '#/components/schemas/Subscription'
+          description: Subscription information was retrieved successfully.
+        400:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: One or more input parameters were missing or invalid.
+        401:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bearer access token was not provided in Authorization header,
+            token could not be decoded, or token was invalid.
+        403:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The access token was decoded successfully but did not include
+            a scope appropriate to this endpoint.
+        413:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The requested area was too large.
       security:
       - AuthFromJurisdictionalAuthority:
         - dss.read.position_reporting_entities
+        - dss.write.position_reporting_entities
+        - dss.read.airspace_awareness
+        - dss.write.airspace_awareness
+        - dss.write.operations
+      summary: 'DSS: /subscriptions/{id}'
+      description: Verify the existence/valdity and state of a particular subscription.
+    put:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PutSubscriptionParameters'
+        required: true
+      tags:
+      - dss
+      parameters:
+      - name: id
+        description: SubscriptionUUID of the subscription of interest.  Must be created
+          by client before `PUT` call to create AreaSubscription in DSS because the
+          client may receive a notification at that subscription before receiving
+          a response from the DSS.
+        schema:
+          $ref: '#/components/schemas/SubscriptionUUID'
+        in: path
+        required: true
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PutSubscriptionResponse'
+          description: Subscription was created or updated successfully.
+        400:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: |-
+            * One or more input parameters were missing or invalid.
+            * The request attempted to mutate the Subscription in a disallowed way.
+        401:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bearer access token was not provided in Authorization header,
+            token could not be decoded, or token was invalid.
+        403:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The access token was decoded successfully but did not include
+            a scope appropriate to this endpoint.
+        409:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: |-
+            * A Subscription with the specified ID already exists and is owned by a different client.
+            * Despite repeated attempts, the DSS was unable to update the DAR because of other simultaneous changes.
+      security:
+      - AuthFromJurisdictionalAuthority:
+        - dss.read.position_reporting_entities
+        - dss.write.position_reporting_entities
         - dss.read.airspace_awareness
         - dss.write.operations
-      summary: 'RID: /flights/{id}'
-      description: Retrieve basic flight information to meet remote ID requirements
-        for a specific flight.  This endpoint may be polled by remote ID display providers
-        to display basic aircraft activity for a specific flight.
+        - dss.write.airspace_awareness
+      summary: 'DSS: /subscriptions/{id}'
+      description: |-
+        Create or update a subscription.
+
+        Note that the types of content that should be sent to the created subscription depends on the scope in the provided access token.
+    delete:
+      tags:
+      - dss
+      parameters:
+      - name: location
+        description: The approximate location of the Subscription must be specified
+          to find it in the DSS.  This point may lie anywhere within the Subscription's
+          extents.
+        schema:
+          $ref: '#/components/schemas/LocationString'
+        in: query
+        required: true
+      responses:
+        204:
+          description: Subscription was deleted successfully.
+        400:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: One or more input parameters were missing or invalid.
+        401:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bearer access token was not provided in Authorization header,
+            token could not be decoded, or token was invalid.
+        403:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: |-
+            * The access token was decoded successfully but did not include a scope appropriate to this endpoint.
+            * The Entity does not belong to the client requesting deletion.
+        404:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Subscription could not be deleted because it could not be found.  This
+            may happen if an incorrect `location` is provided.
+        409:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Despite repeated attempts, the DSS was unable to update the
+            DAR because of other simultaneous changes.
+      security:
+      - AuthFromJurisdictionalAuthority:
+        - dss.read.position_reporting_entities
+        - dss.write.position_reporting_entities
+        - dss.read.airspace_awareness
+        - dss.write.airspace_awareness
+        - dss.write.operations
+      summary: 'DSS: /subscriptions/{id}'
+      description: Delete a subscription.
     parameters:
     - name: id
-      description: Remote ID flight ID for this flight; may be obtained in general
-        /flights query.
+      description: SubscriptionUUID of the subscription of interest.
       schema:
-        $ref: '#/components/schemas/RIDFlightID'
+        $ref: '#/components/schemas/SubscriptionUUID'
       in: path
       required: true
-  /flights/{id}/details:
-    summary: A remote ID flight reported by a remote ID service provider.
+  /entity_details/{id}:
+    summary: Details of a UTM Entity.
     get:
       tags:
-      - p2p_rid
+      - p2p_entities
       responses:
         200:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GetFlightDetailsResponse'
-          description: Flight details were successfully retrieved.
+                $ref: '#/components/schemas/EntityDetails'
+          description: The Entity details were retrieved successfully.
+        400:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: One or more input parameters were missing or invalid.
+        401:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bearer access token was not provided in Authorization header,
+            token could not be decoded, or token was invalid.
+        403:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The access token was decoded successfully but did not include
+            a scope appropriate to this endpoint.
+        404:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The requested Entity could not be found.
       security:
       - AuthFromJurisdictionalAuthority:
         - dss.read.position_reporting_entities
         - dss.read.airspace_awareness
         - dss.write.operations
-      summary: 'RID: /flights/{id}/details'
-      description: Retrieve details of a flight to meet remote ID requirements.
+      summary: 'Entities: /entity_details/{id}'
+      description: |-
+        Retrieve the details of an Entity owned by the client.  Note that this request should be denied if the authorization scope does not provide access to the type of Entity being requested.
+
+        Implementation of this endpoint is not required for remote ID service providers (nor remote ID display providers since they do not create Entities).
+    put:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PutEntityNotificationParameters'
+        required: true
+      tags:
+      - p2p_entities
+      responses:
+        204:
+          description: Entity details were received successfully.
+        400:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: |-
+            * One or more parameters were missing or invalid.
+            * The Entity could not be parsed, or contains illegal data.
+        401:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bearer access token was not provided in Authorization header,
+            token could not be decoded, or token was invalid.
+        403:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The access token was decoded successfully but did not include
+            a scope appropriate to this endpoint.
+        409:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The Entity version specified in this message is lower than
+            a previously-received notification, or identical to a previously-received
+            notification and the Entity is different.
+      security:
+      - AuthFromJurisdictionalAuthority:
+        - dss.write.position_reporting_entities
+        - dss.write.airspace_awareness
+        - dss.write.operations
+      summary: 'Entities: /entity_details/{id}'
+      description: Publish new information about an Entity to this client (usually
+        because of instructions from the DSS triggered by a subscription).
+    delete:
+      tags:
+      - p2p_entities
+      responses:
+        204:
+          description: Notification of Entity deletion was received successfully,
+            even if the host USS was previously unaware of the specified Entity.
+        400:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: One or more parameters were missing or invalid.
+        401:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bearer access token was not provided in Authorization header,
+            token could not be decoded, or token was invalid.
+        403:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The access token was decoded successfully but did not include
+            a scope appropriate to this endpoint.
+      security:
+      - AuthFromJurisdictionalAuthority:
+        - dss.write.position_reporting_entities
+        - dss.write.airspace_awareness
+        - dss.write.operations
+      summary: 'Entities: /entity_details/{id}'
+      description: Publish a notification about the deletion of an Entity to this
+        client (usually because of instructions from the DSS triggered by a subscription).
     parameters:
     - name: id
-      description: Remote ID flight ID for this flight; may be obtained in general
-        /flights query.
+      description: EntityUUID of the Entity details.
       schema:
-        $ref: '#/components/schemas/RIDFlightID'
+        $ref: '#/components/schemas/EntityUUID'
+      in: path
+      required: true
+  /dar_constraints/{id}:
+    summary: Constraints stored directly in the DSS airspace representation internal
+      to the DSS constellation.
+    put:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PutDARConstraintParameters'
+        required: true
+      tags:
+      - dar
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PutDARConstraintResponse'
+          description: The specified Constraint was propagated to the DAR successfully.
+        409:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PutDARConstraintResponse'
+          description: Constraint could not be updated because it had changed remotely.
+      summary: 'DAR: /dar_constraints'
+      description: '`[UTM only]` Update the contents in the DSS airspace representation
+        for a particular constraint.  Note that this operation will probably not be
+        hosted at a standard endpoint; instead, the idea of writing information to
+        an endpoint like this will be accomplished via the DAR synchronization interface
+        which may be an atomic broadcast system like Apache Zookeeper.'
+    parameters:
+    - name: id
+      description: EntityUUID of the Constraint.
+      schema:
+        type: string
       in: path
       required: true
 components:
@@ -1900,6 +2267,14 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Volume4D'
+    ErrorResponse:
+      description: Data provided when an off-nominal condition was encountered.
+      type: object
+      properties:
+        message:
+          description: Human-readable message indicating what error occurred and/or
+            why.
+          type: string
   securitySchemes:
     AuthFromJurisdictionalAuthority:
       flows:

@@ -151,7 +151,7 @@ paths:
       basic aircraft activity near a user in real time.
     get:
       tags:
-      - ridclient
+      - p2p_rid
       responses:
         200:
           content:
@@ -170,7 +170,7 @@ paths:
         - dss.read.position_reporting_entities
         - dss.read.airspace_awareness
         - dss.write.operations
-      summary: 'PositionReporting: /flights'
+      summary: 'RID: /flights'
       description: Retrieve basic flight information to meet remote ID requirements.  This
         endpoint will be polled by remote ID display providers to display basic aircraft
         activity near a user in real time.  All flights that have any recent position
@@ -298,7 +298,7 @@ paths:
     summary: Details of a UTM Entity.
     get:
       tags:
-      - utmclient
+      - p2p_entities
       responses:
         200:
           content:
@@ -309,14 +309,13 @@ paths:
       security:
       - AuthFromJurisdictionalAuthority:
         - dss.read.position_reporting_entities
-        - dss.write.position_reporting_entities
         - dss.read.airspace_awareness
-        - dss.write.airspace_awareness
         - dss.write.operations
-      summary: 'Client: /entity_details/{id}'
-      description: '`[UTM only]` Retrieve the details of an Entity owned by the client.  Note
-        that this request should be denied if the authorization scope does not provide
-        access to the type of Entity being requested.'
+      summary: 'Entities: /entity_details/{id}'
+      description: |-
+        Retrieve the details of an Entity owned by the client.  Note that this request should be denied if the authorization scope does not provide access to the type of Entity being requested.
+
+        Implementation of this endpoint is not required for remote ID service providers (nor remote ID display providers since they do not create Entities).
     put:
       requestBody:
         content:
@@ -325,7 +324,7 @@ paths:
               $ref: '#/components/schemas/PutEntityNotificationParameters'
         required: true
       tags:
-      - client
+      - p2p_entities
       responses:
         204:
           description: Entity details were received successfully.
@@ -334,12 +333,12 @@ paths:
         - dss.write.position_reporting_entities
         - dss.write.airspace_awareness
         - dss.write.operations
-      summary: 'Client: /entity_details/{id}'
+      summary: 'Entities: /entity_details/{id}'
       description: Publish new information about an Entity to this client (usually
         because of instructions from the DSS triggered by a subscription).
     delete:
       tags:
-      - client
+      - p2p_entities
       responses:
         204:
           description: Notification of Entity deletion was received successfully.
@@ -348,7 +347,7 @@ paths:
         - dss.write.position_reporting_entities
         - dss.write.airspace_awareness
         - dss.write.operations
-      summary: 'Client: /entity_details/{id}'
+      summary: 'Entities: /entity_details/{id}'
       description: Publish a notification about the deletion of an Entity to this
         client (usually because of instructions from the DSS triggered by a subscription).
     parameters:
@@ -496,11 +495,13 @@ paths:
       description: |-
         Create or update reference to an Entity.  Unless otherwise specified, the EntityType of an existing Entity may not be changed.
 
+        The `details_url` field in the request body is required for all Entities except PositionReporting Entities.
+
         `PositionReporting Entities`:
         Authorization scope `dss.write.position_reporting_entities` is required.  The DSS assumes the USS has already added the appropriate retention period to operation end time in EntitySummary's `time_end` extents field before storing it.  Updating `time_start` is not allowed if it is before the current time.
 
         `Operation Entities`:
-        Operation Entities require additional parameters in `operation`.  If an Entity is declared a RogueOperation, a `key` is not necessary to mutate it.
+        Authorization scope `dss.write.operation_entities` is required.
     delete:
       tags:
       - dss
@@ -541,7 +542,7 @@ paths:
       basic aircraft activity near a user in real time.
     get:
       tags:
-      - ridclient
+      - p2p_rid
       responses:
         200:
           content:
@@ -560,7 +561,7 @@ paths:
         - dss.read.position_reporting_entities
         - dss.read.airspace_awareness
         - dss.write.operations
-      summary: 'PositionReporting: /flights/{id}'
+      summary: 'RID: /flights/{id}'
       description: Retrieve basic flight information to meet remote ID requirements
         for a specific flight.  This endpoint may be polled by remote ID display providers
         to display basic aircraft activity for a specific flight.
@@ -576,7 +577,7 @@ paths:
     summary: A remote ID flight reported by a remote ID service provider.
     get:
       tags:
-      - ridclient
+      - p2p_rid
       responses:
         200:
           content:
@@ -589,7 +590,7 @@ paths:
         - dss.read.position_reporting_entities
         - dss.read.airspace_awareness
         - dss.write.operations
-      summary: 'PositionReporting: /flights/{id}/details'
+      summary: 'RID: /flights/{id}/details'
       description: Retrieve details of a flight to meet remote ID requirements.
     parameters:
     - name: id
@@ -775,9 +776,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/EntitySummary'
-    AirspaceAwarenessProviderDetails:
-      description: Entity details specific to an airspace awareness provider.
-      type: object
     PutSubscriptionParameters:
       description: Parameters for a request to create or update a subscription in
         the DSS.
@@ -989,58 +987,13 @@ components:
           description: The previous version of this Constraint in the DAR.  Omit this
             property if the Constraint did not previously exist in the DAR.
           type: integer
-    EntityDetails:
-      description: Detailed specification of obstacle, thing, or region of special
-        significance in the airspace (Constraint or Operation are concrete/specific
-        types of Entities). Note that this data is not stored in the DSS; only with
-        the clients. Note that this may be expanded to include other types of volume-based
-        entities in the airspace.
-      required:
-      - id
-      - type
-      type: object
-      properties:
-        id:
-          anyOf:
-          - $ref: '#/components/schemas/EntityUUID'
-          description: Unique identifier for this entity.  Created by client.
-        type:
-          $ref: '#/components/schemas/EntityType'
-        extents:
-          description: Volumes that wholly contain the Entity while being as small
-            as practical.
-          type: array
-          items:
-            $ref: '#/components/schemas/Volume4D'
-        constraint:
-          anyOf:
-          - $ref: '#/components/schemas/ConstraintDetails'
-          description: If this Entity is a Constraint, this property contains details
-            about the Constraint.
-        operation:
-          anyOf:
-          - $ref: '#/components/schemas/OperationDetails'
-          description: If this Entity is an Operation, this property contains details
-            about the Operation.
-        awareness_provider:
-          anyOf:
-          - $ref: '#/components/schemas/AirspaceAwarenessProviderDetails'
-          description: If this Entity is an airspace awareness provider, this property
-            contains details about that provider.
-        signature:
-          anyOf:
-          - $ref: '#/components/schemas/EntitySignature'
-          description: Signature for this version of this Entity.  Includes information
-            about the version of this Entity.
     EntityType:
       description: |-
         Type of Entity.  The API of the URL associated with an Entity depends on its EntityType.
 
-        `PositionReporting`: An spacetime volume in which a remote ID service provider will provide remote ID services.  The API for the URL associated with a PositionReporting Entity is all endpoints beginning with /flights in this document.  The /flights path is NOT appended to the provided URL; if https://example.com/rid were provided, flights would be polled at https://example.com/rid and flight details could be found at https://example.com/rid/{id}/details.
+        `PositionReporting`: A spacetime volume in which a remote ID service provider will provide remote ID services.
 
-        `Operation`: A single deconflicted UTM operation.  The API for the URL associated with an Operation Entity is /entity_details in this document.
-
-        For Entities that must receive flight-critical notifications (Operation, AirspaceAwarenessProvider), this endpoint must also support PUT according to the `client` Entities endpoint.
+        `Operation`: A single deconflicted UTM operation.
       enum:
       - Operation
       - Constraint
@@ -1065,10 +1018,6 @@ components:
           - $ref: '#/components/schemas/RogueFlight'
           description: If this Constraint contains a rogue flight, this field contains
             the details of that flight.
-    PutConstraintParameters:
-      description: Additional parameters for a request to create or update a reference
-        to an Constraint Entity in the DSS.
-      type: object
     RogueFlight:
       description: Details about a rogue flight inside a Constraint.
       type: object
@@ -1179,68 +1128,6 @@ components:
       pattern: '^https?:\/\/(?:\[[0-9a-fA-F]{0,4}(?::[0-9a-fA-F]{0,4}){2,7}\]|[^\0\t\r\n
         #%\/:?@[\\\]]{1,63}(?:\.[^\0\t\r\n #%\/:?@[\\\]]{1,63}){1,126})(?::\d{1,5})?\/?'
       type: string
-    EntitySummary:
-      description: A declaration of an Entity.  The DSS reports only these EntitySummaries
-        and clients must obtain full details peer-to-peer from the creator/owner.
-      required:
-      - id
-      - owner
-      - type
-      - url
-      - version
-      type: object
-      properties:
-        id:
-          anyOf:
-          - $ref: '#/components/schemas/EntityUUID'
-          description: Unique identifier for this object.  Created by client, and
-            client must respond to a peer request for details about this Entity according
-            to this ID.
-        owner:
-          description: Assigned by the DSS based on creating client’s ID (via access
-            token).  Used for restricting mutation and deletion operations to owner,
-            and only requiring EntitySignatures for unowned Entities.
-          type: string
-          example: myuss
-        type:
-          $ref: '#/components/schemas/EntityType'
-        url:
-          anyOf:
-          - $ref: '#/components/schemas/URL'
-          description: The URL at which further information for this Entity may be
-            changed.  See EntityType documentation for specifications of this endpoint.
-          type: string
-        version:
-          format: int32
-          description: Extracted from the EntitySignature if specified, or assigned
-            and incremented automatically otherwise.  When increased, indicates that
-            an Entity has changed (allows another client client to optimize full Entity
-            retrieval for only those Entities which have changed since client’s cache).
-          type: integer
-        time_end:
-          format: date-time
-          description: A planning client does not need to consider this Entity when
-            considering time periods that will start after time_end.
-          type: string
-        time_start:
-          format: date-time
-          description: A planning client does not need to consider this Entity when
-            considering time periods that will end before start_time.
-          type: string
-    GeoPolygon:
-      description: An enclosed area on the earth.  The bounding edges of this polygon
-        shall be the shortest paths between connected vertices.  This means, for instance,
-        that the edge between two points both defined at a particular latitude is
-        not generally contained at that latitude.
-      required:
-      - points
-      type: object
-      properties:
-        points:
-          minLength: 3
-          type: array
-          items:
-            $ref: '#/components/schemas/LatLngPoint'
     Hash:
       description: Base64 representation of a SHA256 hash of the given inner content.  If
         this Hash is for multiple entries, the entries should be concatenated together
@@ -1369,24 +1256,14 @@ components:
     PutOperationParameters:
       description: Additional parameters for a request to create or update a reference
         to an Operation Entity in the DSS.
-      required:
-      - key
+      required: []
       type: object
       properties:
         key:
           anyOf:
           - $ref: '#/components/schemas/DeconflictionKey'
           description: Proof that the client is aware of (and has deconflicted with)
-            all relevant Entities.  Not required when Operation is declared rogue.
-    EntityDetailsURL:
-      anyOf:
-      - $ref: '#/components/schemas/URL'
-      description: |-
-        The URL at which details about an Entity may be exchanged.  The API for this URL may be found at `/entity_details`.
-        This URL is the base entity_details resource.  If this URL is specified as https://example.com/entity_details then the Entity details for a particular {id} may be exchanged at the URL https://example.com/entity_details/{id}.  This URL may not have a trailing / character.
-      pattern: '[^\/]$'
-      type: string
-      example: https://example.com/entity_details
+            all relevant Entities.  Required unless Operation is declared rogue.
     PutEntityResponse:
       description: Response to a request to create or update a reference to an Entity
         in the DSS.
@@ -1580,41 +1457,6 @@ components:
         The final polygon vertex does not need to be identical to the first vertex.  Latitude values must fall in the range [-90, 90] and longitude values must fall in the range [-180, 180].  The winding order shall be interpreted as the order which produces the smaller area.  The path between two vertices shall be the shortest possible path between those vertices.
       pattern: ^(?:-?\d{1,3}(?:\.\d*)?,){5}-?\d{1,3}(?:\.\d*)?(?:(?:,-?\d{1,3}(?:\.\d*)?){2})*$
       type: string
-    PutEntityParameters:
-      description: Parameters for a request to create or update a reference to an
-        Entity in the DSS.
-      required:
-      - extents
-      - type
-      type: object
-      properties:
-        extents:
-          anyOf:
-          - $ref: '#/components/schemas/Volume4D'
-          description: The bounding spacetime extents of this Entity.  Start and end
-            times must be specified.  Spatial information is translated into DAR cells
-            internally by the DSS then discarded.
-        signature:
-          anyOf:
-          - $ref: '#/components/schemas/EntitySignature'
-          description: Signature for this version of this Entity.  May be used to
-            verify that peer clients have retrieved the details of this Operation
-            before being allowed to place deconflicted Entities into the airspace.
-        operation:
-          $ref: '#/components/schemas/PutOperationParameters'
-        constraint:
-          $ref: '#/components/schemas/PutConstraintParameters'
-        type:
-          $ref: '#/components/schemas/EntityType'
-        url:
-          oneOf:
-          - $ref: '#/components/schemas/EntityDetailsURL'
-          - $ref: '#/components/schemas/RIDFlightsURL'
-          description: The URL at which a peer client can retrieve further information
-            about this Entity via GET.  The API of this endpoint depends on the EntityType;
-            see EntityType definition for more details.
-        awareness_provider:
-          $ref: '#/components/schemas/AirspaceAwarenessProviderDetails'
     RIDFlightID:
       description: ID, unique to a remote ID service provider, which identifies a
         particular flight for which the remote ID service provider is providing remote
@@ -1661,6 +1503,207 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Volume4D'
+    EntitySummary:
+      description: |-
+        A declaration of an Entity.  The DSS reports only these EntitySummaries and clients must obtain full details peer-to-peer from the creator/owner.
+
+        `details_url` is required for all Entity types except `PositionReporting`.
+      required:
+      - id
+      - owner
+      - type
+      - version
+      type: object
+      properties:
+        id:
+          anyOf:
+          - $ref: '#/components/schemas/EntityUUID'
+          description: Unique identifier for this object.  Created by client, and
+            client must respond to a peer request for details about this Entity according
+            to this ID.
+        owner:
+          description: Assigned by the DSS based on creating client’s ID (via access
+            token).  Used for restricting mutation and deletion operations to owner,
+            and only requiring EntitySignatures for unowned Entities.
+          type: string
+          example: myuss
+        type:
+          $ref: '#/components/schemas/EntityType'
+        version:
+          format: int32
+          description: Extracted from the EntitySignature if specified, or assigned
+            and incremented automatically otherwise.  When increased, indicates that
+            an Entity has changed (allows another client client to optimize full Entity
+            retrieval for only those Entities which have changed since client’s cache).
+          type: integer
+        time_end:
+          format: date-time
+          description: A planning client does not need to consider this Entity when
+            considering time periods that will start after time_end.
+          type: string
+        time_start:
+          format: date-time
+          description: A planning client does not need to consider this Entity when
+            considering time periods that will end before start_time.
+          type: string
+        details_url:
+          $ref: '#/components/schemas/EntityDetailsURL'
+        details:
+          $ref: '#/components/schemas/DSSEntityDetails'
+          description: ""
+    DSSEntityDetails:
+      description: |-
+        Entity data fields stored in the DSS specific to particular Entity Types.
+
+        For `PositionReporting` Entities, `flights_url` is required.
+      type: object
+      properties:
+        flights_url:
+          anyOf:
+          - $ref: '#/components/schemas/RIDFlightsURL'
+          description: For PositionReporting Entities, this field contains the `/flights`
+            URL at which the `ridclient` endpoints may be found.
+    PutPositionReportingDetails:
+      description: Additional parameters for a request to create or update a reference
+        to a PositionReporting Entity in the DSS.
+      required:
+      - flights_url
+      type: object
+      properties:
+        flights_url:
+          $ref: '#/components/schemas/RIDFlightsURL'
+    EntityDetailsURL:
+      anyOf:
+      - $ref: '#/components/schemas/URL'
+      description: |-
+        The URL at which details about an Entity may be exchanged.  See the `/entity_details` path for specification of this endpoint.
+        This URL is the base entity_details resource.  If this URL is specified as https://example.com/entity_details then the Entity details for a particular {id} may be exchanged at the URL https://example.com/entity_details/{id}.  This URL may not have a trailing / character.
+      pattern: '[^\/]$'
+      type: string
+      example: https://example.com/entity_details
+    GeoPolygon:
+      description: An enclosed area on the earth.  The bounding edges of this polygon
+        shall be the shortest paths between connected vertices.  This means, for instance,
+        that the edge between two points both defined at a particular latitude is
+        not generally contained at that latitude.  The final polygon vertex does not
+        need to be identical to the first vertex.
+      required:
+      - points
+      type: object
+      properties:
+        points:
+          minLength: 3
+          type: array
+          items:
+            $ref: '#/components/schemas/LatLngPoint'
+    PutEntityParameters:
+      description: Parameters for a request to create or update a reference to an
+        Entity in the DSS.
+      required:
+      - extents
+      - type
+      type: object
+      properties:
+        extents:
+          anyOf:
+          - $ref: '#/components/schemas/Volume4D'
+          description: The bounding spacetime extents of this Entity.  Start and end
+            times must be specified.  Spatial information is translated into DAR cells
+            internally by the DSS then discarded.
+        signature:
+          anyOf:
+          - $ref: '#/components/schemas/EntitySignature'
+          description: |-
+            Signature for this version of this Entity.  May be used to verify that peer clients have retrieved the details of this Entity before being allowed to place deconflicted Entities into the airspace.
+            This field is required when `type` is `Operation`.
+        type:
+          $ref: '#/components/schemas/EntityType'
+        details_url:
+          $ref: '#/components/schemas/EntityDetailsURL'
+        position_reporting:
+          anyOf:
+          - $ref: '#/components/schemas/PutPositionReportingDetails'
+          description: This field is required when `type` is `PositionReporting`.
+        operation:
+          anyOf:
+          - $ref: '#/components/schemas/PutOperationParameters'
+          description: This field is required when `type` is `Operation`.
+        constraint:
+          anyOf:
+          - $ref: '#/components/schemas/PutConstraintParameters'
+          description: This field is required when `type` is `Constraint`.
+        awareness_provider:
+          anyOf:
+          - $ref: '#/components/schemas/PutAirspaceAwarenessProviderDetails'
+          description: This field is required when `type` is `AirspaceAwarenessProvider`.
+    AirspaceAwarenessProviderDetails:
+      description: Entity details specific to an airspace awareness provider.
+      type: object
+    PutAirspaceAwarenessProviderDetails:
+      description: Additional parameters for a request to create or update a reference
+        to an AirspaceAwarenessProvider Entity in the DSS.
+      type: object
+    PutConstraintParameters:
+      description: Additional parameters for a request to create or update a reference
+        to a Constraint Entity in the DSS.
+      type: object
+    PositionReportingDetails:
+      description: Entity details specific to a PositionReporting Entity.
+      required:
+      - flights_url
+      type: object
+      properties:
+        flights_url:
+          $ref: '#/components/schemas/RIDFlightsURL'
+    EntityDetails:
+      description: Detailed specification of obstacle, thing, or region of special
+        significance in the airspace (Constraint or Operation are concrete/specific
+        types of Entities). Note that this data is not stored in the DSS; only with
+        the clients. Note that this may be expanded to include other types of volume-based
+        entities in the airspace.
+      required:
+      - id
+      - type
+      type: object
+      properties:
+        id:
+          anyOf:
+          - $ref: '#/components/schemas/EntityUUID'
+          description: Unique identifier for this entity.  Created by client.
+        type:
+          $ref: '#/components/schemas/EntityType'
+        extents:
+          description: Volumes that wholly contain the Entity while being as small
+            as practical.  This field is required unless the Entity `type` is `PositionReporting`.
+          type: array
+          items:
+            $ref: '#/components/schemas/Volume4D'
+        position_reporting:
+          anyOf:
+          - $ref: '#/components/schemas/PutPositionReportingDetails'
+          description: If this Entity is a PositionReporting Entity, this property
+            is required and contains details about the PositionReporting Entity.
+        constraint:
+          anyOf:
+          - $ref: '#/components/schemas/ConstraintDetails'
+          description: If this Entity is a Constraint, this property is required and
+            contains details about the Constraint.
+        operation:
+          anyOf:
+          - $ref: '#/components/schemas/OperationDetails'
+          description: If this Entity is an Operation, this property is required and
+            contains details about the Operation.
+        awareness_provider:
+          anyOf:
+          - $ref: '#/components/schemas/AirspaceAwarenessProviderDetails'
+          description: If this Entity is an airspace awareness provider, this property
+            is required and contains details about that provider.
+        signature:
+          anyOf:
+          - $ref: '#/components/schemas/EntitySignature'
+          description: Signature for this version of this Entity.  Includes information
+            about the version of this Entity.  This property is required unless Entity
+            `type` is `PositionReporting`.
   securitySchemes:
     AuthFromJurisdictionalAuthority:
       flows:
@@ -1688,7 +1731,8 @@ components:
               would use this scope.
       type: oauth2
       description: Authorization from, or on behalf of, a jurisdiction-having authority.  The
-        `aud` field in access tokens from this authority must be specified.
+        `aud` field in access tokens from this authority must be specified.  Multiple
+        scopes may be requested for a single token.
 security:
 - AuthFromJurisdictionalAuthority:
   - dss.read.position_reporting_entities
@@ -1700,12 +1744,11 @@ security:
 tags:
 - name: dss
   description: Endpoints exposed by the DSS server.
-- name: utmclient
-  description: Endpoints exposed by UTM DSS clients for peer-peer communication.
-- name: ridclient
-  description: Endpoints exposed by remote ID providers for peer-peer communication.
+- name: p2p_rid
+  description: Endpoints exposed by remote ID service providers for peer-peer communication.
 - name: dar
   description: Pseudo-endpoint actions used by DSS instances to synchronize DSS airspace
     representation cell information.
-- name: client
-  description: Endpoints exposed by DSS clients for peer-peer communication.
+- name: p2p_entities
+  description: Endpoints exposed by DSS clients for peer-peer communication of Entity
+    details, including DSS-triggered subscription notifications.

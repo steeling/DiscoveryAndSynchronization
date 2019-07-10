@@ -1563,45 +1563,6 @@ components:
           enum:
           - TakeoffLocation
           - GroundLevel
-    RIDFlight:
-      description: Description of a remote ID flight.  If `last_poll` is specified
-        in query, only fields that have changed since the specified timestamp must
-        be included, with the exception that `id` must always be included.
-      required:
-      - id
-      - aircraft_type
-      type: object
-      properties:
-        id:
-          $ref: '#/components/schemas/RIDFlightID'
-        aircraft_type:
-          anyOf:
-          - $ref: '#/components/schemas/RIDAircraftType'
-          description: Generic type of aircraft.
-        aircraft_icon_url:
-          anyOf:
-          - $ref: '#/components/schemas/URL'
-          description: The location at which a custom icon for this aircraft or aircraft
-            type may be found
-          example: https://myuss.com/aircraft/myaircraft.png
-        current_state:
-          anyOf:
-          - $ref: '#/components/schemas/RIDAircraftState'
-          description: The most up-to-date state of the aircraft.
-        position_history:
-          description: A short history of recent aircraft movement including at least
-            one entry (current position).  If `last_poll` is specified in query, only
-            entries since that timestamp should be included.  Under no circumstances
-            should more than 60 seconds of history be included.
-          type: array
-          items:
-            $ref: '#/components/schemas/RIDAircraftPosition'
-        volumes:
-          description: If telemetry is not available, the set of spacetime volumes
-            the aircraft is within.
-          type: array
-          items:
-            $ref: '#/components/schemas/Volume4D'
     RIDAircraftState:
       description: State of an aircraft for the purposes of remote ID.
       required:
@@ -1687,65 +1648,6 @@ components:
           format: float
           description: 'Max height (AGL) of group operation (TODO: improve this description)'
           type: number
-    RIDAircraftPosition:
-      description: Position of an aircraft as reported for remote ID purposes.
-      required:
-      - lat
-      - lng
-      - alt
-      - time
-      type: object
-      properties:
-        time:
-          format: date-time
-          description: The time of applicability of position information.  This may
-            be the time coming from the source, such as a GPS, or the time when the
-            system computes the values using an algorithm such as an Extended Kalman
-            Filter (EKF).  Timestamps must be expressed with a minimum resolution
-            of 1/10th of a second.
-          type: string
-        time_accuracy:
-          format: float
-          description: Declaration of timestamp accuracy in seconds, precise to at
-            least 10ths of a second, to determine time of applicability.  Required
-            for most recent non-extrapolated position entry.
-          minimum: 0
-          exclusiveMinimum: false
-          type: number
-        lat:
-          $ref: '#/components/schemas/Latitude'
-        lng:
-          $ref: '#/components/schemas/Longitude'
-        alt:
-          format: float
-          description: 'Geodetic altitude (NOT altitude above launch, altitude above
-            ground, or EGM96): aircraft distance above the WGS84 ellipsoid as measured
-            along a line that passes through the aircraft and is normal to the surface
-            of the WGS84 ellipsoid.  This value is provided in meters and must have
-            a minimum resolution of 1 meter.'
-          type: number
-          example: 1321.2
-        accuracy_h:
-          format: float
-          description: The maximum number of meters of horizontal error that are likely
-            to be present in this reported position.  Must be specified if `extrapolated`
-            field is true and in the most recent non-extrapolated position entry.
-          minimum: 0
-          exclusiveMinimum: true
-          type: number
-        accuracy_v:
-          format: float
-          description: The maximum number of meters of vertical error that are likely
-            to be present in this reported position.  Must be specified if `extrapolated`
-            field is true and in the most recent non-extrapolated position entry.
-          minimum: 0
-          exclusiveMinimum: true
-          type: number
-        extrapolated:
-          description: True if this position was generated primarily by computation
-            rather than primarily from a direct instrument measurement.  Assumed false
-            if not specified.
-          type: boolean
     GetFlightDetailsResponse:
       description: Response to remote ID provider query for details about a specific
         flight.
@@ -1826,6 +1728,178 @@ components:
           type: integer
         auth_data:
           $ref: '#/components/schemas/RIDAuthData'
+    HorizontalAccuracy:
+      description: |-
+        This is the NACp enumeration from ADS-B, plus 1m for a more complete range for UAs.
+
+        `HAUnknown`: Unknown horizontal accuracy
+
+        `HA10NMPlus`: > 10NM (18.52km)
+
+        `HA10NM`: < 10NM (18.52km)
+
+        `HA4NM`: < 4NM (7.408km)
+
+        `HA2NM`: < 2NM (3.704km)
+
+        `HA1NM`: < 1NM (1852m)
+
+        `HA05NM`: < 0.5NM (926m)
+
+        `HA03NM`: < 0.3NM (555.6m)
+
+        `HA01NM`: < 0.1NM (185.2m)
+
+        `HA005NM`: < 0.05NM (92.6m)
+
+        `HA30m`: < 30m
+
+        `HA10m`: < 10m
+
+        `HA3m`: < 3m
+
+        `HA1m`: < 1m
+      enum:
+      - HAUnknown
+      - HA10NMPlus
+      - HA10NM
+      - HA4NM
+      - HA2NM
+      - HA1NM
+      - HA05NM
+      - HA03NM
+      - HA01NM
+      - HA005NM
+      - HA30m
+      - HA10m
+      - HA3m
+      - HA1m
+      type: string
+    VerticalAccuracy:
+      description: |-
+        This is the GVA enumeration from ADS-B, plus some finer values for UAs.
+
+        `VAUnknown`: Unknown vertical accuracy
+
+        `VA150mPlus`: > 150m
+
+        `VA150m`: < 150m
+
+        `VA45m`: < 45m
+
+        `VA25m`: < 25m
+
+        `VA10m`: < 10m
+
+        `VA3m`: < 3m
+
+        `VA1m`: < 1m
+      enum:
+      - VAUnknown
+      - VA150mPlus
+      - VA150m
+      - VA45m
+      - VA25m
+      - VA10m
+      - VA3m
+      - VA1m
+      type: string
+    RIDAircraftPosition:
+      description: Position of an aircraft as reported for remote ID purposes.
+      required:
+      - lat
+      - lng
+      - alt
+      - time
+      type: object
+      properties:
+        time:
+          format: date-time
+          description: The time of applicability of position information.  This may
+            be the time coming from the source, such as a GPS, or the time when the
+            system computes the values using an algorithm such as an Extended Kalman
+            Filter (EKF).  Timestamps must be expressed with a minimum resolution
+            of 1/10th of a second.
+          type: string
+        time_accuracy:
+          format: float
+          description: Declaration of timestamp accuracy in seconds, precise to at
+            least 10ths of a second, to determine time of applicability.  Required
+            for most recent non-extrapolated position entry.
+          minimum: 0
+          exclusiveMinimum: false
+          type: number
+        lat:
+          $ref: '#/components/schemas/Latitude'
+        lng:
+          $ref: '#/components/schemas/Longitude'
+        alt:
+          format: float
+          description: 'Geodetic altitude (NOT altitude above launch, altitude above
+            ground, or EGM96): aircraft distance above the WGS84 ellipsoid as measured
+            along a line that passes through the aircraft and is normal to the surface
+            of the WGS84 ellipsoid.  This value is provided in meters and must have
+            a minimum resolution of 1 meter.'
+          type: number
+          example: 1321.2
+        accuracy_h:
+          anyOf:
+          - $ref: '#/components/schemas/HorizontalAccuracy'
+          description: Horizontal error that is likely to be present in this reported
+            position.  Required when `extrapolated` field is true and always in the
+            most recent non-extrapolated position entry.
+        accuracy_v:
+          anyOf:
+          - $ref: '#/components/schemas/VerticalAccuracy'
+          description: Vertical error that is likely to be present in this reported
+            position.  Required when `extrapolated` field is true and always in the
+            most recent non-extrapolated position entry.
+        extrapolated:
+          description: True if this position was generated primarily by computation
+            rather than primarily from a direct instrument measurement.  Assumed false
+            if not specified.
+          type: boolean
+    RIDFlight:
+      description: Description of a remote ID flight.  If `last_poll` is specified
+        in query, only fields that have changed since the specified timestamp must
+        be included, with the exception that `id` must always be included.
+      required:
+      - id
+      - aircraft_type
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/RIDFlightID'
+        aircraft_type:
+          anyOf:
+          - $ref: '#/components/schemas/RIDAircraftType'
+          description: Generic type of aircraft.
+        aircraft_icon_url:
+          anyOf:
+          - $ref: '#/components/schemas/URL'
+          description: The location at which a custom icon for this aircraft or aircraft
+            type may be found
+          example: https://myuss.com/aircraft/myaircraft.png
+        current_state:
+          anyOf:
+          - $ref: '#/components/schemas/RIDAircraftState'
+          description: The most up-to-date state of the aircraft.  Required unless
+            `volumes` is specified.
+        position_history:
+          description: A short history of recent aircraft movement including at least
+            one entry (current position).  If `last_poll` is specified in query, only
+            entries since that timestamp should be included.  Under no circumstances
+            should more than 60 seconds of history be included.  If `volumes` is not
+            specified, this field is required.
+          type: array
+          items:
+            $ref: '#/components/schemas/RIDAircraftPosition'
+        volumes:
+          description: The set of spacetime volumes the aircraft is within.  If `position_history`
+            is not specified, this field is required.
+          type: array
+          items:
+            $ref: '#/components/schemas/Volume4D'
   securitySchemes:
     AuthFromJurisdictionalAuthority:
       flows:

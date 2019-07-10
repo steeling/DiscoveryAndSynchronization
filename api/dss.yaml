@@ -176,7 +176,7 @@ paths:
         activity near a user in real time.  All flights that have any recent position
         history (duration defined in standard) inside the requested box must be returned.
     parameters:
-    - name: box
+    - name: view
       description: 'The area of this view: latmin,lngmin,latmax,lngmax.  Size may
         not exceed a diagonal length specified in the standard.'
       schema:
@@ -187,8 +187,9 @@ paths:
       required: true
     - name: last_poll
       description: If specified, the timestamp of the last time this box was polled
-        by the requesting display provider.  Only changes since this time will be
-        returned by the service provider (see details mentioning `last_poll` below)
+        by the requesting display provider.  The service provider may limit data returned
+        to only data which has changed since `last_poll` (see details mentioning `last_poll`
+        below).
       schema:
         format: date-time
         type: string
@@ -851,57 +852,18 @@ components:
         timestamp:
           format: date-time
           description: The remote ID service provider's timestamp for when this information
-            was current.
+            was current.  May be provided in `last_poll` query parameter to request
+            only data which has changed since this timestamp.
           type: string
         flights:
           description: A list of all flights that have been within the requested area
             within the remote ID retention period (if `last_poll` was not specified
-            in the request) or since the `last_poll` timestamp.  This includes flights
-            that are not currently within the requested area, but were within the
-            requested area within the remote ID retention period.
+            in the request) or have changed since the `last_poll` timestamp.  This
+            includes flights that are not currently within the requested area, but
+            were within the requested area within the remote ID retention period.
           type: array
           items:
             $ref: '#/components/schemas/RIDFlight'
-    RIDAircraftState:
-      description: State of an aircraft for the purposes of remote ID.
-      required:
-      - timestamp
-      type: object
-      properties:
-        timestamp:
-          format: date-time
-          description: Time at which this state was valid.
-          type: string
-        speed_ns:
-          format: float
-          description: Ground speed in the Northerly direction, m/s.
-          type: number
-          example: 5.2
-        speed_ew:
-          format: float
-          description: Ground speed Easterly direction, m/s.
-          type: number
-          example: 1.9
-        speed_ud:
-          format: float
-          description: Ground speed up (vertically), m/s.
-          type: number
-          example: 0.2
-        heading:
-          format: float
-          description: Orientation of the aircraft's nose, degrees East of North.
-          maximum: 360
-          minimum: 0
-          type: number
-          example: 285
-    RIDAircraftType:
-      description: Type of aircraft for the purposes of remote ID.
-      enum:
-      - unknown
-      - vtol
-      - fixed_wing
-      - multirotor
-      type: string
     PutDARCellsParameters:
       description: Parameters for a request to update cells in the DSS airspace representation.
       required:
@@ -1000,15 +962,6 @@ components:
       - PositionReporting
       - AirspaceAwarenessProvider
       type: string
-    GetFlightDetailsResponse:
-      description: Response to remote ID provider query for details about a specific
-        flight.
-      required:
-      - flight
-      type: object
-      properties:
-        flight:
-          $ref: '#/components/schemas/RIDFlightDetails'
     ConstraintDetails:
       description: Constraint-specific Entity details.
       type: object
@@ -1029,78 +982,6 @@ components:
             for the rogue aircraft in this Constraint through the specified remote
             ID interface.
           type: string
-    RIDFlightDetails:
-      description: Details about a flight reported by a remote ID service provider.  At
-        least one of the registration or serial fields must be filled if required
-        by CAA.
-      required:
-      - id
-      - aircraft_type
-      type: object
-      properties:
-        id:
-          description: ID for this flight, matching argument in request.
-          type: string
-          example: a3423b-213401-0023
-        registration:
-          description: Country/State registration number of the aircraft.
-          type: string
-          example: FA12345897
-        serial:
-          description: Serial number of the aircraft.
-          type: string
-          example: INTCJ123-4567-890
-        responsible_party_name:
-          description: Display name of responsible party for this flight.
-          type: string
-          example: My USS
-        responsible_party_url:
-          description: URL where more information about the responsible party for
-            this flight may be found.
-          type: string
-          example: https://myuss.com
-        aircraft_make:
-          description: Manufacturer of aircraft.
-          type: string
-          example: DJI
-        aircraft_model:
-          description: Model of aircraft.
-          type: string
-          example: Inspire 2
-        flight_notes:
-          description: Human-readable notes about operator and flight purpose.
-          type: string
-          example: SafeFlightDrone company doing survey. See my privacy policy www.sfd.com/privacy.
-        accuracy_horizontal:
-          format: float
-          description: The horizontal accuracy of the report position in meters.
-          minimum: 0
-          type: number
-        accuracy_vertical:
-          format: float
-          description: The vertical accuracy of the reported position in meters.
-          minimum: 0
-          type: number
-        operator_location:
-          anyOf:
-          - $ref: '#/components/schemas/LatLngPoint'
-          description: Location of party controlling the aircraft.
-        takeoff_location:
-          anyOf:
-          - $ref: '#/components/schemas/LatLngPoint'
-          description: Location of the takeoff point for this flight.
-        immediate_destination_location:
-          anyOf:
-          - $ref: '#/components/schemas/LatLngPoint'
-          description: Location of the current destination of the aircraft.
-        ultimate_destination_location:
-          anyOf:
-          - $ref: '#/components/schemas/LatLngPoint'
-          description: Location where the aircraft will be at the end of this flight.
-        aircraft_type:
-          anyOf:
-          - $ref: '#/components/schemas/RIDAircraftType'
-          description: Generic type of drone
     DeleteEntityResponse:
       description: Response for a request to delete an Entity.
       required:
@@ -1313,46 +1194,6 @@ components:
           description: Result of the operation on the subscription.
         location:
           $ref: '#/components/schemas/LocationString'
-    RIDAircraftPosition:
-      description: Position of an aircraft as reported for remote ID purposes.
-      required:
-      - lat
-      - lng
-      - alt
-      - timestamp
-      type: object
-      properties:
-        timestamp:
-          format: date-time
-          description: The time at which this position applied.
-          type: string
-        lat:
-          $ref: '#/components/schemas/Latitude'
-        lng:
-          $ref: '#/components/schemas/Longitude'
-        alt:
-          format: float
-          description: Altitude in meters above the WGS84 datum (NOT altitude above
-            launch, altitude above ground, or EGM96).
-          type: number
-          example: 1321.2
-        extrapolated:
-          description: True if this position was generated primarily by computation
-            rather than primarily from a direct instrument measurement.  Assumed false
-            if not specified.
-          type: boolean
-        accuracy_h:
-          format: float
-          description: The maximum number of meters of horizontal error that are likely
-            to be present in this reported position.  Must be specified if `extrapolated`
-            field is true.
-          type: number
-        accuracy_v:
-          format: float
-          description: The maximum number of meters of vertical error that are likely
-            to be present in this reported position.  Must be specified if `extrapolated`
-            field is true.
-          type: number
     RIDFlightsURL:
       anyOf:
       - $ref: '#/components/schemas/URL'
@@ -1465,44 +1306,6 @@ components:
       minLength: 1
       pattern: ^[^\0\t\r\n#%\/:?@[\\\]]+$
       type: string
-    RIDFlight:
-      description: Description of a remote ID flight.  If `last_poll` is specified
-        in query, only fields that have changed since the specified timestamp must
-        be included, with the exception that `id` must always be included.
-      required:
-      - id
-      type: object
-      properties:
-        id:
-          $ref: '#/components/schemas/RIDFlightID'
-        aircraft_type:
-          anyOf:
-          - $ref: '#/components/schemas/RIDAircraftType'
-          description: Generic type of aircraft.
-        aircraft_icon_url:
-          anyOf:
-          - $ref: '#components/schemas/URL'
-          description: The location at which a custom icon for this aircraft or aircraft
-            type may be found
-          example: https://myuss.com/aircraft/myaircraft.png
-        current_state:
-          anyOf:
-          - $ref: '#/components/schemas/RIDAircraftState'
-          description: The most up-to-date state of the aircraft.
-        position_history:
-          description: A short history of recent aircraft movement including at least
-            one entry (current position).  If `last_poll` is specified in query, only
-            entries since that timestamp should be included.  Under no circumstances
-            should more than 60 seconds of history be included.
-          type: array
-          items:
-            $ref: '#/components/schemas/RIDAircraftPosition'
-        volumes:
-          description: If telemetry is not available, the set of spacetime volumes
-            the aircraft is within.
-          type: array
-          items:
-            $ref: '#/components/schemas/Volume4D'
     EntitySummary:
       description: |-
         A declaration of an Entity.  The DSS reports only these EntitySummaries and clients must obtain full details peer-to-peer from the creator/owner.
@@ -1704,6 +1507,325 @@ components:
           description: Signature for this version of this Entity.  Includes information
             about the version of this Entity.  This property is required unless Entity
             `type` is `PositionReporting`.
+    RIDAircraftType:
+      description: |-
+        Type of aircraft for the purposes of remote ID.
+
+        'LTA' means 'Lighter Than Air'.  `LTAUnpowered` is a balloon.  `VTOL` is a fixed wing aircraft that can take off vertically.
+      enum:
+      - NotDeclared
+      - FixedWingPowered
+      - Rotorcraft
+      - Multirotor
+      - LTAPowered
+      - LTAUnpowered
+      - VTOL
+      - FreeFall
+      - Parachute
+      - Rocket
+      - Glider
+      - Tethered
+      - GroundObstacle
+      - Other
+      type: string
+    RIDOperationalStatus:
+      description: Indicates operational status of associated aircraft.
+      enum:
+      - Undeclared
+      - Ground
+      - Airborne
+      type: string
+    RIDAuthData:
+      description: Additional authentication data.
+      required:
+      - format
+      - data
+      type: object
+      properties:
+        format:
+          description: Format of additional authentication data.
+          type: string
+        data:
+          description: Authentication data in form specified by `format`.
+          type: string
+    RIDHeight:
+      description: A relative altitude for the purposes of remote ID.
+      required:
+      - distance
+      - reference
+      type: object
+      properties:
+        distance:
+          description: Distance above reference datum.  This value is provided in
+            meters and must have a minimum resolution of 1 meter.
+        reference:
+          description: The reference datum above which the height is reported.
+          enum:
+          - TakeoffLocation
+          - GroundLevel
+    RIDFlight:
+      description: Description of a remote ID flight.  If `last_poll` is specified
+        in query, only fields that have changed since the specified timestamp must
+        be included, with the exception that `id` must always be included.
+      required:
+      - id
+      - aircraft_type
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/RIDFlightID'
+        aircraft_type:
+          anyOf:
+          - $ref: '#/components/schemas/RIDAircraftType'
+          description: Generic type of aircraft.
+        aircraft_icon_url:
+          anyOf:
+          - $ref: '#/components/schemas/URL'
+          description: The location at which a custom icon for this aircraft or aircraft
+            type may be found
+          example: https://myuss.com/aircraft/myaircraft.png
+        current_state:
+          anyOf:
+          - $ref: '#/components/schemas/RIDAircraftState'
+          description: The most up-to-date state of the aircraft.
+        position_history:
+          description: A short history of recent aircraft movement including at least
+            one entry (current position).  If `last_poll` is specified in query, only
+            entries since that timestamp should be included.  Under no circumstances
+            should more than 60 seconds of history be included.
+          type: array
+          items:
+            $ref: '#/components/schemas/RIDAircraftPosition'
+        volumes:
+          description: If telemetry is not available, the set of spacetime volumes
+            the aircraft is within.
+          type: array
+          items:
+            $ref: '#/components/schemas/Volume4D'
+    RIDAircraftState:
+      description: State of an aircraft for the purposes of remote ID.
+      required:
+      - timestamp
+      - timestamp_accuracy
+      - speed
+      - vertical_speed
+      - direction
+      - speed_accuracy
+      type: object
+      properties:
+        timestamp:
+          format: date-time
+          description: Time at which this state was valid.  This may be the time coming
+            from the source, such as a GPS, or the time when the system computes the
+            values using an algorithm such as an Extended Kalman Filter (EKF).  Timestamp
+            must be expressed with a minimum resolution of 1/10th of a second.
+          type: string
+        timestamp_accuracy:
+          format: float
+          description: Declaration of timestamp accuracy in seconds, precise to at
+            least 10ths of a second, to determine time of applicability.
+          minimum: 0
+          exclusiveMinimum: false
+          type: number
+        operational_status:
+          $ref: '#/components/schemas/RIDOperationalStatus'
+        direction:
+          format: float
+          description: Direction of flight expressed as a "True North-based" ground
+            track angle.  This value is provided in degrees with a minimum resolution
+            of 1 degree.
+          maximum: 360
+          exclusiveMaximum: true
+          minimum: 0
+          exclusiveMinimum: false
+          type: number
+        heading:
+          format: float
+          description: Orientation of the aircraft's nose, degrees East of North.
+          maximum: 360
+          exclusiveMaximum: true
+          minimum: 0
+          exclusiveMinimum: false
+          type: number
+          example: 285
+        speed:
+          format: float
+          description: Ground speed of flight in meters per second.  Minimum resolution
+            of 0.25 m/s.
+          minimum: 0
+          exclusiveMinimum: false
+          type: number
+          example: 1.9
+        speed_accuracy:
+          format: float
+          description: 'TODO: provide better description'
+          minimum: 0
+          exclusiveMinimum: true
+          type: number
+        vertical_speed:
+          format: float
+          description: Ground speed up (vertically), m/s.
+          type: number
+          example: 0.2
+        pressure_altitude:
+          format: float
+          description: The uncorrected altitude (based on reference standard 29.92
+            inHg, 1013.25 mb) provides a reference for algorithms that utilize "altitude
+            deltas" between aircraft.  This value is provided in meters and must have
+            a minimum resolution of 1 meter.
+          type: number
+        height:
+          $ref: '#/components/schemas/RIDHeight'
+        group_radius:
+          format: float
+          description: Farthest horizontal distance from reported group location of
+            an aircraft in the group (meters).
+          minimum: 0
+          exclusiveMinimum: true
+          type: number
+        group_height:
+          format: float
+          description: 'Max height (AGL) of group operation (TODO: improve this description)'
+          type: number
+    RIDAircraftPosition:
+      description: Position of an aircraft as reported for remote ID purposes.
+      required:
+      - lat
+      - lng
+      - alt
+      - time
+      type: object
+      properties:
+        time:
+          format: date-time
+          description: The time of applicability of position information.  This may
+            be the time coming from the source, such as a GPS, or the time when the
+            system computes the values using an algorithm such as an Extended Kalman
+            Filter (EKF).  Timestamps must be expressed with a minimum resolution
+            of 1/10th of a second.
+          type: string
+        time_accuracy:
+          format: float
+          description: Declaration of timestamp accuracy in seconds, precise to at
+            least 10ths of a second, to determine time of applicability.  Required
+            for most recent non-extrapolated position entry.
+          minimum: 0
+          exclusiveMinimum: false
+          type: number
+        lat:
+          $ref: '#/components/schemas/Latitude'
+        lng:
+          $ref: '#/components/schemas/Longitude'
+        alt:
+          format: float
+          description: 'Geodetic altitude (NOT altitude above launch, altitude above
+            ground, or EGM96): aircraft distance above the WGS84 ellipsoid as measured
+            along a line that passes through the aircraft and is normal to the surface
+            of the WGS84 ellipsoid.  This value is provided in meters and must have
+            a minimum resolution of 1 meter.'
+          type: number
+          example: 1321.2
+        accuracy_h:
+          format: float
+          description: The maximum number of meters of horizontal error that are likely
+            to be present in this reported position.  Must be specified if `extrapolated`
+            field is true and in the most recent non-extrapolated position entry.
+          minimum: 0
+          exclusiveMinimum: true
+          type: number
+        accuracy_v:
+          format: float
+          description: The maximum number of meters of vertical error that are likely
+            to be present in this reported position.  Must be specified if `extrapolated`
+            field is true and in the most recent non-extrapolated position entry.
+          minimum: 0
+          exclusiveMinimum: true
+          type: number
+        extrapolated:
+          description: True if this position was generated primarily by computation
+            rather than primarily from a direct instrument measurement.  Assumed false
+            if not specified.
+          type: boolean
+    GetFlightDetailsResponse:
+      description: Response to remote ID provider query for details about a specific
+        flight.
+      required:
+      - details
+      type: object
+      properties:
+        details:
+          $ref: '#/components/schemas/RIDFlightDetails'
+    RIDFlightDetails:
+      description: Details about a flight reported by a remote ID service provider.  At
+        least one of the registration or serial fields must be filled if required
+        by CAA.
+      required:
+      - id
+      type: object
+      properties:
+        id:
+          description: ID for this flight, matching argument in request.
+          type: string
+          example: a3423b-213401-0023
+        registration:
+          description: Country/State registration number of the aircraft.
+          type: string
+          example: FA12345897
+        serial:
+          description: Serial number of the aircraft.
+          type: string
+          example: INTCJ123-4567-890
+        aircraft_make:
+          description: Manufacturer of aircraft.
+          type: string
+          example: DJI
+        aircraft_model:
+          description: Model of aircraft.
+          type: string
+          example: Inspire 2
+        operator_id:
+          description: 'CAA-issued registration/license ID for the remote pilot or
+            operator. '
+          type: string
+        operator_location:
+          anyOf:
+          - $ref: '#/components/schemas/LatLngPoint'
+          description: Location of party controlling the aircraft.
+        responsible_party_name:
+          description: Display name of responsible party for this flight.
+          type: string
+          example: My USS
+        responsible_party_url:
+          description: URL where more information about the responsible party for
+            this flight may be found.
+          type: string
+          example: https://myuss.com
+        operation_description:
+          description: Free-text field that enables the operator to describe the purpose
+            of a flight, if so desired.
+          type: string
+          example: SafeFlightDrone company doing survey. See my privacy policy www.sfd.com/privacy.
+        takeoff_location:
+          anyOf:
+          - $ref: '#/components/schemas/LatLngPoint'
+          description: Location of the takeoff point for this flight.
+        immediate_destination_location:
+          anyOf:
+          - $ref: '#/components/schemas/LatLngPoint'
+          description: Location of the current destination of the aircraft.
+        ultimate_destination_location:
+          anyOf:
+          - $ref: '#/components/schemas/LatLngPoint'
+          description: Location where the aircraft will be at the end of this flight.
+        group_count:
+          format: int32
+          description: When operating a group (or formation or swarm), number of aircraft
+            in group.
+          minimum: 1
+          exclusiveMinimum: false
+          type: integer
+        auth_data:
+          $ref: '#/components/schemas/RIDAuthData'
   securitySchemes:
     AuthFromJurisdictionalAuthority:
       flows:

@@ -8,38 +8,6 @@ info:
 
     Unless otherwise specified, fields specified in a message but not declared in the API shall be ignored.
 paths:
-  /cells:
-    summary: Geographic segmentation cells of DSS airspace representation internal
-      to the DSS constellation.
-    put:
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PutDARCellsParameters'
-        required: true
-      tags:
-      - dar
-      responses:
-        200:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PutDARCellsResponse'
-          description: The specified DAR cells were updated successfully.
-        409:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PutDARCellsResponse'
-          description: DAR cells could not be updated because at least one cell had
-            been changed before this transaction could be executed.
-      summary: 'DAR: /cells'
-      description: Update the contents in the DSS airspace representation for a set
-        of cells.  Note that this operation will probably not be hosted at a standard
-        endpoint; instead, the idea of writing information to an endpoint like this
-        will be accomplished via the DAR synchronization interface which may be an
-        atomic broadcast system like Apache Zookeeper.
   /constraints/{id}:
     summary: Public Constraint Entities stored in the DSS.
     get:
@@ -930,15 +898,14 @@ paths:
         $ref: '#/components/schemas/EntityUUID'
       in: path
       required: true
-  /dar_constraints/{id}:
-    summary: Constraints stored directly in the DSS airspace representation internal
-      to the DSS constellation.
-    put:
+  /dar_transaction:
+    summary: Update information DSS airspace representation internal to the DSS constellation.
+    post:
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PutDARConstraintParameters'
+              $ref: '#/components/schemas/PostDARTransactionParameters'
         required: true
       tags:
       - dar
@@ -947,27 +914,28 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PutDARConstraintResponse'
-          description: The specified Constraint was propagated to the DAR successfully.
+                $ref: '#/components/schemas/PostDARTransactionResponse'
+          description: The specified DAR cells were updated successfully.
         409:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PutDARConstraintResponse'
-          description: Constraint could not be updated because it had changed remotely.
-      summary: 'DAR: /dar_constraints'
-      description: '`[UTM only]` Update the contents in the DSS airspace representation
-        for a particular constraint.  Note that this operation will probably not be
-        hosted at a standard endpoint; instead, the idea of writing information to
-        an endpoint like this will be accomplished via the DAR synchronization interface
-        which may be an atomic broadcast system like Apache Zookeeper.'
-    parameters:
-    - name: id
-      description: EntityUUID of the Constraint.
-      schema:
-        type: string
-      in: path
-      required: true
+                $ref: '#/components/schemas/PostDARTransactionResponse'
+          description: DAR information could not be updated because at least one resource
+            had been changed before this transaction could be executed.
+      summary: 'DAR: /dar_transaction'
+      description: |-
+        Update the contents of the DSS airspace representation.
+
+        Note that this operation will not be hosted at a standard endpoint; instead, the idea of writing information to an endpoint like this will be accomplished via the DAR synchronization interface which is likely to be CockroachDB node intercommunication.
+
+        All updates included in the request must succeed or fail atomically -- no changes shall be made to the DAR unless all updates are successful.
+
+        The assumption for this intercommunication synchronization is that the DAR data schema will consist of the following key-value mappings:
+        * DARCellID -> {List of EntityUUID, List of SubscriptionUUID}
+        * EntityUUID -> InternalEntitySummary
+        * SubscriptionUUID -> InternalSubscription
+        * EntityUUID -> InternalConstraint `[UTM only]`
 components:
   schemas:
     EntitySignature:
@@ -1231,64 +1199,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/RIDFlight'
-    PutDARCellsParameters:
-      description: Parameters for a request to update cells in the DSS airspace representation.
-      required:
-      - updates
-      type: object
-      properties:
-        updates:
-          description: A set of updates to DAR cells to apply in a single transaction.
-          type: array
-          items:
-            $ref: '#/components/schemas/DARCellUpdate'
-    DARCellUpdate:
-      description: Updated data stored internally in DAR cells within the DSS.  Must
-        be exchanged in a standardized format between DSS instances to maintain a
-        DSS airspace representation.
-      required:
-      - entities
-      - subscriptions
-      - cell
-      - version
-      type: object
-      properties:
-        subscriptions:
-          description: Details of everyone who must be notified when a client changes
-            the airspace.
-          type: array
-          items:
-            $ref: '#/components/schemas/InternalSubscription'
-        cell:
-          anyOf:
-          - $ref: '#/components/schemas/DARCellID'
-          description: The DAR cell containing this information.
-        version:
-          description: The previous version of the contents of this cell.  An update
-            will only be successful if the cell contents have not changed since the
-            request was formed.
-          type: integer
-        entities:
-          description: References to all the Entities in the airspace contained in
-            this DAR cell.
-          type: array
-          items:
-            $ref: '#/components/schemas/InternalEntitySummary'
-    PutDARCellsResponse:
-      description: Response to a request to update cells in the DAR.
-      type: object
-      properties:
-        conflicted_cells:
-          description: If any cells had been updated since the information used to
-            form the transaction request, those out-of-date cells will be listed here
-            in the case of a 409 Conflict response.
-          type: array
-          items:
-            $ref: '#/components/schemas/DARCellID'
-    PutDARConstraintResponse:
-      description: Response to a request to create or update Constraint details in
-        the DAR.
-      type: object
     InternalConstraint:
       description: Data stored in the DAR for a Constraint whose details are stored
         in the DAR and provided by the DSS.
@@ -1301,21 +1211,6 @@ components:
           $ref: '#/components/schemas/EntityDetails'
         signature:
           $ref: '#/components/schemas/EntitySignature'
-    PutDARConstraintParameters:
-      description: Parameters for a request to create or update a Constraint stored
-        in the DSS airspace representation.
-      required:
-      - constraint
-      type: object
-      properties:
-        constraint:
-          anyOf:
-          - $ref: '#/components/schemas/InternalConstraint'
-          description: Entity details of Constraint to store in the DSS airspace representation.
-        version:
-          description: The previous version of this Constraint in the DAR.  Omit this
-            property if the Constraint did not previously exist in the DAR.
-          type: integer
     EntityType:
       description: |-
         Type of Entity.  The API of the URL associated with an Entity depends on its EntityType.
@@ -2275,6 +2170,172 @@ components:
           description: Human-readable message indicating what error occurred and/or
             why.
           type: string
+    DARSubscriptionUpdate:
+      description: Updated data for a Subscription stored internally in the DAR within
+        the DSS.  Must be exchanged in a standardized format between DSS instances
+        to maintain a DSS airspace representation.
+      required:
+      - id
+      type: object
+      properties:
+        id:
+          anyOf:
+          - $ref: '#/components/schemas/SubscriptionUUID'
+          description: The Subscription being created, updated, or deleted.
+        version:
+          description: The previous version of this Subscription within the DAR.  An
+            update will only be successful if the Subscription has not changed since
+            the request was formed.  Omit this field if the Subscription did not previously
+            exist in the DAR.
+          type: integer
+        subscription:
+          anyOf:
+          - $ref: '#/components/schemas/InternalSubscription'
+          description: New full representation of Subscription.  If omitted, the Subscription
+            will be deleted from the DAR.
+    DAREntityUpdate:
+      description: Updated data for an Entity stored internally in the DAR within
+        the DSS.  Must be exchanged in a standardized format between DSS instances
+        to maintain a DSS airspace representation.
+      required:
+      - id
+      type: object
+      properties:
+        id:
+          anyOf:
+          - $ref: '#/components/schemas/EntityUUID'
+          description: The Entity being created, updated, or deleted.
+        version:
+          description: The previous version of this Entity within the DAR.  An update
+            will only be successful if the Entity has not changed since the request
+            was formed.  Omit this field if the Entity did not previously exist in
+            the DAR.
+          type: integer
+        entity:
+          anyOf:
+          - $ref: '#/components/schemas/InternalEntitySummary'
+          description: New full representation of Entity.  If omitted, the Entity
+            will be deleted from the DAR.
+    DARConstraintUpdate:
+      description: |-
+        `[UTM only]` Updated data for the full details of a Constraint Entity stored internally in the DAR within the DSS.  Must be exchanged in a standardized format between DSS instances to maintain a DSS airspace representation.
+        Note that a corresponding DAREntityUpdate should accompany this DARConstraintUpdate in a DAR transaction as this update merely updates the details and not its EntitySummary.
+      required:
+      - id
+      type: object
+      properties:
+        id:
+          anyOf:
+          - $ref: '#/components/schemas/EntityUUID'
+          description: The Constraint Entity being created, updated, or deleted.
+        version:
+          description: The previous version of this Constraint within the DAR.  An
+            update will only be successful if the Constraint has not changed since
+            the request was formed.  Omit this field if the Constraint did not previously
+            exist in the DAR.
+          type: integer
+        constraint:
+          anyOf:
+          - $ref: '#/components/schemas/InternalConstraint'
+          description: New full representation of Constraint.  If omitted, the Entity
+            will be deleted from the DAR.
+    PostDARTransactionParameters:
+      description: Parameters for a request to update information in the DSS airspace
+        representation.
+      type: object
+      properties:
+        cell_updates:
+          description: A set of updates to DAR cells to apply in this transaction.
+          type: array
+          items:
+            $ref: '#/components/schemas/DARCellUpdate'
+        entity_updates:
+          description: A set of updates to Entities in the DAR to apply in this transaction.
+          type: array
+          items:
+            $ref: '#/components/schemas/DAREntityUpdate'
+        subscription_updates:
+          description: A set of updates to Subscriptions in the DAR to apply in this
+            transaction.
+          type: array
+          items:
+            $ref: '#/components/schemas/DARSubscriptionUpdate'
+        constraint_updates:
+          description: A set of updates to Constraint details in the DAR to apply
+            in this transaction.
+          type: array
+          items:
+            $ref: '#/components/schemas/DARConstraintUpdate'
+    PostDARTransactionResponse:
+      description: Response to a request to update information in the DAR.
+      type: object
+      properties:
+        conflicted_cells:
+          description: If any cells had been updated since the information used to
+            form the transaction request, those out-of-date cells will be listed here
+            in the case of a 409 Conflict response.
+          type: array
+          items:
+            $ref: '#/components/schemas/DARCellID'
+        conflicted_entities:
+          description: If any Entities had been updated since the information used
+            to form the transaction request, those out-of-date Entities will be listed
+            here in the case of a 409 Conflict response.
+          type: array
+          items:
+            $ref: '#/components/schemas/EntityUUID'
+        conflicted_subscriptions:
+          description: If any Subscriptions had been updated since the information
+            used to form the transaction request, those out-of-date Subscriptions
+            will be listed here in the case of a 409 Conflict response.
+          type: array
+          items:
+            $ref: '#/components/schemas/SubscriptionUUID'
+        conflicted_constraints:
+          description: If any Constraint details had been updated since the information
+            used to form the transaction request, those out-of-date Constraint details
+            will be listed here in the case of a 409 Conflict response.
+          type: array
+          items:
+            $ref: '#/components/schemas/EntityUUID'
+    InternalDARCell:
+      description: The information about a DAR cell that the DSS stores internally
+        and synchronizes between different DSS instances.
+      type: object
+      properties:
+        subscriptions:
+          description: List of Subscriptions applicable to this cell.
+          type: array
+          items:
+            $ref: '#/components/schemas/SubscriptionUUID'
+        entities:
+          description: List of Entities applicable to this cell.
+          type: array
+          items:
+            $ref: '#/components/schemas/EntityUUID'
+    DARCellUpdate:
+      description: Updated data stored internally in DAR cells within the DSS.  Must
+        be exchanged in a standardized format between DSS instances to maintain a
+        DSS airspace representation.
+      required:
+      - id
+      type: object
+      properties:
+        id:
+          anyOf:
+          - $ref: '#/components/schemas/DARCellID'
+          description: The DAR cell containing this information.
+        version:
+          description: The previous version of the contents of this cell.  An update
+            will only be successful if the cell contents have not changed since the
+            request was formed.  Omit this field if the cell did not previously exist
+            in the DAR.
+          type: integer
+        cell:
+          anyOf:
+          - $ref: '#/components/schemas/InternalDARCell'
+          description: New full representation of cell.  If omitted, the cell will
+            be deleted from the DAR.
   securitySchemes:
     AuthFromJurisdictionalAuthority:
       flows:

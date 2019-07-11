@@ -1266,31 +1266,6 @@ components:
             airspace awareness, the DSS will create an appropriate AreaSubscription
             to provide flight-critical notifications like rogue aircraft or UVRs.  This
             automatic subscription is not necessary for Position Reporting Entities.
-    LatLngBox:
-      description: Rectangular geographic area in lat-lng space.
-      required:
-      - lat_hi
-      - lat_lo
-      - lng_hi
-      - lng_lo
-      type: object
-      properties:
-        lat_lo:
-          anyOf:
-          - $ref: '#/components/schemas/Latitude'
-          description: Area is north of this latitude in degrees.
-        lat_hi:
-          anyOf:
-          - $ref: '#/components/schemas/Latitude'
-          description: Area is south of this latitude in degrees.
-        lng_lo:
-          anyOf:
-          - $ref: '#/components/schemas/Longitude'
-          description: Area is east of this longitude in degrees.
-        lng_hi:
-          anyOf:
-          - $ref: '#/components/schemas/Longitude'
-          description: Area is west of this longitude in degrees.
     Latitude:
       format: double
       description: Degrees of latitude north of the equator.
@@ -1323,17 +1298,6 @@ components:
     OperationDetails:
       description: Operation-specific Entity details.
       type: object
-    PutOperationParameters:
-      description: Additional parameters for a request to create or update a reference
-        to an Operation Entity in the DSS.
-      required: []
-      type: object
-      properties:
-        key:
-          anyOf:
-          - $ref: '#/components/schemas/DeconflictionKey'
-          description: Proof that the client is aware of (and has deconflicted with)
-            all relevant Entities.  Required unless Operation is declared rogue.
     LocationString:
       description: An approximate location of an Entity or Subscription, which must
         be specified to find it in the DSS in a future PUT or DELETE call.  Returned
@@ -1438,54 +1402,6 @@ components:
       minLength: 1
       pattern: ^[^\0\t\r\n#%\/:?@[\\\]]+$
       type: string
-    EntitySummary:
-      description: |-
-        A declaration of an Entity.  The DSS reports only these EntitySummaries and clients must obtain full details peer-to-peer from the creator/owner.
-
-        `details_url` is required for all Entity types except `PositionReporting`.
-      required:
-      - id
-      - owner
-      - type
-      - version
-      type: object
-      properties:
-        id:
-          anyOf:
-          - $ref: '#/components/schemas/EntityUUID'
-          description: Unique identifier for this object.  Created by client, and
-            client must respond to a peer request for details about this Entity according
-            to this ID.
-        owner:
-          description: Assigned by the DSS based on creating client’s ID (via access
-            token).  Used for restricting mutation and deletion operations to owner,
-            and only requiring EntitySignatures for unowned Entities.
-          type: string
-          example: myuss
-        type:
-          $ref: '#/components/schemas/EntityType'
-        version:
-          format: int32
-          description: Extracted from the EntitySignature if specified, or assigned
-            and incremented automatically otherwise.  When increased, indicates that
-            an Entity has changed (allows another client client to optimize full Entity
-            retrieval for only those Entities which have changed since client’s cache).
-          type: integer
-        time_end:
-          format: date-time
-          description: A planning client does not need to consider this Entity when
-            considering time periods that will start after time_end.
-          type: string
-        time_start:
-          format: date-time
-          description: A planning client does not need to consider this Entity when
-            considering time periods that will end before start_time.
-          type: string
-        details_url:
-          $ref: '#/components/schemas/EntityDetailsURL'
-        details:
-          $ref: '#/components/schemas/DSSEntityDetails'
-          description: ""
     DSSEntityDetails:
       description: |-
         Entity data fields stored in the DSS specific to particular Entity Types.
@@ -1570,13 +1486,6 @@ components:
       - Tethered
       - GroundObstacle
       - Other
-      type: string
-    RIDOperationalStatus:
-      description: Indicates operational status of associated aircraft.
-      enum:
-      - Undeclared
-      - Ground
-      - Airborne
       type: string
     RIDAuthData:
       description: Additional authentication data.
@@ -2279,55 +2188,6 @@ components:
           description: Resulting summary stored in DSS.
         location:
           $ref: '#/components/schemas/LocationString'
-    EntityDetails:
-      description: Detailed specification of obstacle, thing, or region of special
-        significance in the airspace (Constraint or Operation are concrete/specific
-        types of Entities). Note that this data is not stored in the DSS; only with
-        the clients. Note that this may be expanded to include other types of volume-based
-        entities in the airspace.
-      required:
-      - id
-      - type
-      type: object
-      properties:
-        id:
-          anyOf:
-          - $ref: '#/components/schemas/EntityUUID'
-          description: Unique identifier for this entity.  Created by client.
-        type:
-          $ref: '#/components/schemas/EntityType'
-        volumes:
-          description: Volumes that wholly contain the Entity while being as small
-            as practical.  This field is required unless the Entity `type` is `PositionReporting`.
-          type: array
-          items:
-            $ref: '#/components/schemas/Volume4D'
-        position_reporting:
-          anyOf:
-          - $ref: '#/components/schemas/PutPositionReportingDetails'
-          description: If this Entity is a PositionReporting Entity, this property
-            is required and contains details about the PositionReporting Entity.
-        constraint:
-          anyOf:
-          - $ref: '#/components/schemas/ConstraintDetails'
-          description: If this Entity is a Constraint, this property is required and
-            contains details about the Constraint.
-        operation:
-          anyOf:
-          - $ref: '#/components/schemas/OperationDetails'
-          description: If this Entity is an Operation, this property is required and
-            contains details about the Operation.
-        awareness_provider:
-          anyOf:
-          - $ref: '#/components/schemas/AirspaceAwarenessProviderDetails'
-          description: If this Entity is an airspace awareness provider, this property
-            is required and contains details about that provider.
-        signature:
-          anyOf:
-          - $ref: '#/components/schemas/EntitySignature'
-          description: Signature for this version of this Entity.  Includes information
-            about the version of this Entity.  This property is required unless Entity
-            `type` is `PositionReporting`.
     DeleteSubscriptionResponse:
       description: Response for a successful request to delete an Subscription.
       required:
@@ -2374,6 +2234,124 @@ components:
           anyOf:
           - $ref: '#/components/schemas/EntityDetails'
           description: Entity that the notifying client changed or created.
+    RIDOperationalStatus:
+      description: Indicates operational status of associated aircraft.
+      enum:
+      - Undeclared
+      - Ground
+      - ManualControl
+      - ReturningHome
+      - AutomatedMission
+      - EmergencyLanding
+      - ControlLoss
+      - AirborneOther
+      type: string
+    PutOperationParameters:
+      description: Additional parameters for a request to create or update a reference
+        to an Operation Entity in the DSS.
+      type: object
+      properties:
+        key:
+          anyOf:
+          - $ref: '#/components/schemas/DeconflictionKey'
+          description: Proof that the client is aware of (and has deconflicted with)
+            all relevant Entities.  Required unless Operation is declared rogue.
+    EntitySummary:
+      description: |-
+        A declaration of an Entity.  The DSS reports only these EntitySummaries and clients must obtain full details peer-to-peer from the creator/owner.
+
+        `details_url` is required for all Entity types except `PositionReporting`.
+      required:
+      - id
+      - owner
+      - type
+      - version
+      type: object
+      properties:
+        id:
+          anyOf:
+          - $ref: '#/components/schemas/EntityUUID'
+          description: Unique identifier for this object.  Created by client, and
+            client must respond to a peer request for details about this Entity according
+            to this ID.
+        owner:
+          description: Assigned by the DSS based on creating client’s ID (via access
+            token).  Used for restricting mutation and deletion operations to owner,
+            and only requiring EntitySignatures for unowned Entities.
+          type: string
+          example: myuss
+        type:
+          $ref: '#/components/schemas/EntityType'
+        version:
+          format: int32
+          description: Extracted from the EntitySignature if specified, or assigned
+            and incremented automatically otherwise.  When increased, indicates that
+            an Entity has changed (allows another client client to optimize full Entity
+            retrieval for only those Entities which have changed since client’s cache).
+          type: integer
+        time_end:
+          format: date-time
+          description: A planning client does not need to consider this Entity when
+            considering time periods that will start after time_end.
+          type: string
+        time_start:
+          format: date-time
+          description: A planning client does not need to consider this Entity when
+            considering time periods that will end before start_time.
+          type: string
+        details_url:
+          $ref: '#/components/schemas/EntityDetailsURL'
+        details:
+          $ref: '#/components/schemas/DSSEntityDetails'
+    EntityDetails:
+      description: Detailed specification of obstacle, thing, or region of special
+        significance in the airspace (Constraint or Operation are concrete/specific
+        types of Entities). Note that this data is not stored in the DSS; only with
+        the clients. Note that this may be expanded to include other types of volume-based
+        entities in the airspace.
+      required:
+      - id
+      - type
+      type: object
+      properties:
+        id:
+          anyOf:
+          - $ref: '#/components/schemas/EntityUUID'
+          description: Unique identifier for this entity.  Created by client.
+        type:
+          $ref: '#/components/schemas/EntityType'
+        volumes:
+          description: Volumes that wholly contain the Entity while being as small
+            as practical.  This field is required unless the Entity `type` is `PositionReporting`.
+          type: array
+          items:
+            $ref: '#/components/schemas/Volume4D'
+        position_reporting:
+          anyOf:
+          - $ref: '#/components/schemas/PositionReportingDetails'
+          description: If this Entity is a PositionReporting Entity, this property
+            is required and contains details about the PositionReporting Entity.
+        constraint:
+          anyOf:
+          - $ref: '#/components/schemas/ConstraintDetails'
+          description: If this Entity is a Constraint, this property is required and
+            contains details about the Constraint.
+        operation:
+          anyOf:
+          - $ref: '#/components/schemas/OperationDetails'
+          description: If this Entity is an Operation, this property is required and
+            contains details about the Operation.
+        awareness_provider:
+          anyOf:
+          - $ref: '#/components/schemas/AirspaceAwarenessProviderDetails'
+          description: If this Entity is an airspace awareness provider, this property
+            is required and contains details about that provider.
+        signature:
+          anyOf:
+          - $ref: '#/components/schemas/EntitySignature'
+          description: Signature for this version of this Entity.  Includes information
+            about the version of this Entity.  This property is required unless Entity
+            `type` is `PositionReporting`.
   securitySchemes:
     AuthFromJurisdictionalAuthority:
       flows:

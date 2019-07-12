@@ -25,7 +25,7 @@ paths:
                 $ref: '#/components/schemas/EntityDetails'
           description: The Constraint details were retrieved successfully.
       security:
-      - AuthFromJurisdictionalAuthority:
+      - AuthFromAuthorizationAuthority:
         - dss.read.airspace_awareness
         - dss.write.airspace_awareness
         - dss.write.operations
@@ -50,7 +50,7 @@ paths:
                 $ref: '#/components/schemas/PutEntityResponse'
           description: Constraint was successfully added to the airspace.
       security:
-      - AuthFromJurisdictionalAuthority:
+      - AuthFromAuthorizationAuthority:
         - dss.write.constraints
       summary: 'DSS: /constraints/{id}'
       description: '`[UTM only]` Publish a new public Constraint that will be stored
@@ -67,7 +67,7 @@ paths:
                 $ref: '#/components/schemas/DeleteEntityResponse'
           description: Constraint was successfully deleted from DSS.
       security:
-      - AuthFromJurisdictionalAuthority:
+      - AuthFromAuthorizationAuthority:
         - dss.write.constraints
       summary: 'DSS: /constraints/{id}'
       description: '`[UTM only]` Delete a public Constraint stored in the DAR and
@@ -86,7 +86,7 @@ paths:
       tags:
       - dss
       parameters:
-      - name: polygon
+      - name: area
         description: The area in which to search for Entities.  Some Entities near
           this area but wholly outside it may also be returned.
         schema:
@@ -153,7 +153,7 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
           description: The requested area was too large.
       security:
-      - AuthFromJurisdictionalAuthority:
+      - AuthFromAuthorizationAuthority:
         - dss.read.position_reporting_entities
         - dss.write.airspace_awareness
         - dss.write.operations
@@ -214,7 +214,7 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
           description: The requested view rectangle was too large.
       security:
-      - AuthFromJurisdictionalAuthority:
+      - AuthFromAuthorizationAuthority:
         - dss.read.position_reporting_entities
         - dss.read.airspace_awareness
         - dss.write.operations
@@ -291,7 +291,7 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
           description: The requested flight could not be found.
       security:
-      - AuthFromJurisdictionalAuthority:
+      - AuthFromAuthorizationAuthority:
         - dss.read.position_reporting_entities
         - dss.read.airspace_awareness
         - dss.write.operations
@@ -346,7 +346,7 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
           description: The requested flight could not be found.
       security:
-      - AuthFromJurisdictionalAuthority:
+      - AuthFromAuthorizationAuthority:
         - dss.read.position_reporting_entities
         - dss.read.airspace_awareness
         - dss.write.operations
@@ -399,7 +399,7 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
           description: The requested Entity could not be found.
       security:
-      - AuthFromJurisdictionalAuthority:
+      - AuthFromAuthorizationAuthority:
         - dss.read.position_reporting_entities
         - dss.read.airspace_awareness
         - dss.write.operations
@@ -451,7 +451,7 @@ paths:
             a previously-received notification, or identical to a previously-received
             notification and the Entity is different.
       security:
-      - AuthFromJurisdictionalAuthority:
+      - AuthFromAuthorizationAuthority:
         - dss.write.position_reporting_entities
         - dss.write.airspace_awareness
         - dss.write.operations
@@ -486,7 +486,7 @@ paths:
           description: The access token was decoded successfully but did not include
             a scope appropriate to this endpoint.
       security:
-      - AuthFromJurisdictionalAuthority:
+      - AuthFromAuthorizationAuthority:
         - dss.write.position_reporting_entities
         - dss.write.airspace_awareness
         - dss.write.operations
@@ -605,7 +605,7 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
           description: The area of the Entity is too large.
       security:
-      - AuthFromJurisdictionalAuthority:
+      - AuthFromAuthorizationAuthority:
         - dss.write.position_reporting_entities
         - dss.write.airspace_awareness
         - dss.write.operations
@@ -623,15 +623,6 @@ paths:
     delete:
       tags:
       - dss
-      parameters:
-      - name: location
-        description: The approximate location of the Entity reference must be specified
-          to find it in the DSS.  This point may lie anywhere within the Entity's
-          extents.
-        schema:
-          $ref: '#/components/schemas/LocationString'
-        in: query
-        required: true
       responses:
         200:
           content:
@@ -675,7 +666,7 @@ paths:
           description: Despite repeated attempts, the DSS was unable to update the
             DAR because of other simultaneous changes.
       security:
-      - AuthFromJurisdictionalAuthority:
+      - AuthFromAuthorizationAuthority:
         - dss.write.position_reporting_entities
         - dss.write.airspace_awareness
         - dss.write.operations
@@ -696,7 +687,7 @@ paths:
       tags:
       - dss
       parameters:
-      - name: polygon
+      - name: area
         description: The area in which to search for Subscriptions.  Some Subscriptions
           near this area but wholly outside it may also be returned.
         schema:
@@ -749,7 +740,7 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
           description: The requested area was too large.
       security:
-      - AuthFromJurisdictionalAuthority:
+      - AuthFromAuthorizationAuthority:
         - dss.read.position_reporting_entities
         - dss.write.position_reporting_entities
         - dss.read.airspace_awareness
@@ -762,15 +753,6 @@ paths:
     get:
       tags:
       - dss
-      parameters:
-      - name: location
-        description: The approximate location of the Subscription must be specified
-          to find it in the DSS.  This point may lie anywhere within the Subscription's
-          extents.
-        schema:
-          $ref: '#/components/schemas/SubscriptionUUID'
-        in: query
-        required: true
       responses:
         200:
           content:
@@ -805,7 +787,7 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
           description: The requested area was too large.
       security:
-      - AuthFromJurisdictionalAuthority:
+      - AuthFromAuthorizationAuthority:
         - dss.read.position_reporting_entities
         - dss.write.position_reporting_entities
         - dss.read.airspace_awareness
@@ -870,7 +852,7 @@ paths:
             * A Subscription with the specified ID already exists and is owned by a different client.
             * Despite repeated attempts, the DSS was unable to update the DAR because of other simultaneous changes.
       security:
-      - AuthFromJurisdictionalAuthority:
+      - AuthFromAuthorizationAuthority:
         - dss.read.position_reporting_entities
         - dss.write.position_reporting_entities
         - dss.read.airspace_awareness
@@ -884,15 +866,6 @@ paths:
     delete:
       tags:
       - dss
-      parameters:
-      - name: location
-        description: The approximate location of the Subscription must be specified
-          to find it in the DSS.  This point may lie anywhere within the Subscription's
-          extents.
-        schema:
-          $ref: '#/components/schemas/LocationString'
-        in: query
-        required: true
       responses:
         200:
           content:
@@ -936,7 +909,7 @@ paths:
           description: Despite repeated attempts, the DSS was unable to update the
             DAR because of other simultaneous changes.
       security:
-      - AuthFromJurisdictionalAuthority:
+      - AuthFromAuthorizationAuthority:
         - dss.read.position_reporting_entities
         - dss.write.position_reporting_entities
         - dss.read.airspace_awareness
@@ -1305,18 +1278,9 @@ components:
     OperationDetails:
       description: Operation-specific Entity details.
       type: object
-    LocationString:
-      description: An approximate location of an Entity or Subscription, which must
-        be specified to find it in the DSS in a future PUT or DELETE call.  Returned
-        in the form of "latitude,longitude".
-      maxLength: 35
-      minLength: 3
-      pattern: ^-?\d{1,3}(?:\.\d*)?,-?\d{1,3}(?:\.\d*)?$
-      type: string
     PutSubscriptionResponse:
       description: Response for a request to create or update a subscription.
       required:
-      - location
       - subscription
       - entities
       type: object
@@ -1331,8 +1295,6 @@ components:
           anyOf:
           - $ref: '#/components/schemas/Subscription'
           description: Result of the operation on the subscription.
-        location:
-          $ref: '#/components/schemas/LocationString'
     RIDFlightsURL:
       anyOf:
       - $ref: '#/components/schemas/URL'
@@ -1943,7 +1905,6 @@ components:
       required:
       - entity_summary
       - subscribers
-      - location
       type: object
       properties:
         subscribers:
@@ -1957,8 +1918,6 @@ components:
           anyOf:
           - $ref: '#/components/schemas/EntitySummary'
           description: Resulting summary stored in DSS.
-        location:
-          $ref: '#/components/schemas/LocationString'
     DeleteSubscriptionResponse:
       description: Response for a successful request to delete an Subscription.
       required:
@@ -2307,10 +2266,10 @@ components:
         Edges may not cross.
         Vertices may not be duplicated.  In particular, the final polygon vertex shall not be identical to the first vertex.
       required:
-      - points
+      - vertices
       type: object
       properties:
-        points:
+        vertices:
           minLength: 3
           type: array
           items:
@@ -2378,7 +2337,7 @@ components:
           items:
             $ref: '#/components/schemas/RIDHistoricalAircraftPosition'
   securitySchemes:
-    AuthFromJurisdictionalAuthority:
+    AuthFromAuthorizationAuthority:
       flows:
         clientCredentials:
           tokenUrl: https://example.com/oauth/token
@@ -2386,28 +2345,29 @@ components:
             dss.read.position_reporting_entities: Client may query, read, or create
               subscriptions for PositionReporting Entities for remote ID.  Does not
               provide access to UTM-related Entities.  A remote ID display provider
-              would use this scope.
+              shall be granted this scope upon request.
             dss.write.position_reporting_entities: Client may create, edit, and delete
               PositionReporting Entities for remote ID.  A remote ID service provider
-              would use this scope.
-            dss.read.airspace_awareness: In addition to `dss.read.position_reporting_entities`,
+              shall be granted this scope upon request.
+            dss.read.airspace_awareness: '`[UTM only]` In addition to `dss.read.position_reporting_entities`,
               client may query or read Entities related to airspace awareness.  A
-              VLOS airspace awareness provider might use this scope.
-            dss.write.airspace_awareness: In addition to `dss.read.airspace_awareness`,
+              VLOS airspace awareness provider might use this scope.'
+            dss.write.airspace_awareness: '`[UTM only]` In addition to `dss.read.airspace_awareness`,
               client may create airspace awareness Entities.  A VLOS airspace awareness
-              provider would likely use this scope.
-            dss.write.operations: In addition to `dss.write.airspace_awareness`, client
-              may query, read, and create Operation Entities.  A strategic planning
-              UTM provider would use this scope.
-            dss.write.constraints: Client may create un-deconflicted constraints in
-              the airspace.  A client acting on behalf of a governmental organization
-              would use this scope.
+              provider would likely use this scope.'
+            dss.write.operations: '`[UTM only]` In addition to `dss.write.airspace_awareness`,
+              client may query, read, and create Operation Entities.  A strategic
+              planning UTM provider would use this scope.'
+            dss.write.constraints: '`[UTM only]` Client may create un-deconflicted
+              constraints in the airspace.  A client acting on behalf of a governmental
+              organization would use this scope.'
       type: oauth2
-      description: Authorization from, or on behalf of, a jurisdiction-having authority.  The
-        `aud` field in access tokens from this authority must be specified.  Multiple
-        scopes may be requested for a single token.
+      description: Authorization from, or on behalf of, an authorization authority.  This
+        authority shall issue JSON Web Tokens as access tokens.  The `aud` field in
+        access tokens from this authority must be specified.  Multiple scopes for
+        a single token must be granted if requested.
 security:
-- AuthFromJurisdictionalAuthority:
+- AuthFromAuthorizationAuthority:
   - dss.read.position_reporting_entities
   - dss.write.position_reporting_entities
   - dss.read.airspace_awareness
@@ -2421,7 +2381,7 @@ tags:
   description: Endpoints exposed by remote ID service providers for peer-peer communication.
 - name: dar
   description: Pseudo-endpoint actions used by DSS instances to synchronize DSS airspace
-    representation cell information.
+    representation information.
 - name: p2p_entities
   description: Endpoints exposed by DSS clients for peer-peer communication of Entity
     details, including DSS-triggered subscription notifications.

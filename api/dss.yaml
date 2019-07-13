@@ -233,16 +233,6 @@ paths:
         example: 29.97816,31.13296,29.98025,31.13535
       in: query
       required: true
-    - name: last_poll
-      description: If specified, the timestamp of the last time this box was polled
-        by the requesting display provider.  The service provider may limit data returned
-        to only data which has changed since `last_poll` (see details mentioning `last_poll`
-        below).
-      schema:
-        format: date-time
-        type: string
-        example: 2019-07-01T00:01:02.345Z
-      in: query
     - name: include_history
       description: |-
         If specified as true, include position history.  Otherwise, do not include position history.
@@ -456,8 +446,8 @@ paths:
         - dss.write.airspace_awareness
         - dss.write.operations
       summary: 'Entities: /entity_details/{id}'
-      description: Publish new information about an Entity to this client (usually
-        because of instructions from the DSS triggered by a subscription).
+      description: Publish new information about an Entity to the host of this endpoint
+        (usually because of instructions from the DSS triggered by a subscription).
     delete:
       tags:
       - p2p_entities
@@ -529,7 +519,7 @@ paths:
       description: |-
         Update the contents of the DSS airspace representation.
 
-        Note that this operation will not be hosted at a standard endpoint; instead, the idea of writing information to an endpoint like this will be accomplished via the DAR synchronization interface which is likely to be CockroachDB node intercommunication.
+        Note that this pseudo-endpoint will be replaced by specification of the minimum CockroachDB database schema, and then atomic transactions will be made using the CockroachDB client interface.  This pseudo-endpoint serves to illustrate the intended schema before it is formalized; each of the key-value mappings below will become a table in the database schema.
 
         All updates included in the request must succeed or fail atomically -- no changes shall be made to the DAR unless all updates are successful.
 
@@ -1141,15 +1131,13 @@ components:
         timestamp:
           format: date-time
           description: The remote ID service provider's timestamp for when this information
-            was current.  May be provided in `last_poll` query parameter to request
-            only data which has changed since this timestamp.
+            was current.
           type: string
         flights:
           description: A list of all flights that have been within the requested area
-            within the remote ID retention period (if `last_poll` was not specified
-            in the request) or have changed since the `last_poll` timestamp.  This
-            includes flights that are not currently within the requested area, but
-            were within the requested area within the remote ID retention period.
+            within the remote ID retention period.  This includes flights that are
+            not currently within the requested area, but were within the requested
+            area within the remote ID retention period.
           type: array
           items:
             $ref: '#/components/schemas/RIDFlight'
@@ -2228,15 +2216,6 @@ components:
           minimum: 0
           exclusiveMinimum: false
           type: number
-        heading:
-          format: float
-          description: Orientation of the aircraft's nose, degrees East of North.
-          maximum: 360
-          exclusiveMaximum: true
-          minimum: 0
-          exclusiveMinimum: false
-          type: number
-          example: 285
         speed:
           format: float
           description: Ground speed of flight in meters per second.  Minimum resolution
@@ -2313,9 +2292,7 @@ components:
           - GroundLevel
           type: string
     RIDFlight:
-      description: Description of a remote ID flight.  If `last_poll` is specified
-        in query, only fields that have changed since the specified timestamp must
-        be included, with the exception that `id` must always be included.
+      description: Description of a remote ID flight.
       required:
       - id
       - aircraft_type
@@ -2327,12 +2304,6 @@ components:
           anyOf:
           - $ref: '#/components/schemas/RIDAircraftType'
           description: Generic type of aircraft.
-        aircraft_icon_url:
-          anyOf:
-          - $ref: '#/components/schemas/URL'
-          description: The location at which a custom icon for this aircraft or aircraft
-            type may be found
-          example: https://myuss.com/aircraft/myaircraft.png
         current_state:
           anyOf:
           - $ref: '#/components/schemas/RIDAircraftState'
@@ -2347,12 +2318,11 @@ components:
             $ref: '#/components/schemas/Volume4D'
         position_history:
           description: A short history of recent aircraft movement, specified only
-            when `include_history` is true.  If `last_poll` is specified in query,
-            only entries since that timestamp must be included (entries prior to `last_poll`
-            may be omitted).  Under no circumstances should more than 60 seconds of
-            history be included.  If `volumes` is not specified and `include_history`
-            is true, then this field is required.  This history does not need to include
-            the current position.
+            when `include_history` is true.  Under no circumstances should more than
+            60 seconds of history be included.  If `volumes` is not specified and
+            `include_history` is true, then this field is required.  This history
+            does not need to include the current position.  The entries in this list
+            should be in descending order according to time.
           type: array
           items:
             $ref: '#/components/schemas/RIDHistoricalAircraftPosition'
@@ -2386,7 +2356,7 @@ components:
           description: |-
             Time-bounded DAR configurations, active and intended, for this organization.  This list may be empty if the provider is not providing a DSS.
 
-            A configuration may not take effect until it has been accessible to all other approved providers at this endpoint for at least 36 hours, or all approved providers have agreed to a shorter notice period for the new configuration.
+            A configuration should not take effect until it has been accessible to all other approved providers at this endpoint for at least 36 hours, or all approved providers have agreed to a shorter notice period for the new configuration.
           type: array
           items:
             $ref: '#/components/schemas/DARConfiguration'

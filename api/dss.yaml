@@ -924,6 +924,26 @@ paths:
         $ref: '#/components/schemas/SubscriptionUUID'
       in: path
       required: true
+  /configuration:
+    summary: Configuration of a DAR participant's portion of the DAR.
+    get:
+      tags:
+      - dar
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetDARConfigurationResponse'
+          description: Configuration information was successfully retrieved.
+      security:
+      - AuthFromAuthorizationAuthority:
+        - dss.read.dar_configuration
+      summary: 'DAR: /configuration'
+      description: |-
+        Retrieve all information necessary to interoperate with the portion of the DAR provided by this provider.  This endpoint will nominally only be used when a change is made to the distributed DAR system configuration.
+
+        When a provider is approved by the jurisdictional authority, they will provide a URL to and endpoint with this API that the jurisdictional authority will distribute to all other providers.
 components:
   schemas:
     DeconflictionKey:
@@ -2336,6 +2356,63 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/RIDHistoricalAircraftPosition'
+    DARNodeConfiguration:
+      description: A CockroachDB node that will participate in the DAR.
+      required:
+      - hostname
+      - port
+      type: object
+      properties:
+        hostname:
+          description: Hostname of this node conformant with RFC 1123 section 2.1,
+            resolveable to an IP address by all other DAR participants.
+          pattern: '^\[[0-9a-fA-F]{0,4}(?::[0-9a-fA-F]{0,4}){2,7}\]|[^\0\t\r\n#%\/:?@[\\\]]{1,63}(?:\.[^\0\t\r\n
+            #%\/:?@[\\\]]{1,63}){1,126}$'
+          type: string
+        port:
+          description: Exposed port on node that may be joined by other CockroachDB
+            nodes.
+          maximum: 65535
+          minimum: 1
+          type: integer
+    GetDARConfigurationResponse:
+      description: Response to query for DAR configuration information.
+      required:
+      - dar_nodes
+      - dar_configurations
+      type: object
+      properties:
+        dar_configurations:
+          description: |-
+            Time-bounded DAR configurations, active and intended, for this organization.  This list may be empty if the provider is not providing a DSS.
+
+            A configuration may not take effect until it has been accessible to all other approved providers at this endpoint for at least 36 hours, or all approved providers have agreed to a shorter notice period for the new configuration.
+          type: array
+          items:
+            $ref: '#/components/schemas/DARConfiguration'
+    DARConfiguration:
+      description: Configuration of the portion of the DAR hosted by this organization.
+      required:
+      - time_effective
+      - dar_nodes
+      type: object
+      properties:
+        time_effective:
+          format: date-time
+          description: The datetime at which this configuration became effective,
+            or will become effective.
+          type: string
+        time_end:
+          format: date-time
+          description: The datetime at which this configuration will no longer apply.  If
+            omitted, this configuration is intended to be active indefinitely.
+          type: string
+        dar_nodes:
+          description: List of all CockroachDB nodes participating in the DAR hosted
+            by this provider.
+          type: array
+          items:
+            $ref: '#/components/schemas/DARNodeConfiguration'
   securitySchemes:
     AuthFromAuthorizationAuthority:
       flows:
@@ -2361,6 +2438,9 @@ components:
             dss.write.constraints: '`[UTM only]` Client may create un-deconflicted
               constraints in the airspace.  A client acting on behalf of a governmental
               organization would use this scope.'
+            dss.read.dar_configuration: Client may read information about the configuration
+              of this DAR participant's portion of the DAR.  Any airspace service
+              provider shall be granted this scope upon request.
       type: oauth2
       description: Authorization from, or on behalf of, an authorization authority.  This
         authority shall issue JSON Web Tokens as access tokens.  The `aud` field in
@@ -2380,8 +2460,8 @@ tags:
 - name: p2p_rid
   description: Endpoints exposed by remote ID service providers for peer-peer communication.
 - name: dar
-  description: Pseudo-endpoint actions used by DSS instances to synchronize DSS airspace
-    representation information.
+  description: Communication necessary to synchronize DSS airspace representation
+    information.
 - name: p2p_entities
   description: Endpoints exposed by DSS clients for peer-peer communication of Entity
     details, including DSS-triggered subscription notifications.

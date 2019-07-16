@@ -1153,43 +1153,6 @@ components:
           $ref: '#/components/schemas/EntityDetails'
         signature:
           $ref: '#/components/schemas/EntitySignature'
-    EntityType:
-      description: |-
-        Type of Entity.  The API of the URL associated with an Entity depends on its EntityType.
-
-        `PositionReporting`: A spacetime volume in which a remote ID service provider will provide remote ID services.
-
-        `Operation`: A single deconflicted UTM operation.
-
-        `Constraint`: A region of airspacetime that imposes limitations on, or provides special information to, flights within it.
-
-        `AirspaceAwarenessProvider`: A spacetime volume in which a consumer wishes to receive notifications about UTM airspace changes, but is not conducting an Operation.
-      enum:
-      - Operation
-      - Constraint
-      - PositionReporting
-      - AirspaceAwarenessProvider
-      type: string
-    ConstraintDetails:
-      description: Constraint-specific Entity details.
-      type: object
-      properties:
-        rogue_flight:
-          oneOf:
-          - $ref: '#/components/schemas/RogueFlight'
-          description: If this Constraint contains a rogue flight, this field contains
-            the details of that flight.
-    RogueFlight:
-      description: Details about a rogue flight inside a Constraint.
-      type: object
-      properties:
-        position_reporting_url:
-          $ref: '#/components/schemas/RIDFlightsURL'
-        flight_id:
-          description: This flight ID may be used to request real-time position updates
-            for the rogue aircraft in this Constraint through the specified remote
-            ID interface.
-          type: string
     AuthorizationScope:
       description: The scope included in an access token used to access one of the
         endpoints in this API.
@@ -1283,9 +1246,6 @@ components:
           $ref: '#/components/schemas/Latitude'
         lng:
           $ref: '#/components/schemas/Longitude'
-    OperationDetails:
-      description: Operation-specific Entity details.
-      type: object
     PutSubscriptionResponse:
       description: Response for a request to create or update a subscription.
       required:
@@ -1372,6 +1332,7 @@ components:
       minLength: 1
       pattern: ^[^\0\t\r\n#%\/:?@[\\\]]+$
       type: string
+      example: uss1.JA6kHYCcByQ-6AfU
     DSSEntityDetails:
       description: |-
         Entity data fields stored in the DSS specific to particular Entity Types.
@@ -1464,60 +1425,6 @@ components:
       properties:
         details:
           $ref: '#/components/schemas/RIDFlightDetails'
-    RIDFlightDetails:
-      description: Details about a flight reported by a remote ID service provider.  At
-        least one of the registration or serial fields must be filled if required
-        by CAA.
-      required:
-      - id
-      type: object
-      properties:
-        id:
-          description: ID for this flight, matching argument in request.
-          type: string
-          example: a3423b-213401-0023
-        registration:
-          description: Country/State registration number of the aircraft.
-          type: string
-          example: FA12345897
-        serial:
-          description: Serial number of the aircraft.
-          type: string
-          example: INTCJ123-4567-890
-        aircraft_make:
-          description: Manufacturer of aircraft.
-          type: string
-          example: DJI
-        aircraft_model:
-          description: Model of aircraft.
-          type: string
-          example: Inspire 2
-        operator_id:
-          description: 'CAA-issued registration/license ID for the remote pilot or
-            operator. '
-          type: string
-        operator_location:
-          anyOf:
-          - $ref: '#/components/schemas/LatLngPoint'
-          description: Location of party controlling the aircraft.
-        operation_description:
-          description: Free-text field that enables the operator to describe the purpose
-            of a flight, if so desired.
-          type: string
-          example: SafeFlightDrone company doing survey. See my privacy policy www.sfd.com/privacy.
-        takeoff_location:
-          anyOf:
-          - $ref: '#/components/schemas/LatLngPoint'
-          description: Location of the takeoff point for this flight.
-        group_count:
-          format: int32
-          description: When operating a group (or formation or swarm), number of aircraft
-            in group.
-          minimum: 1
-          exclusiveMinimum: false
-          type: integer
-        auth_data:
-          $ref: '#/components/schemas/RIDAuthData'
     HorizontalAccuracy:
       description: |-
         This is the NACp enumeration from ADS-B, plus 1m for a more complete range for UAs.
@@ -1602,75 +1509,6 @@ components:
           description: Human-readable message indicating what error occurred and/or
             why.
           type: string
-    DARSubscriptionUpdate:
-      description: Updated data for a Subscription stored internally in the DAR within
-        the DSS.  Must be exchanged in a standardized format between DSS instances
-        to maintain a DSS airspace representation.
-      required:
-      - id
-      type: object
-      properties:
-        id:
-          anyOf:
-          - $ref: '#/components/schemas/SubscriptionUUID'
-          description: The Subscription being created, updated, or deleted.
-        version:
-          description: The previous version of this Subscription within the DAR.  An
-            update will only be successful if the Subscription has not changed since
-            the request was formed.  Omit this field if the Subscription did not previously
-            exist in the DAR.
-          type: integer
-        subscription:
-          anyOf:
-          - $ref: '#/components/schemas/InternalSubscription'
-          description: New full representation of Subscription.  If omitted, the Subscription
-            will be deleted from the DAR.
-    DAREntityUpdate:
-      description: Updated data for an Entity stored internally in the DAR within
-        the DSS.  Must be exchanged in a standardized format between DSS instances
-        to maintain a DSS airspace representation.
-      required:
-      - id
-      type: object
-      properties:
-        id:
-          anyOf:
-          - $ref: '#/components/schemas/EntityUUID'
-          description: The Entity being created, updated, or deleted.
-        version:
-          description: The previous version of this Entity within the DAR.  An update
-            will only be successful if the Entity has not changed since the request
-            was formed.  Omit this field if the Entity did not previously exist in
-            the DAR.
-          type: integer
-        entity:
-          anyOf:
-          - $ref: '#/components/schemas/InternalEntitySummary'
-          description: New full representation of Entity.  If omitted, the Entity
-            will be deleted from the DAR.
-    DARConstraintUpdate:
-      description: |-
-        `[UTM only]` Updated data for the full details of a Constraint Entity stored internally in the DAR within the DSS.  Must be exchanged in a standardized format between DSS instances to maintain a DSS airspace representation.
-        Note that a corresponding DAREntityUpdate should accompany this DARConstraintUpdate in a DAR transaction as this update merely updates the details and not its EntitySummary.
-      required:
-      - id
-      type: object
-      properties:
-        id:
-          anyOf:
-          - $ref: '#/components/schemas/EntityUUID'
-          description: The Constraint Entity being created, updated, or deleted.
-        version:
-          description: The previous version of this Constraint within the DAR.  An
-            update will only be successful if the Constraint has not changed since
-            the request was formed.  Omit this field if the Constraint did not previously
-            exist in the DAR.
-          type: integer
-        constraint:
-          anyOf:
-          - $ref: '#/components/schemas/InternalConstraint'
-          description: New full representation of Constraint.  If omitted, the Entity
-            will be deleted from the DAR.
     PostDARTransactionParameters:
       description: Parameters for a request to update information in the DSS airspace
         representation.
@@ -1745,29 +1583,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/EntityUUID'
-    DARCellUpdate:
-      description: Updated data stored internally in DAR cells within the DSS.  Must
-        be exchanged in a standardized format between DSS instances to maintain a
-        DSS airspace representation.
-      required:
-      - id
-      type: object
-      properties:
-        id:
-          anyOf:
-          - $ref: '#/components/schemas/DARCellID'
-          description: The DAR cell containing this information.
-        version:
-          description: The previous version of the contents of this cell.  An update
-            will only be successful if the cell contents have not changed since the
-            request was formed.  Omit this field if the cell did not previously exist
-            in the DAR.
-          type: integer
-        cell:
-          anyOf:
-          - $ref: '#/components/schemas/InternalDARCell'
-          description: New full representation of cell.  If omitted, the cell will
-            be deleted from the DAR.
     InternalSubscription:
       description: The information about a Subscription that the DSS stores internally
         and synchronizes between different DSS instances.
@@ -2113,20 +1928,6 @@ components:
       - SA1mps
       - SA03mps
       type: string
-    RIDHistoricalAircraftPosition:
-      description: ""
-      required:
-      - time
-      - position
-      type: object
-      properties:
-        time:
-          format: date-time
-          description: Time at which this position applied.
-          type: string
-        position:
-          $ref: '#/components/schemas/RIDAircraftPosition'
-          description: ""
     RIDAircraftPosition:
       description: Position of an aircraft as reported for remote ID purposes.
       required:
@@ -2360,11 +2161,151 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/DARConfiguration'
+    RIDFlightDetails:
+      description: Details about a flight reported by a remote ID service provider.  At
+        least one of the registration or serial fields must be filled if required
+        by CAA.
+      required:
+      - id
+      type: object
+      properties:
+        id:
+          description: ID for this flight, matching argument in request.
+          type: string
+          example: a3423b-213401-0023
+        registration:
+          description: Country/State registration number of the aircraft.
+          type: string
+          example: FA12345897
+        serial:
+          description: Serial number of the aircraft.
+          type: string
+          example: INTCJ123-4567-890
+        operator_id:
+          description: 'CAA-issued registration/license ID for the remote pilot or
+            operator. '
+          type: string
+        operator_location:
+          anyOf:
+          - $ref: '#/components/schemas/LatLngPoint'
+          description: Location of party controlling the aircraft.
+        operation_description:
+          description: Free-text field that enables the operator to describe the purpose
+            of a flight, if so desired.
+          type: string
+          example: SafeFlightDrone company doing survey with DJI Inspire 2. See my
+            privacy policy www.example.com/privacy.
+        takeoff_location:
+          anyOf:
+          - $ref: '#/components/schemas/LatLngPoint'
+          description: Location of the takeoff point for this flight.
+        group_count:
+          format: int32
+          description: When operating a group (or formation or swarm), number of aircraft
+            in group.
+          minimum: 1
+          exclusiveMinimum: false
+          type: integer
+        auth_data:
+          $ref: '#/components/schemas/RIDAuthData'
+    DARCellUpdate:
+      description: Updated data stored internally in DAR cells within the DSS.  Must
+        be exchanged in a standardized format between DSS instances to maintain a
+        DSS airspace representation.
+      required:
+      - id
+      type: object
+      properties:
+        id:
+          anyOf:
+          - $ref: '#/components/schemas/DARCellID'
+          description: The DAR cell containing this information.
+        previous_version:
+          description: The previous version of the contents of this cell.  An update
+            will only be successful if the cell contents have not changed since the
+            request was formed.  Omit this field if the cell did not previously exist
+            in the DAR.
+          type: integer
+        cell:
+          anyOf:
+          - $ref: '#/components/schemas/InternalDARCell'
+          description: New full representation of cell.  If omitted, the cell will
+            be deleted from the DAR.
+    DARConstraintUpdate:
+      description: |-
+        `[UTM only]` Updated data for the full details of a Constraint Entity stored internally in the DAR within the DSS.  Must be exchanged in a standardized format between DSS instances to maintain a DSS airspace representation.
+        Note that a corresponding DAREntityUpdate should accompany this DARConstraintUpdate in a DAR transaction as this update merely updates the details and not its EntitySummary.
+      required:
+      - id
+      type: object
+      properties:
+        id:
+          anyOf:
+          - $ref: '#/components/schemas/EntityUUID'
+          description: The Constraint Entity being created, updated, or deleted.
+        previous_version:
+          description: The previous version of this Constraint within the DAR.  An
+            update will only be successful if the Constraint has not changed since
+            the request was formed.  Omit this field if the Constraint did not previously
+            exist in the DAR.
+          type: integer
+        constraint:
+          anyOf:
+          - $ref: '#/components/schemas/InternalConstraint'
+          description: New full representation of Constraint.  If omitted, the Entity
+            will be deleted from the DAR.
+    DAREntityUpdate:
+      description: Updated data for an Entity stored internally in the DAR within
+        the DSS.  Must be exchanged in a standardized format between DSS instances
+        to maintain a DSS airspace representation.
+      required:
+      - id
+      type: object
+      properties:
+        id:
+          anyOf:
+          - $ref: '#/components/schemas/EntityUUID'
+          description: The Entity being created, updated, or deleted.
+        previous_version:
+          description: The previous version of this Entity within the DAR.  An update
+            will only be successful if the Entity has not changed since the request
+            was formed.  Omit this field if the Entity did not previously exist in
+            the DAR.
+          type: integer
+        entity:
+          anyOf:
+          - $ref: '#/components/schemas/InternalEntitySummary'
+          description: New full representation of Entity.  If omitted, the Entity
+            will be deleted from the DAR.
+    DARSubscriptionUpdate:
+      description: Updated data for a Subscription stored internally in the DAR within
+        the DSS.  Must be exchanged in a standardized format between DSS instances
+        to maintain a DSS airspace representation.
+      required:
+      - id
+      type: object
+      properties:
+        id:
+          anyOf:
+          - $ref: '#/components/schemas/SubscriptionUUID'
+          description: The Subscription being created, updated, or deleted.
+        previous_version:
+          description: The previous version of this Subscription within the DAR.  An
+            update will only be successful if the Subscription has not changed since
+            the request was formed.  Omit this field if the Subscription did not previously
+            exist in the DAR.
+          type: integer
+        subscription:
+          anyOf:
+          - $ref: '#/components/schemas/InternalSubscription'
+          description: New full representation of Subscription.  If omitted, the Subscription
+            will be deleted from the DAR.
     DARConfiguration:
       description: Configuration of the portion of the DAR hosted by this organization.
       required:
       - time_effective
       - dar_nodes
+      - environment
       type: object
       properties:
         time_effective:
@@ -2383,6 +2324,68 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/DARNodeConfiguration'
+        environment:
+          description: Environment to which this configuration applies.  The production
+            environment shall have the value `production` and the test environment
+            shall have the value `test`, but other values are allowed as well.  All
+            CockroachDB nodes in a named environment are expected to interact with
+            all other providers' nodes in that environment.
+          type: string
+          example: production
+    ConstraintDetails:
+      description: Constraint-specific Entity details.
+      type: object
+    OperationDetails:
+      description: Operation-specific Entity details.
+      type: object
+      properties:
+        rogue_flight:
+          oneOf:
+          - $ref: '#/components/schemas/RogueFlight'
+          description: If this Operation is rogue, this field contains the details
+            for tracking that flight.
+    RogueFlight:
+      description: Details about a rogue flight inside a Constraint.
+      type: object
+      properties:
+        position_reporting_url:
+          $ref: '#/components/schemas/RIDFlightsURL'
+        flight_id:
+          description: This flight ID may be used to request real-time position updates
+            for the rogue aircraft in this Constraint through the specified remote
+            ID interface.
+          allOf:
+          - $ref: '#/components/schemas/RIDFlightID'
+    EntityType:
+      description: |-
+        Type of Entity.  The API of the URL associated with an Entity depends on its EntityType.
+
+        `PositionReporting`: A spacetime volume in which a remote ID service provider will provide remote ID services.
+
+        `Constraint`: A region of airspacetime that imposes limitations on, or provides special information to, flights within it.
+
+        `AirspaceAwarenessProvider`: A spacetime volume in which a consumer wishes to receive notifications about UTM airspace changes, but is not conducting an Operation.
+
+        `Operation`: A single deconflicted UTM operation.
+      enum:
+      - PositionReporting
+      - Constraint
+      - AirspaceAwarenessProvider
+      - Operation
+      type: string
+    RIDHistoricalAircraftPosition:
+      description: ""
+      required:
+      - time
+      - position
+      type: object
+      properties:
+        time:
+          format: date-time
+          description: Time at which this position applied.
+          type: string
+        position:
+          $ref: '#/components/schemas/RIDAircraftPosition'
   securitySchemes:
     AuthFromAuthorizationAuthority:
       flows:

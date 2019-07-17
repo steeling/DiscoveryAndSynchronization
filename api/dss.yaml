@@ -321,74 +321,6 @@ paths:
         * EntityUUID -> InternalEntitySummary
         * SubscriptionUUID -> InternalSubscription
         * EntityUUID -> InternalConstraint `[UTM only]`
-  /subscriptions:
-    summary: Subscriptions for airspace updates to a volume of interest.  Only Subscriptions
-      belonging to the caller are returned.
-    get:
-      tags:
-      - dss
-      parameters:
-      - name: area
-        description: The area in which to search for Subscriptions.  Some Subscriptions
-          near this area but wholly outside it may also be returned.
-        schema:
-          $ref: '#/components/schemas/GeoPolygonString'
-        in: query
-        required: true
-      - name: min_altitude
-        description: If specified, indicates non-interest in subscriptions for volumes
-          entirely below this altitude in meters above the WGS84 datum.
-        schema:
-          type: number
-        in: query
-      - name: max_altitude
-        description: If specified, indicates non-interest in subscriptions for volumes
-          entirely above this altitude in meters above the WGS84 datum.
-        schema:
-          type: number
-        in: query
-      responses:
-        200:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GetSubscriptionsResponse'
-          description: Subscriptions were retrieved successfully.
-        400:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: One or more input parameters were missing or invalid.
-        401:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: Bearer access token was not provided in Authorization header,
-            token could not be decoded, or token was invalid.
-        403:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: The access token was decoded successfully but did not include
-            a scope appropriate to this endpoint.
-        413:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: The requested area was too large.
-      security:
-      - AuthFromAuthorizationAuthority:
-        - dss.read.position_reporting_entities
-        - dss.write.position_reporting_entities
-        - dss.read.airspace_awareness
-        - dss.write.airspace_awareness
-        - dss.write.operations
-      summary: 'DSS: /subscriptions'
-      description: Retrieve subscriptions intersecting an area of interest.
   /configuration:
     summary: Configuration of a DAR participant's portion of the DAR.
     get:
@@ -557,6 +489,74 @@ paths:
         $ref: '#/components/schemas/EntityUUID'
       in: path
       required: true
+  /subscriptions:
+    summary: Subscriptions for airspace updates to a volume of interest.  Only Subscriptions
+      belonging to the caller are returned.
+    get:
+      tags:
+      - dss
+      parameters:
+      - name: area
+        description: The area in which to search for Subscriptions.  Some Subscriptions
+          near this area but wholly outside it may also be returned.
+        schema:
+          $ref: '#/components/schemas/GeoPolygonString'
+        in: query
+        required: true
+      - name: min_altitude
+        description: If specified, indicates non-interest in subscriptions for volumes
+          entirely below this altitude in meters above the WGS84 datum.
+        schema:
+          type: number
+        in: query
+      - name: max_altitude
+        description: If specified, indicates non-interest in subscriptions for volumes
+          entirely above this altitude in meters above the WGS84 datum.
+        schema:
+          type: number
+        in: query
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetSubscriptionsResponse'
+          description: Subscriptions were retrieved successfully.
+        400:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: One or more input parameters were missing or invalid.
+        401:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bearer access token was not provided in Authorization header,
+            token could not be decoded, or token was invalid.
+        403:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The access token was decoded successfully but did not include
+            a scope appropriate to this endpoint.
+        413:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The requested area was too large.
+      security:
+      - AuthFromAuthorizationAuthority:
+        - dss.read.position_reporting_entities
+        - dss.write.position_reporting_entities
+        - dss.read.airspace_awareness
+        - dss.write.airspace_awareness
+        - dss.write.operations
+      summary: 'DSS: /subscriptions'
+      description: Retrieve subscriptions intersecting an area of interest.
   /subscriptions/{id}:
     summary: Subscription for airspace updates to a volume of interest.
     get:
@@ -739,80 +739,6 @@ paths:
         $ref: '#/components/schemas/SubscriptionUUID'
       in: path
       required: true
-  /constraints/{id}:
-    summary: Public Constraint Entities stored in the DSS.
-    get:
-      tags:
-      - dss
-      responses:
-        200:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/EntityDetails'
-          description: The Constraint details were retrieved successfully.
-      security:
-      - AuthFromAuthorizationAuthority:
-        - dss.read.airspace_awareness
-        - dss.write.airspace_awareness
-        - dss.write.operations
-      summary: 'DSS: /constraints/{id}'
-      description: '`[UTM only]` Retrieve the details of a public Constraint Entity
-        stored in the DAR and exposed by DSS instances.  This path''s GET API is compatible
-        with a GET for an EntityDetailsURLs.'
-    put:
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PutEntityParameters'
-        required: true
-      tags:
-      - dss
-      responses:
-        200:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PutEntityResponse'
-          description: Existing Constraint was successfully updated, and its details
-            will be served from the DSS.
-        201:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PutEntityResponse'
-          description: New Constraint was successfully added to the airspace.
-      security:
-      - AuthFromAuthorizationAuthority:
-        - dss.write.constraints
-      summary: 'DSS: /constraints/{id}'
-      description: '`[UTM only]` Publish a new public Constraint that will be stored
-        in the DAR and exposed by DSS instances (details do not need to be hosted
-        by the requesting client).'
-    delete:
-      tags:
-      - dss
-      responses:
-        200:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DeleteEntityResponse'
-          description: Constraint was successfully deleted from DSS.
-      security:
-      - AuthFromAuthorizationAuthority:
-        - dss.write.constraints
-      summary: 'DSS: /constraints/{id}'
-      description: '`[UTM only]` Delete a public Constraint stored in the DAR and
-        served from the DSS.'
-    parameters:
-    - name: id
-      description: EntityUUID of the Constraint.
-      schema:
-        type: string
-      in: path
-      required: true
   /entity_details/{id}:
     summary: Details of a UTM Entity.
     get:
@@ -961,6 +887,80 @@ paths:
       description: EntityUUID of the Entity details.
       schema:
         $ref: '#/components/schemas/EntityUUID'
+      in: path
+      required: true
+  /constraint_details/{id}:
+    summary: Public Constraint Entities stored in the DSS.
+    get:
+      tags:
+      - dss
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntityDetails'
+          description: The Constraint details were retrieved successfully.
+      security:
+      - AuthFromAuthorizationAuthority:
+        - dss.read.airspace_awareness
+        - dss.write.airspace_awareness
+        - dss.write.operations
+      summary: 'DSS: /constraint_details/{id}'
+      description: '`[UTM only]` Retrieve the details of a public Constraint Entity
+        stored in the DAR and exposed by DSS instances.  This path''s GET API is compatible
+        with a GET for an EntityDetailsURLs.'
+    put:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PutEntityParameters'
+        required: true
+      tags:
+      - dss
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PutEntityResponse'
+          description: Existing Constraint was successfully updated, and its details
+            will be served from the DSS.
+        201:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PutEntityResponse'
+          description: New Constraint was successfully added to the airspace.
+      security:
+      - AuthFromAuthorizationAuthority:
+        - dss.write.constraints
+      summary: 'DSS: /constraint_details/{id}'
+      description: '`[UTM only]` Publish a new public Constraint that will be stored
+        in the DAR and exposed by DSS instances (details do not need to be hosted
+        by the requesting client).'
+    delete:
+      tags:
+      - dss
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteEntityResponse'
+          description: Constraint was successfully deleted from DSS.
+      security:
+      - AuthFromAuthorizationAuthority:
+        - dss.write.constraints
+      summary: 'DSS: /constraint_details/{id}'
+      description: '`[UTM only]` Delete a public Constraint stored in the DAR and
+        served from the DSS.'
+    parameters:
+    - name: id
+      description: EntityUUID of the Constraint.
+      schema:
+        type: string
       in: path
       required: true
 components:

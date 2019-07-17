@@ -2129,12 +2129,10 @@ components:
           items:
             $ref: '#/components/schemas/Volume4D'
         position_history:
-          description: A short history of recent aircraft movement, specified only
-            when `include_history` is true.  Under no circumstances should more than
-            60 seconds of history be included.  If `volumes` is not specified and
-            `include_history` is true, then this field is required.  This history
-            does not need to include the current position.  The entries in this list
-            should be in descending order according to time.
+          description: |-
+            A short history of recent aircraft movement, specified only when `include_history` is true.  If `volumes` is not specified and `include_history` is true, then this field is required.
+
+            Under no circumstances should more than 60 seconds of history be included.  A full 60 seconds of most recent history (excluding current position) is required, or as much history is available if there is less than 60 seconds of history.  This history does not need to include the current position.  The entries in this list should be in descending order according to time.
           type: array
           items:
             $ref: '#/components/schemas/RIDHistoricalAircraftPosition'

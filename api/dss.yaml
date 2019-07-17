@@ -283,146 +283,6 @@ paths:
         $ref: '#/components/schemas/RIDFlightID'
       in: path
       required: true
-  /entity_details/{id}:
-    summary: Details of a UTM Entity.
-    get:
-      tags:
-      - p2p_entities
-      responses:
-        200:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/EntityDetails'
-          description: The Entity details were retrieved successfully.
-        400:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: One or more input parameters were missing or invalid.
-        401:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: Bearer access token was not provided in Authorization header,
-            token could not be decoded, or token was invalid.
-        403:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: The access token was decoded successfully but did not include
-            a scope appropriate to this endpoint.
-        404:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: The requested Entity could not be found.
-      security:
-      - AuthFromAuthorizationAuthority:
-        - dss.read.position_reporting_entities
-        - dss.read.airspace_awareness
-        - dss.write.operations
-      summary: 'Entities: /entity_details/{id}'
-      description: |-
-        Retrieve the details of an Entity owned by the client.  Note that this request should be denied if the authorization scope does not provide access to the type of Entity being requested.
-
-        Implementation of this endpoint is not required for remote ID service providers (nor remote ID display providers since they do not create Entities).
-    put:
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PutEntityNotificationParameters'
-        required: true
-      tags:
-      - p2p_entities
-      responses:
-        204:
-          description: Entity details were received successfully.
-        400:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: |-
-            * One or more parameters were missing or invalid.
-            * The Entity could not be parsed, or contains illegal data.
-        401:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: Bearer access token was not provided in Authorization header,
-            token could not be decoded, or token was invalid.
-        403:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: The access token was decoded successfully but did not include
-            a scope appropriate to this endpoint.
-        409:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: The Entity version specified in this message is lower than
-            a previously-received notification, or identical to a previously-received
-            notification and the Entity is different.
-      security:
-      - AuthFromAuthorizationAuthority:
-        - dss.write.position_reporting_entities
-        - dss.write.airspace_awareness
-        - dss.write.operations
-      summary: 'Entities: /entity_details/{id}'
-      description: Publish new information about an Entity to the host of this endpoint
-        (usually because of instructions from the DSS triggered by a subscription).
-    delete:
-      tags:
-      - p2p_entities
-      responses:
-        204:
-          description: Notification of Entity deletion was received successfully,
-            even if the host USS was previously unaware of the specified Entity.
-        400:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: One or more parameters were missing or invalid.
-        401:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: Bearer access token was not provided in Authorization header,
-            token could not be decoded, or token was invalid.
-        403:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: The access token was decoded successfully but did not include
-            a scope appropriate to this endpoint.
-      security:
-      - AuthFromAuthorizationAuthority:
-        - dss.write.position_reporting_entities
-        - dss.write.airspace_awareness
-        - dss.write.operations
-      summary: 'Entities: /entity_details/{id}'
-      description: Publish a notification about the deletion of an Entity to this
-        client (usually because of instructions from the DSS triggered by a subscription).
-    parameters:
-    - name: id
-      description: EntityUUID of the Entity details.
-      schema:
-        $ref: '#/components/schemas/EntityUUID'
-      in: path
-      required: true
   /dar_transaction:
     summary: Update information DSS airspace representation internal to the DSS constellation.
     post:
@@ -951,6 +811,156 @@ paths:
       description: EntityUUID of the Constraint.
       schema:
         type: string
+      in: path
+      required: true
+  /entity_details/{id}:
+    summary: Details of a UTM Entity.
+    get:
+      tags:
+      - p2p_entities
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntityDetails'
+          description: The Entity details were retrieved successfully.
+        400:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: One or more input parameters were missing or invalid.
+        401:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bearer access token was not provided in Authorization header,
+            token could not be decoded, or token was invalid.
+        403:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The access token was decoded successfully but did not include
+            a scope appropriate to this endpoint.
+        404:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The requested Entity could not be found.
+      security:
+      - AuthFromAuthorizationAuthority:
+        - dss.read.position_reporting_entities
+        - dss.read.airspace_awareness
+        - dss.write.operations
+      summary: 'Entities: /entity_details/{id}'
+      description: |-
+        Retrieve the details of an Entity owned by the client.  Note that this request should be denied if the authorization scope does not provide access to the type of Entity being requested.
+
+        Implementation of this endpoint is not required for remote ID service providers (nor remote ID display providers since they do not create Entities).
+    put:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PutEntityDetailsParameters'
+        required: true
+      tags:
+      - p2p_entities
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PutEntityDetailsResponse'
+          description: Details of previously-known Entity were updated successfully.
+        201:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PutEntityDetailsResponse'
+          description: Details of new (previously-unknown) Entity were received successfully.
+        400:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: |-
+            * One or more parameters were missing or invalid.
+            * The Entity could not be parsed, or contains illegal data.
+        401:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bearer access token was not provided in Authorization header,
+            token could not be decoded, or token was invalid.
+        403:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The access token was decoded successfully but did not include
+            a scope appropriate to this endpoint.
+        409:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The Entity version specified in this message is lower than
+            a previously-received notification, or identical to a previously-received
+            notification and the Entity is different.
+      security:
+      - AuthFromAuthorizationAuthority:
+        - dss.write.position_reporting_entities
+        - dss.write.airspace_awareness
+        - dss.write.operations
+      summary: 'Entities: /entity_details/{id}'
+      description: Publish new information about an Entity to the host of this endpoint
+        (usually because of instructions from the DSS triggered by a subscription).
+    delete:
+      tags:
+      - p2p_entities
+      responses:
+        204:
+          description: Notification of Entity deletion was received successfully,
+            even if the host USS was previously unaware of the specified Entity.
+        400:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: One or more parameters were missing or invalid.
+        401:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bearer access token was not provided in Authorization header,
+            token could not be decoded, or token was invalid.
+        403:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The access token was decoded successfully but did not include
+            a scope appropriate to this endpoint.
+      security:
+      - AuthFromAuthorizationAuthority:
+        - dss.write.position_reporting_entities
+        - dss.write.airspace_awareness
+        - dss.write.operations
+      summary: 'Entities: /entity_details/{id}'
+      description: Publish a notification about the deletion of an Entity to this
+        client (usually because of instructions from the DSS triggered by a subscription).
+    parameters:
+    - name: id
+      description: EntityUUID of the Entity details.
+      schema:
+        $ref: '#/components/schemas/EntityUUID'
       in: path
       required: true
 components:
@@ -1788,24 +1798,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/SubscriberToNotify'
-    PutEntityNotificationParameters:
-      description: Parameters of a message informing of new Entity details.  Usually
-        pushed (by a client, not the DSS) directly to clients with subscriptions when
-        another client makes a change to airspace within a cell with a subscription.
-      required:
-      - entity
-      - subscriptions
-      type: object
-      properties:
-        subscriptions:
-          description: Subscription(s) prompting this notification.
-          type: array
-          items:
-            $ref: '#/components/schemas/SubscriptionState'
-        entity:
-          anyOf:
-          - $ref: '#/components/schemas/EntityDetails'
-          description: Entity that the notifying client changed or created.
     RIDOperationalStatus:
       description: Indicates operational status of associated aircraft.
       enum:
@@ -2405,6 +2397,34 @@ components:
           type: string
         position:
           $ref: '#/components/schemas/RIDAircraftPosition'
+    PutEntityDetailsParameters:
+      description: Parameters of a message informing of new Entity details.  Usually
+        pushed (by a client, not the DSS) directly to clients with subscriptions when
+        another client makes a change to airspace within a cell with a subscription.
+      required:
+      - entity
+      - subscriptions
+      type: object
+      properties:
+        subscriptions:
+          description: Subscription(s) prompting this notification.
+          type: array
+          items:
+            $ref: '#/components/schemas/SubscriptionState'
+        entity:
+          anyOf:
+          - $ref: '#/components/schemas/EntityDetails'
+          description: Entity that the notifying client changed or created.
+    PutEntityDetailsResponse:
+      description: Response to a USS-USS notification of new or updated Entity details.
+      required:
+      - entity
+      type: object
+      properties:
+        entity:
+          anyOf:
+          - $ref: '#/components/schemas/EntityDetails'
+          description: Current representation of the affected Entity.
   securitySchemes:
     AuthFromAuthorizationAuthority:
       flows:

@@ -420,8 +420,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-          description: Entity could not be deleted because it could not be found.  This
-            may happen if an incorrect `location` is provided.
+          description: Entity could not be deleted because it could not be found.
         409:
           content:
             application/json:
@@ -819,8 +818,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-          description: Subscription could not be deleted because it could not be found.  This
-            may happen if an incorrect `location` is provided.
+          description: Subscription could not be deleted because it could not be found.
         409:
           content:
             application/json:

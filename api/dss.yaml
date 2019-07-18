@@ -33,6 +33,7 @@ paths:
           format: date-time
           type: string
         in: query
+        required: true
       - name: latest_time
         description: If specified, indicates non-interest in any Entities that start
           after this time.
@@ -40,6 +41,7 @@ paths:
           format: date-time
           type: string
         in: query
+        required: true
       - name: min_altitude
         description: If specified, indicates non-interest in Entities entirely below
           this altitude in meters above the WGS84 datum.
@@ -51,6 +53,14 @@ paths:
           this altitude in meters above the WGS84 datum.
         schema:
           type: number
+        in: query
+        required: true
+      - name: types_filter
+        description: The types of Entities that should be returned from this query.  If
+          not specified, all EntityTypes visible with the provided access token will
+          be returned.
+        schema:
+          $ref: '#/components/schemas/EntityTypeListString'
         in: query
       responses:
         200:
@@ -77,8 +87,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-          description: The access token was decoded successfully but did not include
-            a scope appropriate to this endpoint.
+          description: |-
+            * The access token was decoded successfully but did not include a scope appropriate to this endpoint.
+            * An EntityType was specified in `types_filter` to which the scopes included in the access token do not provide access.
         413:
           content:
             application/json:
@@ -174,62 +185,6 @@ paths:
       schema:
         type: boolean
       in: query
-  /flights/{id}:
-    summary: Basic operation details to meet remote ID requirements.
-    description: ""
-    get:
-      tags:
-      - p2p_rid
-      responses:
-        200:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GetFlightsResponse'
-          description: Flight information was successfully retrieved.
-        400:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: One or more input parameters were missing or invalid.
-        401:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: Bearer access token was not provided in Authorization header,
-            token could not be decoded, or token was invalid.
-        403:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: The access token was decoded successfully but did not include
-            a scope appropriate to this endpoint.
-        404:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: The requested flight could not be found.
-      security:
-      - AuthFromAuthorizationAuthority:
-        - dss.read.position_reporting_entities
-        - dss.read.airspace_awareness
-        - dss.write.operations
-      summary: 'RID: /flights/{id}'
-      description: '`[UTM only]` This endpoint may be polled to maintain situational
-        awareness of an aircraft engaging in a UTM Operation, especially during off-nominal
-        events.'
-    parameters:
-    - name: id
-      description: Remote ID flight ID for this flight; may be obtained in general
-        /flights query.
-      schema:
-        $ref: '#/components/schemas/RIDFlightID'
-      in: path
-      required: true
   /flights/{id}/details:
     summary: A remote ID flight reported by a remote ID service provider.
     get:
@@ -556,189 +511,10 @@ paths:
         - dss.write.airspace_awareness
         - dss.write.operations
       summary: 'DSS: /subscriptions'
-      description: Retrieve subscriptions intersecting an area of interest.
-  /subscriptions/{id}:
-    summary: Subscription for airspace updates to a volume of interest.
-    get:
-      tags:
-      - dss
-      responses:
-        200:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Subscription'
-          description: Subscription information was retrieved successfully.
-        400:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: One or more input parameters were missing or invalid.
-        401:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: Bearer access token was not provided in Authorization header,
-            token could not be decoded, or token was invalid.
-        403:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: The access token was decoded successfully but did not include
-            a scope appropriate to this endpoint.
-        413:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: The requested area was too large.
-      security:
-      - AuthFromAuthorizationAuthority:
-        - dss.read.position_reporting_entities
-        - dss.write.position_reporting_entities
-        - dss.read.airspace_awareness
-        - dss.write.airspace_awareness
-        - dss.write.operations
-      summary: 'DSS: /subscriptions/{id}'
-      description: Verify the existence/valdity and state of a particular subscription.
-    put:
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PutSubscriptionParameters'
-        required: true
-      tags:
-      - dss
-      parameters:
-      - name: id
-        description: SubscriptionUUID of the subscription of interest.  Must be created
-          by client before `PUT` call to create AreaSubscription in DSS because the
-          client may receive a notification at that subscription before receiving
-          a response from the DSS.
-        schema:
-          $ref: '#/components/schemas/SubscriptionUUID'
-        in: path
-        required: true
-      responses:
-        200:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PutSubscriptionResponse'
-          description: An existing Subscription was updated successfully.
-        201:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PutSubscriptionResponse'
-          description: A new Subscription was created successfully.
-        400:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: |-
-            * One or more input parameters were missing or invalid.
-            * The request attempted to mutate the Subscription in a disallowed way.
-        401:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: Bearer access token was not provided in Authorization header,
-            token could not be decoded, or token was invalid.
-        403:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: The access token was decoded successfully but did not include
-            a scope appropriate to this endpoint.
-        409:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: |-
-            * A Subscription with the specified ID already exists and is owned by a different client.
-            * Despite repeated attempts, the DSS was unable to update the DAR because of other simultaneous changes.
-      security:
-      - AuthFromAuthorizationAuthority:
-        - dss.read.position_reporting_entities
-        - dss.write.position_reporting_entities
-        - dss.read.airspace_awareness
-        - dss.write.operations
-        - dss.write.airspace_awareness
-      summary: 'DSS: /subscriptions/{id}'
-      description: |-
-        Create or update a subscription.
-
-        Note that the types of content that should be sent to the created subscription depends on the scope in the provided access token.
-    delete:
-      tags:
-      - dss
-      responses:
-        200:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DeleteSubscriptionResponse'
-          description: Subscription was deleted successfully.
-        400:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: One or more input parameters were missing or invalid.
-        401:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: Bearer access token was not provided in Authorization header,
-            token could not be decoded, or token was invalid.
-        403:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: |-
-            * The access token was decoded successfully but did not include a scope appropriate to this endpoint.
-            * The Entity does not belong to the client requesting deletion.
-        404:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: Subscription could not be deleted because it could not be found.  This
-            may happen if an incorrect `location` is provided.
-        409:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: Despite repeated attempts, the DSS was unable to update the
-            DAR because of other simultaneous changes.
-      security:
-      - AuthFromAuthorizationAuthority:
-        - dss.read.position_reporting_entities
-        - dss.write.position_reporting_entities
-        - dss.read.airspace_awareness
-        - dss.write.airspace_awareness
-        - dss.write.operations
-      summary: 'DSS: /subscriptions/{id}'
-      description: Delete a subscription.
-    parameters:
-    - name: id
-      description: SubscriptionUUID of the subscription of interest.
-      schema:
-        $ref: '#/components/schemas/SubscriptionUUID'
-      in: path
-      required: true
+      description: Retrieve subscriptions intersecting an area of interest.  Subscription
+        notifications are only triggered by (and contain details of) changes to Entities
+        in the DSS; they do not involve any other data transfer such as remote ID
+        telemetry updates.
   /entity_details/{id}:
     summary: Details of a UTM Entity.
     get:
@@ -829,8 +605,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-          description: The access token was decoded successfully but did not include
-            a scope appropriate to this endpoint.
+          description: |-
+            * The access token was decoded successfully but did not include a scope appropriate to this endpoint.
+            * The client identified in the access token is not the owner of this Entity according to the receiving client's records.
         409:
           content:
             application/json:
@@ -872,8 +649,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-          description: The access token was decoded successfully but did not include
-            a scope appropriate to this endpoint.
+          description: |-
+            * The access token was decoded successfully but did not include a scope appropriate to this endpoint.
+            * The client identified in the access token is not the owner of this Entity according to the receiving client's records.
       security:
       - AuthFromAuthorizationAuthority:
         - dss.write.position_reporting_entities
@@ -889,6 +667,247 @@ paths:
         $ref: '#/components/schemas/EntityUUID'
       in: path
       required: true
+  /subscriptions/{id}:
+    summary: Subscription for airspace updates to a volume of interest.
+    get:
+      tags:
+      - dss
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subscription'
+          description: Subscription information was retrieved successfully.
+        400:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: One or more input parameters were missing or invalid.
+        401:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bearer access token was not provided in Authorization header,
+            token could not be decoded, or token was invalid.
+        403:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The access token was decoded successfully but did not include
+            a scope appropriate to this endpoint.
+      security:
+      - AuthFromAuthorizationAuthority:
+        - dss.read.position_reporting_entities
+        - dss.write.position_reporting_entities
+        - dss.read.airspace_awareness
+        - dss.write.airspace_awareness
+        - dss.write.operations
+      summary: 'DSS: /subscriptions/{id}'
+      description: Verify the existence/valdity and state of a particular subscription.
+    put:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PutSubscriptionParameters'
+        required: true
+      tags:
+      - dss
+      parameters:
+      - name: id
+        description: SubscriptionUUID of the subscription of interest.  Must be created
+          by client before `PUT` call to create AreaSubscription in DSS because the
+          client may receive a notification at that subscription before receiving
+          a response from the DSS.
+        schema:
+          $ref: '#/components/schemas/SubscriptionUUID'
+        in: path
+        required: true
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PutSubscriptionResponse'
+          description: An existing Subscription was updated successfully.
+        201:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PutSubscriptionResponse'
+          description: A new Subscription was created successfully.
+        400:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: |-
+            * One or more input parameters were missing or invalid.
+            * The request attempted to mutate the Subscription in a disallowed way.
+        401:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bearer access token was not provided in Authorization header,
+            token could not be decoded, or token was invalid.
+        403:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: |-
+            * The access token was decoded successfully but did not include a scope appropriate to this endpoint.
+            * An EntityType was specified in `types_filter` to which the scopes included in the access token do not provide access.
+        409:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: |-
+            * A Subscription with the specified ID already exists and is owned by a different client.
+            * Despite repeated attempts, the DSS was unable to update the DAR because of other simultaneous changes.
+      security:
+      - AuthFromAuthorizationAuthority:
+        - dss.read.position_reporting_entities
+        - dss.write.position_reporting_entities
+        - dss.read.airspace_awareness
+        - dss.write.operations
+        - dss.write.airspace_awareness
+      summary: 'DSS: /subscriptions/{id}'
+      description: |-
+        Create or update a subscription.  Subscription notifications are only triggered by (and contain details of) changes to Entities in the DSS; they do not involve any other data transfer such as remote ID telemetry updates.
+
+        Note that the types of content that should be sent to the created subscription depends on the scope in the provided access token.
+    delete:
+      tags:
+      - dss
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteSubscriptionResponse'
+          description: Subscription was deleted successfully.
+        400:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: One or more input parameters were missing or invalid.
+        401:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bearer access token was not provided in Authorization header,
+            token could not be decoded, or token was invalid.
+        403:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: |-
+            * The access token was decoded successfully but did not include a scope appropriate to this endpoint.
+            * The Entity does not belong to the client requesting deletion.
+        404:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Subscription could not be deleted because it could not be found.  This
+            may happen if an incorrect `location` is provided.
+        409:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Despite repeated attempts, the DSS was unable to update the
+            DAR because of other simultaneous changes.
+      security:
+      - AuthFromAuthorizationAuthority:
+        - dss.read.position_reporting_entities
+        - dss.write.position_reporting_entities
+        - dss.read.airspace_awareness
+        - dss.write.airspace_awareness
+        - dss.write.operations
+      summary: 'DSS: /subscriptions/{id}'
+      description: Delete a subscription.
+    parameters:
+    - name: id
+      description: SubscriptionUUID of the subscription of interest.
+      schema:
+        $ref: '#/components/schemas/SubscriptionUUID'
+      in: path
+      required: true
+  /flights/{id}:
+    summary: Basic operation details to meet remote ID requirements.
+    description: ""
+    get:
+      tags:
+      - p2p_rid
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetFlightsResponse'
+          description: Flight information was successfully retrieved.
+        400:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: One or more input parameters were missing or invalid.
+        401:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bearer access token was not provided in Authorization header,
+            token could not be decoded, or token was invalid.
+        403:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The access token was decoded successfully but did not include
+            a scope appropriate to this endpoint.
+        404:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The requested flight could not be found.
+      security:
+      - AuthFromAuthorizationAuthority:
+        - dss.read.position_reporting_entities
+        - dss.read.airspace_awareness
+        - dss.write.operations
+      summary: 'RID: /flights/{id}'
+      description: '`[UTM only]` This endpoint may be polled to maintain situational
+        awareness of an aircraft engaging in a UTM Operation, especially during off-nominal
+        events.'
+    parameters:
+    - name: id
+      description: Remote ID flight ID for this flight; may be obtained in general
+        /flights query.
+      schema:
+        $ref: '#/components/schemas/RIDFlightID'
+      in: path
+      required: true
+    - name: include_history
+      description: |-
+        If specified as true, include position history.  Otherwise, do not include position history.
+
+        A display provider's first poll of this endpoint for a particular view will usually request position history while follow-up polls for that same view will usually not need to request position history.
+      schema:
+        type: boolean
+      in: query
   /constraint_details/{id}:
     summary: Public Constraint Entities stored in the DSS.
     get:
@@ -1011,38 +1030,6 @@ components:
           description: Hash of an ordered list of EntitySignatures that correspond
             with the list of EntityUUIDs used to generate the `entity_ids` property
             value.
-    Altitude:
-      description: An altitude relative to the earth.
-      required:
-      - height
-      - reference
-      type: object
-      properties:
-        height:
-          anyOf:
-          - $ref: '#/components/schemas/Distance'
-          description: Distance above reference datum.
-        reference:
-          description: The reference datum above which the height is reported.
-          enum:
-          - WGS84
-    Distance:
-      title: Distance
-      description: Representation of a linear distance.
-      required:
-      - value
-      - units
-      type: object
-      properties:
-        value:
-          format: float
-          type: number
-          example: 19.5
-        units:
-          enum:
-          - m
-          - ft
-          example: m
     Volume3D:
       description: A three-dimensional geographic volume consisting of a vertically-extruded
         polygon.
@@ -1111,33 +1098,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/EntitySummary'
-    PutSubscriptionParameters:
-      description: Parameters for a request to create or update a subscription in
-        the DSS.
-      required:
-      - extents
-      - url
-      type: object
-      properties:
-        extents:
-          anyOf:
-          - $ref: '#/components/schemas/Volume3D'
-          description: The geographic extents of the volume to subscribe to.
-        expiry:
-          format: date-time
-          description: This subscription will automatically be deleted after this
-            time if it has not been refreshed by then.  If not specified when creating
-            a subscription with a UTM scope, this subscription will be automatically
-            deleted if it hasn't been used for a certain amount of time.  If not specified
-            when creating a subscription without a UTM scope (such as for PositionReporting
-            Entities), this value will be automatically set TODO hours in the future.
-          type: string
-        url:
-          anyOf:
-          - $ref: '#/components/schemas/EntityDetailsURL'
-          description: Other clients must call this endpoint with created/updated
-            Entity details when requested by the DSS (requested when they change the
-            airspace in the associated cells).
     GetSubscriptionsResponse:
       description: Response to DSS query for subscriptions in a particular area.
       required:
@@ -1210,71 +1170,6 @@ components:
       pattern: ^[0-9a-zA-Z+\/]{43}=$
       type: string
       example: d8NoNy0cPAd7D3b8Qb0DSzcrBVJElwBfmqVcytIoWsk=
-    InternalEntitySummary:
-      description: The information about an Entity that the DSS stores internally
-        and synchronizes between different DSS instances.
-      required:
-      - summary
-      - affected_cells
-      type: object
-      properties:
-        summary:
-          anyOf:
-          - $ref: '#/components/schemas/EntitySummary'
-          description: Information about this Entity accessible outside the DSS.
-        signature:
-          anyOf:
-          - $ref: '#/components/schemas/EntitySignature'
-          description: Provided by client upon declaration of a UTM Entity.  Used
-            to check the validity of a Key provided for airspace that includes this
-            EntitySummary, and to ensure proper version incrementation upon Entity
-            updates.
-        affected_cells:
-          description: Ensure consistent mutation and deletion of EntitySummaries
-            in/from the DSS in the off-nominal case where a DSS client declares an
-            Entity in one area, but then deletes it from a slightly different area.  This
-            would otherwise leave behind a now-invalid Entity declaration in the cells
-            included in the creation area but omitted from the deletion area.
-          type: array
-          items:
-            $ref: '#/components/schemas/DARCellID'
-        subscription:
-          anyOf:
-          - $ref: '#/components/schemas/SubscriptionUUID'
-          description: A subscription created automatically for this EntitySummary.  If
-            no subscription was provided upon creation of an Entity that requires
-            airspace awareness, the DSS will create an appropriate AreaSubscription
-            to provide flight-critical notifications like rogue aircraft or UVRs.  This
-            automatic subscription is not necessary for Position Reporting Entities.
-    Latitude:
-      format: double
-      description: Degrees of latitude north of the equator.
-      maximum: 90
-      exclusiveMaximum: false
-      minimum: -90
-      exclusiveMinimum: false
-      type: number
-      example: 34.123
-    Longitude:
-      format: double
-      description: Degrees of longitude east of the Prime Meridian.
-      maximum: -180
-      exclusiveMaximum: false
-      minimum: 180
-      exclusiveMinimum: false
-      type: number
-      example: -118.456
-    LatLngPoint:
-      description: Point on the earth's surface.
-      required:
-      - lat
-      - lng
-      type: object
-      properties:
-        lat:
-          $ref: '#/components/schemas/Latitude'
-        lng:
-          $ref: '#/components/schemas/Longitude'
     PutSubscriptionResponse:
       description: Response for a request to create or update a subscription.
       required:
@@ -1612,73 +1507,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/EntityUUID'
-    InternalSubscription:
-      description: The information about a Subscription that the DSS stores internally
-        and synchronizes between different DSS instances.
-      required:
-      - subscription
-      - affected_cells
-      - scopes
-      type: object
-      properties:
-        subscription:
-          anyOf:
-          - $ref: '#/components/schemas/Subscription'
-          description: Publicly-accessible information about the subscription.
-        affected_cells:
-          description: Ensure consistent mutation and deletion of subscriptions in/from
-            the DSS in the off-nominal case where a DSS client creates a subscription
-            in one area, but then deletes it from a slightly different area.  This
-            would otherwise leave behind a now-invalid subscription in the cells included
-            in the creation area but omitted from the deletion area.
-          type: array
-          items:
-            $ref: '#/components/schemas/DARCellID'
-    Subscription:
-      description: Specification of a geographic area that a client is interested
-        in on an ongoing basis (e.g., “planning area”).  Internal to the DSS.
-      required:
-      - id
-      - url
-      - notification_index
-      - owner
-      type: object
-      properties:
-        id:
-          anyOf:
-          - $ref: '#/components/schemas/SubscriptionUUID'
-          description: Unique identifier for this subscription.
-        owner:
-          description: Assigned by the DSS based on creating client’s ID (via access
-            token).  Used for restricting mutation and deletion operations to owner.
-          type: string
-          example: myuss
-        scopes:
-          description: Authorization scopes used to create this subscription; used
-            to filter which Entity changes will prompt notifications to be sent to
-            this subscription.
-          type: array
-          items:
-            $ref: '#/components/schemas/AuthorizationScope'
-        url:
-          anyOf:
-          - $ref: '#/components/schemas/EntityDetailsURL'
-          description: Other clients must call this endpoint with created/updated
-            Entity details when requested by the DSS (requested when they change the
-            airspace in the associated cells).
-        notification_index:
-          $ref: '#/components/schemas/SubscriptionNotificationIndex'
-        expires:
-          format: date-time
-          description: If set, this subscription will be automatically removed after
-            this time.
-          type: string
-        last_used:
-          format: date-time
-          description: Used to automatically delete stale UTM subscriptions (subscriptions
-            not used to create or modify any Key-requiring Entities in the recent
-            past).
-          type: string
     EntitySignature:
       title: EntitySignature
       description: A token associated with a particular UTM Entity+version created
@@ -1867,55 +1695,6 @@ components:
           $ref: '#/components/schemas/EntityDetailsURL'
         details:
           $ref: '#/components/schemas/DSSEntityDetails'
-    EntityDetails:
-      description: Detailed specification of obstacle, thing, or region of special
-        significance in the airspace (Constraint or Operation are concrete/specific
-        types of Entities). Note that this data is not stored in the DSS; only with
-        the clients. Note that this may be expanded to include other types of volume-based
-        entities in the airspace.
-      required:
-      - id
-      - type
-      type: object
-      properties:
-        id:
-          anyOf:
-          - $ref: '#/components/schemas/EntityUUID'
-          description: Unique identifier for this entity.  Created by client.
-        type:
-          $ref: '#/components/schemas/EntityType'
-        volumes:
-          description: Volumes that wholly contain the Entity while being as small
-            as practical.  This field is required unless the Entity `type` is `PositionReporting`.
-          type: array
-          items:
-            $ref: '#/components/schemas/Volume4D'
-        position_reporting:
-          anyOf:
-          - $ref: '#/components/schemas/PositionReportingDetails'
-          description: If this Entity is a PositionReporting Entity, this property
-            is required and contains details about the PositionReporting Entity.
-        constraint:
-          anyOf:
-          - $ref: '#/components/schemas/ConstraintDetails'
-          description: If this Entity is a Constraint, this property is required and
-            contains details about the Constraint.
-        operation:
-          anyOf:
-          - $ref: '#/components/schemas/OperationDetails'
-          description: If this Entity is an Operation, this property is required and
-            contains details about the Operation.
-        awareness_provider:
-          anyOf:
-          - $ref: '#/components/schemas/AirspaceAwarenessProviderDetails'
-          description: If this Entity is an airspace awareness provider, this property
-            is required and contains details about that provider.
-        signature:
-          anyOf:
-          - $ref: '#/components/schemas/EntitySignature'
-          description: Signature for this version of this Entity.  Includes information
-            about the version of this Entity.  This property is required unless Entity
-            `type` is `PositionReporting`.
     SpeedAccuracy:
       description: |-
         This is the same enumeration scale and values from ADS-B NACv.
@@ -1984,107 +1763,13 @@ components:
             deltas" between aircraft.  This value is provided in meters and must have
             a minimum resolution of 1 meter.
           type: number
-    RIDAircraftState:
-      description: State of an aircraft for the purposes of remote ID.
-      required:
-      - timestamp
-      - timestamp_accuracy
-      - lat
-      - lng
-      - alt
-      - accuracy_h
-      - accuracy_v
-      - speed
-      - vertical_speed
-      - track
-      - speed_accuracy
-      type: object
-      properties:
-        timestamp:
-          format: date-time
-          description: Time at which this state was valid.  This may be the time coming
-            from the source, such as a GPS, or the time when the system computes the
-            values using an algorithm such as an Extended Kalman Filter (EKF).  Timestamp
-            must be expressed with a minimum resolution of 1/10th of a second.
-          type: string
-        timestamp_accuracy:
-          format: float
-          description: Declaration of timestamp accuracy in seconds, precise to at
-            least 10ths of a second, to determine time of applicability.
-          minimum: 0
-          exclusiveMinimum: false
-          type: number
-        operational_status:
-          $ref: '#/components/schemas/RIDOperationalStatus'
-        position:
-          $ref: '#/components/schemas/RIDAircraftPosition'
-        track:
-          format: float
-          description: Direction of flight expressed as a "True North-based" ground
-            track angle.  This value is provided in degrees East of North with a minimum
-            resolution of 1 degree.
-          maximum: 360
-          exclusiveMaximum: true
-          minimum: 0
-          exclusiveMinimum: false
-          type: number
-        speed:
-          format: float
-          description: Ground speed of flight in meters per second.  Minimum resolution
-            of 0.25 m/s.
-          minimum: 0
-          exclusiveMinimum: false
-          type: number
-          example: 1.9
-        speed_accuracy:
-          anyOf:
-          - $ref: '#/components/schemas/SpeedAccuracy'
-          description: Accuracy of horizontal ground speed.
-        vertical_speed:
-          format: float
-          description: Speed up (vertically) WGS84-HAE, m/s.
-          type: number
-          example: 0.2
-        height:
-          $ref: '#/components/schemas/RIDHeight'
-        group_radius:
-          format: float
-          description: Farthest horizontal distance from reported group location at
-            which an aircraft in the group may be located (meters).
-          minimum: 0
-          exclusiveMinimum: true
-          type: number
-        group_ceiling:
-          format: float
-          description: Maximum altitude (meters WGS84-HAE) of Group Operation
-          type: number
-        group_floor:
-          format: float
-          description: Minimum altitude (meters WGS84-HAE) of Group Operation.  If
-            not specified, ground level shall be assumed.
-          type: number
     GeoPolygonString:
       description: |-
         Plain-string representation of a geographic polygon consisting of at least three geographic points describing a closed polygon on the earth.  Each point consists of latitude,longitude in degrees.  Points are also comma-delimited, so this parameter will look like `lat1,lng1,lat2,lng2,lat3,lng3,...`  Latitude values must fall in the range [-90, 90] and longitude values must fall in the range [-180, 180].
+
         All of the requirements and clarifications for GeoPolygon apply to GeoPolygonString as well.
       pattern: ^(?:-?\d{1,3}(?:\.\d*)?,){5}-?\d{1,3}(?:\.\d*)?(?:(?:,-?\d{1,3}(?:\.\d*)?){2})*$
       type: string
-    GeoPolygon:
-      description: |-
-        An enclosed area on the earth.  The bounding edges of this polygon shall be the shortest paths between connected vertices.  This means, for instance, that the edge between two points both defined at a particular latitude is not generally contained at that latitude.
-        The winding order shall be interpreted as the order which produces the smaller area.
-        The path between two vertices shall be the shortest possible path between those vertices.
-        Edges may not cross.
-        Vertices may not be duplicated.  In particular, the final polygon vertex shall not be identical to the first vertex.
-      required:
-      - vertices
-      type: object
-      properties:
-        vertices:
-          minLength: 3
-          type: array
-          items:
-            $ref: '#/components/schemas/LatLngPoint'
     RIDHeight:
       description: A relative altitude for the purposes of remote ID.
       required:
@@ -2103,39 +1788,6 @@ components:
           - TakeoffLocation
           - GroundLevel
           type: string
-    RIDFlight:
-      description: Description of a remote ID flight.
-      required:
-      - id
-      - aircraft_type
-      type: object
-      properties:
-        id:
-          $ref: '#/components/schemas/RIDFlightID'
-        aircraft_type:
-          anyOf:
-          - $ref: '#/components/schemas/RIDAircraftType'
-          description: Generic type of aircraft.
-        current_state:
-          anyOf:
-          - $ref: '#/components/schemas/RIDAircraftState'
-          description: The most up-to-date state of the aircraft.  Required unless
-            `volumes` is specified.
-        volumes:
-          description: The set of spacetime volumes the aircraft is within.  Required
-            if `current_state` is not specified.  The fields `time_start` and `time_end`
-            are required if `current_state` is not specified.
-          type: array
-          items:
-            $ref: '#/components/schemas/Volume4D'
-        position_history:
-          description: |-
-            A short history of recent aircraft movement, specified only when `include_history` is true.  If `volumes` is not specified and `include_history` is true, then this field is required.
-
-            Under no circumstances should more than 60 seconds of history be included.  A full 60 seconds of most recent history (excluding current position) is required, or as much history is available if there is less than 60 seconds of history.  This history does not need to include the current position.  The entries in this list should be in descending order according to time.
-          type: array
-          items:
-            $ref: '#/components/schemas/RIDHistoricalAircraftPosition'
     DARNodeConfiguration:
       description: A CockroachDB node that will participate in the DAR.
       required:
@@ -2423,6 +2075,364 @@ components:
           anyOf:
           - $ref: '#/components/schemas/EntityDetails'
           description: Current representation of the affected Entity.
+    Latitude:
+      format: double
+      description: Degrees of latitude north of the equator, with reference to the
+        WGS84 ellipsoid.
+      maximum: 90
+      exclusiveMaximum: false
+      minimum: -90
+      exclusiveMinimum: false
+      type: number
+      example: 34.123
+    Longitude:
+      format: double
+      description: Degrees of longitude east of the Prime Meridian, with reference
+        to the WGS84 ellipsoid.
+      maximum: -180
+      exclusiveMaximum: false
+      minimum: 180
+      exclusiveMinimum: false
+      type: number
+      example: -118.456
+    LatLngPoint:
+      description: Point on the earth's surface.
+      required:
+      - lat
+      - lng
+      type: object
+      properties:
+        lng:
+          $ref: '#/components/schemas/Longitude'
+        lat:
+          $ref: '#/components/schemas/Latitude'
+    RIDAircraftState:
+      description: State of an aircraft for the purposes of remote ID.
+      required:
+      - timestamp
+      - timestamp_accuracy
+      - accuracy_h
+      - accuracy_v
+      - speed
+      - vertical_speed
+      - track
+      - speed_accuracy
+      - position
+      type: object
+      properties:
+        timestamp:
+          format: date-time
+          description: Time at which this state was valid.  This may be the time coming
+            from the source, such as a GPS, or the time when the system computes the
+            values using an algorithm such as an Extended Kalman Filter (EKF).  Timestamp
+            must be expressed with a minimum resolution of 1/10th of a second.
+          type: string
+        timestamp_accuracy:
+          format: float
+          description: Declaration of timestamp accuracy in seconds, precise to at
+            least 10ths of a second, to determine time of applicability.
+          minimum: 0
+          exclusiveMinimum: false
+          type: number
+        operational_status:
+          $ref: '#/components/schemas/RIDOperationalStatus'
+        position:
+          $ref: '#/components/schemas/RIDAircraftPosition'
+        track:
+          format: float
+          description: Direction of flight expressed as a "True North-based" ground
+            track angle.  This value is provided in degrees East of North with a minimum
+            resolution of 1 degree.
+          maximum: 360
+          exclusiveMaximum: true
+          minimum: 0
+          exclusiveMinimum: false
+          type: number
+        speed:
+          format: float
+          description: Ground speed of flight in meters per second.  Minimum resolution
+            of 0.25 m/s.
+          minimum: 0
+          exclusiveMinimum: false
+          type: number
+          example: 1.9
+        speed_accuracy:
+          anyOf:
+          - $ref: '#/components/schemas/SpeedAccuracy'
+          description: Accuracy of horizontal ground speed.
+        vertical_speed:
+          format: float
+          description: Speed up (vertically) WGS84-HAE, m/s.
+          type: number
+          example: 0.2
+        height:
+          $ref: '#/components/schemas/RIDHeight'
+        group_radius:
+          format: float
+          description: Farthest horizontal distance from reported group location at
+            which an aircraft in the group may be located (meters).
+          minimum: 0
+          exclusiveMinimum: true
+          type: number
+        group_ceiling:
+          format: float
+          description: Maximum altitude (meters WGS84-HAE) of Group Operation
+          type: number
+        group_floor:
+          format: float
+          description: Minimum altitude (meters WGS84-HAE) of Group Operation.  If
+            not specified, ground level shall be assumed.
+          type: number
+    Altitude:
+      format: float
+      description: An altitude, in meters, above the WGS84 ellipsoid.
+      type: number
+      example: 19.5
+    Subscription:
+      description: Specification of a geographic area that a client is interested
+        in on an ongoing basis (e.g., “planning area”).  Internal to the DSS.
+      required:
+      - id
+      - url
+      - notification_index
+      - owner
+      type: object
+      properties:
+        id:
+          anyOf:
+          - $ref: '#/components/schemas/SubscriptionUUID'
+          description: Unique identifier for this subscription.
+        owner:
+          description: Assigned by the DSS based on creating client’s ID (via access
+            token).  Used for restricting mutation and deletion operations to owner.
+          type: string
+          example: myuss
+        url:
+          anyOf:
+          - $ref: '#/components/schemas/EntityDetailsURL'
+          description: Other clients must call this endpoint with created/updated
+            Entity details when requested by the DSS (requested when they change the
+            airspace in the associated cells).
+        notification_index:
+          $ref: '#/components/schemas/SubscriptionNotificationIndex'
+        expires:
+          format: date-time
+          description: If set, this subscription will be automatically removed after
+            this time.
+          type: string
+        last_used:
+          format: date-time
+          description: Used to automatically delete stale UTM subscriptions (subscriptions
+            not used to create or modify any Key-requiring Entities in the recent
+            past).
+          type: string
+        types_filter:
+          description: EntityTypes whose creation, mutation, or deletion should trigger
+            notifications for this Subscription.
+          minItems: 1
+          type: array
+          items:
+            $ref: '#/components/schemas/EntityType'
+    InternalEntitySummary:
+      description: The information about an Entity that the DSS stores internally
+        and synchronizes between different DSS instances.
+      required:
+      - summary
+      - affected_cells
+      type: object
+      properties:
+        summary:
+          anyOf:
+          - $ref: '#/components/schemas/EntitySummary'
+          description: Information about this Entity accessible outside the DSS.
+        signature:
+          anyOf:
+          - $ref: '#/components/schemas/EntitySignature'
+          description: Provided by client upon declaration of a UTM Entity.  Used
+            to check the validity of a Key provided for airspace that includes this
+            EntitySummary, and to ensure proper version incrementation upon Entity
+            updates.
+        affected_cells:
+          description: Ensure consistent mutation and deletion of EntitySummaries
+            in/from the DSS in the off-nominal case where a DSS client declares an
+            Entity in one area, but then deletes it from a slightly different area.  This
+            would otherwise leave behind a now-invalid Entity declaration in the cells
+            included in the creation area but omitted from the deletion area.
+          minItems: 1
+          type: array
+          items:
+            $ref: '#/components/schemas/DARCellID'
+        subscription:
+          anyOf:
+          - $ref: '#/components/schemas/SubscriptionUUID'
+          description: A subscription created automatically for this EntitySummary.  If
+            no subscription was provided upon creation of an Entity that requires
+            airspace awareness, the DSS will create an appropriate AreaSubscription
+            to provide flight-critical notifications like rogue aircraft or UVRs.  This
+            automatic subscription is not necessary for Position Reporting Entities.
+    InternalSubscription:
+      description: The information about a Subscription that the DSS stores internally
+        and synchronizes between different DSS instances.
+      required:
+      - subscription
+      - affected_cells
+      - scopes
+      type: object
+      properties:
+        subscription:
+          anyOf:
+          - $ref: '#/components/schemas/Subscription'
+          description: Publicly-accessible information about the subscription.
+        affected_cells:
+          description: Ensure consistent mutation and deletion of subscriptions in/from
+            the DSS in the off-nominal case where a DSS client creates a subscription
+            in one area, but then deletes it from a slightly different area.  This
+            would otherwise leave behind a now-invalid subscription in the cells included
+            in the creation area but omitted from the deletion area.
+          minItems: 1
+          type: array
+          items:
+            $ref: '#/components/schemas/DARCellID'
+    EntityDetails:
+      description: Detailed specification of obstacle, thing, or region of special
+        significance in the airspace (Constraint or Operation are concrete/specific
+        types of Entities). Note that this data is not stored in the DSS; only with
+        the clients. Note that this may be expanded to include other types of volume-based
+        entities in the airspace.
+      required:
+      - id
+      - type
+      type: object
+      properties:
+        id:
+          anyOf:
+          - $ref: '#/components/schemas/EntityUUID'
+          description: Unique identifier for this entity.  Created by client.
+        type:
+          $ref: '#/components/schemas/EntityType'
+        volumes:
+          description: Volumes that wholly contain the Entity while being as small
+            as practical.  This field is required unless the Entity `type` is `PositionReporting`.
+          minItems: 1
+          type: array
+          items:
+            $ref: '#/components/schemas/Volume4D'
+        position_reporting:
+          anyOf:
+          - $ref: '#/components/schemas/PositionReportingDetails'
+          description: If this Entity is a PositionReporting Entity, this property
+            is required and contains details about the PositionReporting Entity.
+        constraint:
+          anyOf:
+          - $ref: '#/components/schemas/ConstraintDetails'
+          description: If this Entity is a Constraint, this property is required and
+            contains details about the Constraint.
+        operation:
+          anyOf:
+          - $ref: '#/components/schemas/OperationDetails'
+          description: If this Entity is an Operation, this property is required and
+            contains details about the Operation.
+        awareness_provider:
+          anyOf:
+          - $ref: '#/components/schemas/AirspaceAwarenessProviderDetails'
+          description: If this Entity is an airspace awareness provider, this property
+            is required and contains details about that provider.
+        signature:
+          anyOf:
+          - $ref: '#/components/schemas/EntitySignature'
+          description: Signature for this version of this Entity.  Includes information
+            about the version of this Entity.  This property is required unless Entity
+            `type` is `PositionReporting`.
+    RIDFlight:
+      description: Description of a remote ID flight.
+      required:
+      - id
+      - aircraft_type
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/RIDFlightID'
+        aircraft_type:
+          anyOf:
+          - $ref: '#/components/schemas/RIDAircraftType'
+          description: Generic type of aircraft.
+        current_state:
+          anyOf:
+          - $ref: '#/components/schemas/RIDAircraftState'
+          description: The most up-to-date state of the aircraft.  Required unless
+            `volumes` is specified.
+        volumes:
+          description: The set of spacetime volumes the aircraft is within.  Required
+            if `current_state` is not specified.  The fields `time_start` and `time_end`
+            are required if `current_state` is not specified.
+          minItems: 1
+          type: array
+          items:
+            $ref: '#/components/schemas/Volume4D'
+        position_history:
+          description: |-
+            A short history of recent aircraft movement, specified only when `include_history` is true.  If `volumes` is not specified and `include_history` is true, then this field is required.
+
+            Under no circumstances should more than 60 seconds of history be included.  A full 60 seconds of most recent history (excluding current position) is required, or as much history is available if there is less than 60 seconds of history.  This history does not need to include the current position.  The entries in this list should be in descending order according to time.
+          type: array
+          items:
+            $ref: '#/components/schemas/RIDHistoricalAircraftPosition'
+    GeoPolygon:
+      description: |-
+        An enclosed area on the earth.
+        The bounding edges of this polygon shall be the shortest paths between connected vertices.  This means, for instance, that the edge between two points both defined at a particular latitude is not generally contained at that latitude.
+        The winding order shall be interpreted as the order which produces the smaller area.
+        The path between two vertices shall be the shortest possible path between those vertices.
+        Edges may not cross.
+        Vertices may not be duplicated.  In particular, the final polygon vertex shall not be identical to the first vertex.
+      required:
+      - vertices
+      type: object
+      properties:
+        vertices:
+          minItems: 3
+          type: array
+          items:
+            $ref: '#/components/schemas/LatLngPoint'
+    PutSubscriptionParameters:
+      description: Parameters for a request to create or update a subscription in
+        the DSS.
+      required:
+      - extents
+      - url
+      type: object
+      properties:
+        extents:
+          anyOf:
+          - $ref: '#/components/schemas/Volume3D'
+          description: The geographic extents of the volume to subscribe to.
+        expiry:
+          format: date-time
+          description: This subscription will automatically be deleted after this
+            time if it has not been refreshed by then.  If not specified when creating
+            a subscription with a UTM scope, this subscription will be automatically
+            deleted if it hasn't been used for a certain amount of time.  If not specified
+            when creating a subscription without a UTM scope (such as for PositionReporting
+            Entities), this value will be automatically set the maximum allowed Subscription
+            duration in the future.
+          type: string
+        url:
+          anyOf:
+          - $ref: '#/components/schemas/EntityDetailsURL'
+          description: Other clients will be instructed by the DSS to call this endpoint
+            with created/updated Entity details when they create, update, or delete
+            an Entity relevant to this Subscription.
+        types_filter:
+          description: EntityTypes whose creation, mutation, or deletion should trigger
+            notifications for this Subscription.
+          minItems: 1
+          type: array
+          items:
+            $ref: '#/components/schemas/EntityType'
+    EntityTypeListString:
+      description: String of comma-separated list of EntityTypes.
+      pattern: ^(?:PositionReporting|Constraint|AirspaceAwarenessProvider|Operation)(?:,(?:PositionReporting|Constraint|AirspaceAwarenessProvider|Operation)){0,3}$
+      type: string
   securitySchemes:
     AuthFromAuthorizationAuthority:
       flows:

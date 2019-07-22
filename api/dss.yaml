@@ -104,7 +104,7 @@ paths:
         - dss.read.airspace_awareness
       summary: 'DSS: /entities'
       description: |-
-        Retrieve references to all visible airspace Entities in the DAR for a given area during the given time.  Note that some Entities returned will lie entirely outside the requested area because an individual DAR cell cannot filter EntitySummaries by exact geography.
+        Retrieve references to all visible airspace Entities in the DAR for a given area during the given time.  Note that some Entities returned will lie entirely outside the requested area because an individual DAR cell cannot filter EntityReferences by exact geography.
 
         Only PositionReporting Entities shall be visible to clients providing the `dss.read.position_reporting_entities` scope.
   /flights:
@@ -273,14 +273,14 @@ paths:
 
         The assumption for this intercommunication synchronization is that the DAR data schema will consist of the following key-value mappings:
         * DARCellID -> {List of EntityUUID, List of SubscriptionUUID}
-        * EntityUUID -> InternalEntitySummary
+        * EntityUUID -> InternalEntityReference
         * SubscriptionUUID -> InternalSubscription
         * EntityUUID -> InternalConstraint `[UTM only]`
   /configuration:
     summary: Configuration of a DAR participant's portion of the DAR.
     get:
       tags:
-      - dar
+      - config
       responses:
         200:
           content:
@@ -380,7 +380,7 @@ paths:
         The `details_url` field in the request body is required for all Entities except PositionReporting Entities.
 
         `PositionReporting Entities`:
-        Authorization scope `dss.write.position_reporting_entities` is required.  The DSS assumes the USS has already added the appropriate retention period to operation end time in EntitySummary's `time_end` extents field before storing it.  Updating `time_start` is not allowed if it is before the current time.
+        Authorization scope `dss.write.position_reporting_entities` is required.  The DSS assumes the USS has already added the appropriate retention period to operation end time in EntityReference's `time_end` extents field before storing it.  Updating `time_start` is not allowed if it is before the current time.
 
         `Operation Entities`:
         Authorization scope `dss.write.operation_entities` is required.
@@ -443,77 +443,6 @@ paths:
         $ref: '#/components/schemas/EntityUUID'
       in: path
       required: true
-  /subscriptions:
-    summary: Subscriptions for airspace updates to a volume of interest.  Only Subscriptions
-      belonging to the caller are returned.
-    get:
-      tags:
-      - dss
-      parameters:
-      - name: area
-        description: The area in which to search for Subscriptions.  Some Subscriptions
-          near this area but wholly outside it may also be returned.
-        schema:
-          $ref: '#/components/schemas/GeoPolygonString'
-        in: query
-        required: true
-      - name: min_altitude
-        description: If specified, indicates non-interest in subscriptions for volumes
-          entirely below this altitude in meters above the WGS84 datum.
-        schema:
-          type: number
-        in: query
-      - name: max_altitude
-        description: If specified, indicates non-interest in subscriptions for volumes
-          entirely above this altitude in meters above the WGS84 datum.
-        schema:
-          type: number
-        in: query
-      responses:
-        200:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GetSubscriptionsResponse'
-          description: Subscriptions were retrieved successfully.
-        400:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: One or more input parameters were missing or invalid.
-        401:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: Bearer access token was not provided in Authorization header,
-            token could not be decoded, or token was invalid.
-        403:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: The access token was decoded successfully but did not include
-            a scope appropriate to this endpoint.
-        413:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: The requested area was too large.
-      security:
-      - AuthFromAuthorizationAuthority:
-        - dss.read.position_reporting_entities
-        - dss.write.position_reporting_entities
-        - dss.read.airspace_awareness
-        - dss.write.airspace_awareness
-        - dss.write.operations
-      summary: 'DSS: /subscriptions'
-      description: Retrieve subscriptions intersecting an area of interest.  Subscription
-        notifications are only triggered by (and contain details of) changes to Entities
-        in the DSS; they do not involve any other data transfer such as remote ID
-        telemetry updates.
   /entity_details/{id}:
     summary: Details of a UTM Entity.
     get:
@@ -666,6 +595,82 @@ paths:
         $ref: '#/components/schemas/EntityUUID'
       in: path
       required: true
+  /subscriptions:
+    summary: Subscriptions for airspace updates to a volume of interest.
+    get:
+      tags:
+      - dss
+      parameters:
+      - name: area
+        description: The area in which to search for Subscriptions.  Some Subscriptions
+          near this area but wholly outside it may also be returned.
+        schema:
+          $ref: '#/components/schemas/GeoPolygonString'
+        in: query
+        required: true
+      - name: min_altitude
+        description: If specified, indicates non-interest in subscriptions for volumes
+          entirely below this altitude in meters above the WGS84 datum.
+        schema:
+          type: number
+        in: query
+      - name: max_altitude
+        description: If specified, indicates non-interest in subscriptions for volumes
+          entirely above this altitude in meters above the WGS84 datum.
+        schema:
+          type: number
+        in: query
+      - name: types_filter
+        description: If specified, only return Subscriptions that are capable of producing
+          notifications for the specified EntityTypes.
+        schema:
+          $ref: '#/components/schemas/EntityTypeListString'
+        in: query
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetSubscriptionsResponse'
+          description: Subscriptions were retrieved successfully.
+        400:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: One or more input parameters were missing or invalid.
+        401:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bearer access token was not provided in Authorization header,
+            token could not be decoded, or token was invalid.
+        403:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The access token was decoded successfully but did not include
+            a scope appropriate to this endpoint.
+        413:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The requested area was too large.
+      security:
+      - AuthFromAuthorizationAuthority:
+        - dss.read.position_reporting_entities
+        - dss.write.position_reporting_entities
+        - dss.read.airspace_awareness
+        - dss.write.airspace_awareness
+        - dss.write.operations
+      summary: 'DSS: /subscriptions'
+      description: Retrieve subscriptions intersecting an area of interest.  Subscription
+        notifications are only triggered by (and contain details of) changes to Entities
+        in the DSS; they do not involve any other data transfer such as remote ID
+        telemetry updates.  Only Subscriptions belonging to the caller are returned.
   /subscriptions/{id}:
     summary: Subscription for airspace updates to a volume of interest.
     get:
@@ -1086,16 +1091,18 @@ components:
           description: The endpoint that the client mutating the airspace should provide
             the updated Entity to.
     GetEntitiesResponse:
-      description: Response to DSS query for summaries of Entities in an area of interest.
+      description: Response to DSS query for references to Entities in an area of
+        interest.
       required:
       - entities
       type: object
       properties:
         entities:
-          description: Declarations/summaries of Entities in the area of interest.
+          description: Declarations/summaries/references of Entities in the area of
+            interest.
           type: array
           items:
-            $ref: '#/components/schemas/EntitySummary'
+            $ref: '#/components/schemas/EntityReference'
     GetSubscriptionsResponse:
       description: Response to DSS query for subscriptions in a particular area.
       required:
@@ -1176,11 +1183,11 @@ components:
       type: object
       properties:
         entities:
-          description: Declarations/summaries of Entities in the subscription area
-            at the time of creation/update.
+          description: Declarations/summaries/references of Entities in the subscription
+            area at the time of creation/update.
           type: array
           items:
-            $ref: '#/components/schemas/EntitySummary'
+            $ref: '#/components/schemas/EntityReference'
         subscription:
           anyOf:
           - $ref: '#/components/schemas/Subscription'
@@ -1524,7 +1531,7 @@ components:
             a client ever receives a subscription update with an EntitySignature for
             a particular EntityUUID that is smaller than the cached EntitySignature
             for that EntityUUID, that subscription update should be ignored.  If the
-            DSS ever receives a request to mutate an EntitySummary with an EntitySignature
+            DSS ever receives a request to mutate an EntityReference with an EntitySignature
             containing a version that is not greater than the current DSS contents,
             the request will be rejected.
           type: integer
@@ -1532,7 +1539,8 @@ components:
           anyOf:
           - $ref: '#/components/schemas/Token'
           description: Unique value associated with a specific version of a specific
-            Entity.
+            Entity.  Token value may not be reused for any other Entity versions;
+            it must change each time the Entity changes.
     PutEntityParameters:
       description: Parameters for a request to create or update a reference to an
         Entity in the DSS.
@@ -1581,7 +1589,7 @@ components:
       description: Response to a request to create or update a reference to an Entity
         in the DSS.
       required:
-      - entity_summary
+      - entity_reference
       - subscribers
       type: object
       properties:
@@ -1592,10 +1600,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/SubscriberToNotify'
-        entity_summary:
+        entity_reference:
           anyOf:
-          - $ref: '#/components/schemas/EntitySummary'
-          description: Resulting summary stored in DSS.
+          - $ref: '#/components/schemas/EntityReference'
+          description: Resulting reference stored in DSS.
     DeleteSubscriptionResponse:
       description: Response for a successful request to delete an Subscription.
       required:
@@ -1615,7 +1623,7 @@ components:
       properties:
         entity:
           anyOf:
-          - $ref: '#/components/schemas/EntitySummary'
+          - $ref: '#/components/schemas/EntityReference'
           description: DSS reference to Entity that was just deleted.
         subscribers:
           description: DSS subscribers that this client now has the obligation to
@@ -1646,53 +1654,6 @@ components:
           - $ref: '#/components/schemas/DeconflictionKey'
           description: Proof that the client is aware of (and has deconflicted with)
             all relevant Entities.  Required unless Operation is declared rogue.
-    EntitySummary:
-      description: |-
-        A declaration of an Entity.  The DSS reports only these EntitySummaries and clients must obtain full details peer-to-peer from the creator/owner.
-
-        `details_url` is required for all Entity types except `PositionReporting`.
-      required:
-      - id
-      - owner
-      - type
-      - version
-      type: object
-      properties:
-        id:
-          anyOf:
-          - $ref: '#/components/schemas/EntityUUID'
-          description: Unique identifier for this object.  Created by client, and
-            client must respond to a peer request for details about this Entity according
-            to this ID.
-        owner:
-          description: Assigned by the DSS based on creating client’s ID (via access
-            token).  Used for restricting mutation and deletion operations to owner,
-            and only requiring EntitySignatures for unowned Entities.
-          type: string
-          example: myuss
-        type:
-          $ref: '#/components/schemas/EntityType'
-        version:
-          format: int32
-          description: Extracted from the EntitySignature if specified, or assigned
-            and incremented automatically otherwise.  When increased, indicates that
-            an Entity has changed (allows another client client to optimize full Entity
-            retrieval for only those Entities which have changed since client’s cache).
-          type: integer
-        time_end:
-          format: date-time
-          description: A planning client does not need to consider this Entity when
-            considering time periods that will start after time_end.
-          type: string
-        time_start:
-          format: date-time
-          description: A planning client does not need to consider this Entity when
-            considering time periods that will end before start_time.
-          type: string
-        details_url:
-          $ref: '#/components/schemas/EntityDetailsURL'
-        details:
-          $ref: '#/components/schemas/DSSEntityDetails'
     SpeedAccuracy:
       description: |-
         This is the same enumeration scale and values from ADS-B NACv.
@@ -1814,9 +1775,9 @@ components:
       properties:
         dar_configurations:
           description: |-
-            Time-bounded DAR configurations, active and intended, for this organization.  This list may be empty if the provider is not providing a DSS.
+            Time-bounded DAR configurations, active and intended, for this organization.  This list may be empty if the provider is not a DAR participant.
 
-            A configuration should not take effect until it has been accessible to all other approved providers at this endpoint for at least 36 hours, or all approved providers have agreed to a shorter notice period for the new configuration.
+            A configuration should not take effect until it has been accessible to all other approved providers at this endpoint for at least [DARConfigNoticePeriod], or all approved providers have agreed to a shorter notice period for the new configuration.
           type: array
           items:
             $ref: '#/components/schemas/DARConfiguration'
@@ -1893,7 +1854,7 @@ components:
     DARConstraintUpdate:
       description: |-
         `[UTM only]` Updated data for the full details of a Constraint Entity stored internally in the DAR within the DSS.  Must be exchanged in a standardized format between DSS instances to maintain a DSS airspace representation.
-        Note that a corresponding DAREntityUpdate should accompany this DARConstraintUpdate in a DAR transaction as this update merely updates the details and not its EntitySummary.
+        Note that a corresponding DAREntityUpdate should accompany this DARConstraintUpdate in a DAR transaction as this update merely updates the details and not its EntityReference.
       required:
       - id
       type: object
@@ -1933,7 +1894,7 @@ components:
           type: integer
         entity:
           anyOf:
-          - $ref: '#/components/schemas/InternalEntitySummary'
+          - $ref: '#/components/schemas/InternalEntityReference'
           description: New full representation of Entity.  If omitted, the Entity
             will be deleted from the DAR.
     DARSubscriptionUpdate:
@@ -1959,38 +1920,6 @@ components:
           - $ref: '#/components/schemas/InternalSubscription'
           description: New full representation of Subscription.  If omitted, the Subscription
             will be deleted from the DAR.
-    DARConfiguration:
-      description: Configuration of the portion of the DAR hosted by this organization.
-      required:
-      - time_effective
-      - dar_nodes
-      - environment
-      type: object
-      properties:
-        time_effective:
-          format: date-time
-          description: The datetime at which this configuration became effective,
-            or will become effective.
-          type: string
-        time_end:
-          format: date-time
-          description: The datetime at which this configuration will no longer apply.  If
-            omitted, this configuration is intended to be active indefinitely.
-          type: string
-        dar_nodes:
-          description: List of all CockroachDB nodes participating in the DAR hosted
-            by this provider.
-          type: array
-          items:
-            $ref: '#/components/schemas/DARNodeConfiguration'
-        environment:
-          description: Environment to which this configuration applies.  The production
-            environment shall have the value `production` and the test environment
-            shall have the value `test`, but other values are allowed as well.  All
-            CockroachDB nodes in a named environment are expected to interact with
-            all other providers' nodes in that environment.
-          type: string
-          example: production
     ConstraintDetails:
       description: Constraint-specific Entity details.
       type: object
@@ -2231,43 +2160,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/EntityType'
-    InternalEntitySummary:
-      description: The information about an Entity that the DSS stores internally
-        and synchronizes between different DSS instances.
-      required:
-      - summary
-      - affected_cells
-      type: object
-      properties:
-        summary:
-          anyOf:
-          - $ref: '#/components/schemas/EntitySummary'
-          description: Information about this Entity accessible outside the DSS.
-        signature:
-          anyOf:
-          - $ref: '#/components/schemas/EntitySignature'
-          description: Provided by client upon declaration of a UTM Entity.  Used
-            to check the validity of a Key provided for airspace that includes this
-            EntitySummary, and to ensure proper version incrementation upon Entity
-            updates.
-        affected_cells:
-          description: Ensure consistent mutation and deletion of EntitySummaries
-            in/from the DSS in the off-nominal case where a DSS client declares an
-            Entity in one area, but then deletes it from a slightly different area.  This
-            would otherwise leave behind a now-invalid Entity declaration in the cells
-            included in the creation area but omitted from the deletion area.
-          minItems: 1
-          type: array
-          items:
-            $ref: '#/components/schemas/DARCellID'
-        subscription:
-          anyOf:
-          - $ref: '#/components/schemas/SubscriptionUUID'
-          description: A subscription created automatically for this EntitySummary.  If
-            no subscription was provided upon creation of an Entity that requires
-            airspace awareness, the DSS will create an appropriate AreaSubscription
-            to provide flight-critical notifications like rogue aircraft or UVRs.  This
-            automatic subscription is not necessary for Position Reporting Entities.
     InternalSubscription:
       description: The information about a Subscription that the DSS stores internally
         and synchronizes between different DSS instances.
@@ -2431,6 +2323,131 @@ components:
       description: String of comma-separated list of EntityTypes.
       pattern: ^(?:PositionReporting|Constraint|AirspaceAwarenessProvider|Operation)(?:,(?:PositionReporting|Constraint|AirspaceAwarenessProvider|Operation)){0,3}$
       type: string
+    DARConfiguration:
+      description: Configuration of the portion of the DAR hosted by this organization.
+      required:
+      - time_effective
+      - dar_nodes
+      - environment
+      - ca_certificate_urls
+      type: object
+      properties:
+        time_effective:
+          format: date-time
+          description: The datetime at which this configuration became effective,
+            or will become effective.
+          type: string
+        time_end:
+          format: date-time
+          description: The datetime at which this configuration will no longer apply.  If
+            omitted, this configuration is intended to be active indefinitely.
+          type: string
+        dar_nodes:
+          description: |-
+            List of CockroachDB nodes participating in the DAR hosted by this provider.
+
+            This may be a complete list of nodes, a load balancer address, or a subset of nodes acting as "seed nodes".  If a load balancer is not specified, at least three entries are recommended.
+          minItems: 1
+          type: array
+          items:
+            $ref: '#/components/schemas/DARNodeConfiguration'
+        environment:
+          description: Environment to which this configuration applies.  The production
+            environment shall have the value `production` and the test environment
+            shall have the value `test`, but other values are allowed as well.  All
+            CockroachDB nodes in a named environment are expected to interact with
+            all other providers' nodes in that environment.
+          type: string
+          example: production
+        ca_certificate_urls:
+          description: The URLs at which CA certificates for this provider may be
+            obtained.  These certificates will be used to validate node certificates
+            signed by the associated key.
+          minItems: 1
+          type: array
+          items:
+            $ref: '#/components/schemas/URL'
+    EntityReference:
+      description: |-
+        A declaration of an Entity.  The DSS reports only these EntityReferences and clients must obtain full details peer-to-peer from the creator/owner.
+
+        `details_url` is required for all Entity types except `PositionReporting`.
+      required:
+      - id
+      - owner
+      - type
+      - version
+      type: object
+      properties:
+        id:
+          anyOf:
+          - $ref: '#/components/schemas/EntityUUID'
+          description: Unique identifier for this object.  Created by client, and
+            client must respond to a peer request for details about this Entity according
+            to this ID.
+        owner:
+          description: Assigned by the DSS based on creating client’s ID (via access
+            token).  Used for restricting mutation and deletion operations to owner,
+            and only requiring EntitySignatures for unowned Entities.
+          type: string
+          example: myuss
+        type:
+          $ref: '#/components/schemas/EntityType'
+        version:
+          format: int32
+          description: Extracted from the EntitySignature if specified, or assigned
+            and incremented automatically otherwise.  When increased, indicates that
+            an Entity has changed (allows another client client to optimize full Entity
+            retrieval for only those Entities which have changed since client’s cache).
+          type: integer
+        time_end:
+          format: date-time
+          description: A planning client does not need to consider this Entity when
+            considering time periods that will start after time_end.
+          type: string
+        time_start:
+          format: date-time
+          description: A planning client does not need to consider this Entity when
+            considering time periods that will end before start_time.
+          type: string
+        details_url:
+          $ref: '#/components/schemas/EntityDetailsURL'
+        details:
+          $ref: '#/components/schemas/DSSEntityDetails'
+    InternalEntityReference:
+      description: The information about an Entity that the DSS stores internally
+        and synchronizes between different DSS instances.
+      required:
+      - reference
+      - affected_cells
+      type: object
+      properties:
+        signature:
+          anyOf:
+          - $ref: '#/components/schemas/EntitySignature'
+          description: Provided by client upon declaration of a UTM Entity.  Used
+            to check the validity of a Key provided for airspace that includes this
+            EntityReference, and to ensure proper version incrementation upon Entity
+            updates.
+        affected_cells:
+          description: Ensure consistent mutation and deletion of EntityReferences
+            in/from the DSS.
+          minItems: 1
+          type: array
+          items:
+            $ref: '#/components/schemas/DARCellID'
+        subscription:
+          anyOf:
+          - $ref: '#/components/schemas/SubscriptionUUID'
+          description: A subscription created automatically for this EntityReference.  If
+            no subscription was provided upon creation of an Entity that requires
+            airspace awareness, the DSS will create an appropriate AreaSubscription
+            to provide flight-critical notifications like rogue aircraft or UVRs.  This
+            automatic subscription is not necessary for Position Reporting Entities.
+        reference:
+          anyOf:
+          - $ref: '#/components/schemas/EntityReference'
+          description: Information about this Entity accessible outside the DSS.
   securitySchemes:
     AuthFromAuthorizationAuthority:
       flows:
@@ -2492,3 +2509,5 @@ tags:
 - name: p2p_entities
   description: Endpoints exposed by DSS clients for peer-peer communication of Entity
     details, including DSS-triggered subscription notifications.
+- name: config
+  description: Communication necessary to coordinate interoperable system configurations.

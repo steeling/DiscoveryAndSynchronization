@@ -775,6 +775,20 @@ paths:
           description: |-
             * A Subscription with the specified ID already exists and is owned by a different client.
             * Despite repeated attempts, the DSS was unable to update the DAR because of other simultaneous changes.
+        429:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Client already has too many Subscriptions in the area where
+            a new Subscription was requested.  To correct this problem, the client
+            may query GET /subscriptions to see which Subscriptions are counting against
+            their limit.  This problem should not generally be encountered because
+            the Subscription limit should be above what any consumer that reasonably
+            aggregates their Subscriptions should request.  But, a Subscription limit
+            is necessary to bound performance requirements for DSS instances and would
+            likely be hit by, e.g., a large remote ID display provider that created
+            a Subscription for each of their display client users' views.
       security:
       - AuthFromAuthorizationAuthority:
         - dss.read.position_reporting_entities

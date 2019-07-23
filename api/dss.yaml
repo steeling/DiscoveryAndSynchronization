@@ -203,7 +203,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DeleteEntityResponse'
+                $ref: '#/components/schemas/DeleteEntityReferenceResponse'
           description: Reference to Entity was successfully deleted from DSS.
         400:
           content:
@@ -970,7 +970,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DeleteEntityResponse'
+                $ref: '#/components/schemas/DeleteEntityReferenceResponse'
           description: Constraint was successfully deleted from DSS.
       security:
       - AuthFromAuthorizationAuthority:
@@ -1188,12 +1188,6 @@ components:
       pattern: '[^\/]$'
       type: string
       example: https://example.com/flights
-    SignatureDictionary:
-      description: Collection of mappings between EntityUUID and EntitySignature.  Keys
-        are string representations of `EntityUUIDs`.
-      type: object
-      additionalProperties:
-        $ref: '#/components/schemas/EntitySignature'
     SubscriptionNotificationIndex:
       format: int32
       description: Tracks the notifications sent for a subscription so the subscriber
@@ -1493,11 +1487,12 @@ components:
     EntitySignature:
       title: EntitySignature
       description: A token associated with a particular UTM Entity+version created
-        by the client who created the associated Entity.  The EntitySignature is provided
-        to the DSS to store privately and then compared against entries in a Key provided
-        to mutate the airspace.  The EntitySignature is also provided by the client
-        whenever that client transmits the details of the Entity (either via GET,
-        or via a subscription notification).
+        by the DSS upon creation or modification of an EntityReference and provided
+        to the client creating or modifying the EntityReference.  The EntitySignature
+        is stored privately by the DSS and then compared against entries in a Key
+        provided to mutate the airspace.  The EntitySignature is also provided by
+        the client whenever that client transmits the details of the Entity (either
+        via GET, or via a subscription notification).
       required:
       - token
       - version
@@ -1505,13 +1500,10 @@ components:
       properties:
         version:
           format: int32
-          description: This version must increase each time an Entity is modified.  If
+          description: This version increases each time an Entity is modified.  If
             a client ever receives a subscription update with an EntitySignature for
             a particular EntityUUID that is smaller than the cached EntitySignature
-            for that EntityUUID, that subscription update should be ignored.  If the
-            DSS ever receives a request to mutate an EntityReference with an EntitySignature
-            containing a version that is not greater than the current DSS contents,
-            the request will be rejected.
+            for that EntityUUID, that subscription update should be ignored.
           type: integer
         token:
           anyOf:
@@ -1529,24 +1521,6 @@ components:
           anyOf:
           - $ref: '#/components/schemas/Subscription'
           description: The Subscription which was deleted.
-    DeleteEntityResponse:
-      description: Response for a request to delete an Entity.
-      required:
-      - entity
-      - subscribers
-      type: object
-      properties:
-        entity:
-          anyOf:
-          - $ref: '#/components/schemas/EntityReference'
-          description: DSS reference to Entity that was just deleted.
-        subscribers:
-          description: DSS subscribers that this client now has the obligation to
-            notify of the Entity just deleted.  This client must call DELETE for each
-            provided URL according to the `/entity_details` path API.
-          type: array
-          items:
-            $ref: '#/components/schemas/SubscriberToNotify'
     RIDOperationalStatus:
       description: Indicates operational status of associated aircraft.
       enum:
@@ -2112,6 +2086,7 @@ components:
       required:
       - id
       - type
+      - signature
       type: object
       properties:
         id:
@@ -2151,8 +2126,8 @@ components:
           anyOf:
           - $ref: '#/components/schemas/EntitySignature'
           description: Signature for this version of this Entity.  Includes information
-            about the version of this Entity.  This property is required unless Entity
-            `type` is `PositionReporting`.
+            about the version of this Entity.  Obtained from the DSS upon creation
+            or modification of an EntityReference.
     RIDFlight:
       description: Description of a remote ID flight.
       required:
@@ -2280,10 +2255,10 @@ components:
           $ref: '#/components/schemas/EntityType'
         version:
           format: int32
-          description: Extracted from the EntitySignature if specified, or assigned
-            and incremented automatically otherwise.  When increased, indicates that
-            an Entity has changed (allows another client client to optimize full Entity
-            retrieval for only those Entities which have changed since client’s cache).
+          description: Assigned and incremented automatically by the DSS, included
+            in EntitySignatures.  When increased, indicates that an Entity has changed
+            (allows another client client to optimize full Entity retrieval for only
+            those Entities which have changed since client’s cache).
           type: integer
         time_end:
           format: date-time
@@ -2310,10 +2285,10 @@ components:
         signature:
           anyOf:
           - $ref: '#/components/schemas/EntitySignature'
-          description: Provided by client upon declaration of a UTM Entity.  Used
-            to check the validity of a Key provided for airspace that includes this
-            EntityReference, and to ensure proper version incrementation upon Entity
-            updates.
+          description: Created by DSS upon creation or modification of an EntityReference,
+            and provided to the requesting client to provide to other client when
+            they request details about the referenced Entity.  Used to check the validity
+            of a Key provided for airspace that includes this EntityReference.
         affected_cells:
           description: Ensure consistent mutation and deletion of EntityReferences
             in/from the DSS.
@@ -2337,78 +2312,15 @@ components:
       description: Response to DSS query for references to Entities in an area of
         interest.
       required:
-      - entities
+      - entity_references
       type: object
       properties:
-        entities:
+        entity_references:
           description: Declarations/summaries/references of Entities in the area of
             interest.
           type: array
           items:
             $ref: '#/components/schemas/EntityReference'
-    PutEntityReferenceParameters:
-      description: Parameters for a request to create or update a reference to an
-        Entity in the DSS.
-      required:
-      - extents
-      - type
-      type: object
-      properties:
-        extents:
-          anyOf:
-          - $ref: '#/components/schemas/Volume4D'
-          description: The bounding spacetime extents of this Entity.  Start and end
-            times must be specified.  Spatial information is translated into DAR cells
-            internally by the DSS then discarded.
-        type:
-          $ref: '#/components/schemas/EntityType'
-        details_url:
-          anyOf:
-          - $ref: '#/components/schemas/EntityDetailsURL'
-          description: The URL at which details about an Entity may be exchanged.  See
-            the `/entity_details` path for specification of this endpoint.  This field
-            is required when `type` is not `PositionReporting`.
-        signature:
-          anyOf:
-          - $ref: '#/components/schemas/EntitySignature'
-          description: |-
-            Signature for this version of this Entity.  May be used to verify that peer clients have retrieved the details of this Entity before being allowed to place deconflicted Entities into the airspace.
-            This field is required when `type` is not `PositionReporting`.
-        position_reporting:
-          anyOf:
-          - $ref: '#/components/schemas/PutPositionReportingParameters'
-          description: This field is required when `type` is `PositionReporting`.
-        operation:
-          anyOf:
-          - $ref: '#/components/schemas/PutOperationParameters'
-          description: This field is required when `type` is `Operation`.
-        constraint:
-          anyOf:
-          - $ref: '#/components/schemas/PutConstraintParameters'
-          description: This field is required when `type` is `Constraint`.
-        awareness_provider:
-          anyOf:
-          - $ref: '#/components/schemas/PutAirspaceAwarenessProviderDetails'
-          description: This field is required when `type` is `AirspaceAwarenessProvider`.
-    PutEntityReferenceResponse:
-      description: Response to a request to create or update a reference to an Entity
-        in the DSS.
-      required:
-      - entity_reference
-      - subscribers
-      type: object
-      properties:
-        subscribers:
-          description: DSS subscribers that this client now has the obligation to
-            notify of the Entity changes just made.  This client must call PUT for
-            each provided URL according to the `/entity_details` path API.
-          type: array
-          items:
-            $ref: '#/components/schemas/SubscriberToNotify'
-        entity_reference:
-          anyOf:
-          - $ref: '#/components/schemas/EntityReference'
-          description: Resulting reference stored in DSS.
     PutPositionReportingParameters:
       description: Additional parameters for a request to create or update a reference
         to a PositionReporting Entity in the DSS.
@@ -2445,6 +2357,111 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/EntityType'
+    PutEntityReferenceParameters:
+      description: Parameters for a request to create or update a reference to an
+        Entity in the DSS.
+      required:
+      - extents
+      - type
+      type: object
+      properties:
+        extents:
+          anyOf:
+          - $ref: '#/components/schemas/Volume4D'
+          description: The bounding spacetime extents of this Entity.  Start and end
+            times must be specified.  Spatial information is translated into DAR cells
+            internally by the DSS then discarded.
+        type:
+          $ref: '#/components/schemas/EntityType'
+        details_url:
+          anyOf:
+          - $ref: '#/components/schemas/EntityDetailsURL'
+          description: The URL at which details about an Entity may be exchanged.  See
+            the `/entity_details` path for specification of this endpoint.  This field
+            is required when `type` is not `PositionReporting`.
+        position_reporting:
+          anyOf:
+          - $ref: '#/components/schemas/PutPositionReportingParameters'
+          description: This field is required when `type` is `PositionReporting`.
+        operation:
+          anyOf:
+          - $ref: '#/components/schemas/PutOperationParameters'
+          description: This field is required when `type` is `Operation`.
+        constraint:
+          anyOf:
+          - $ref: '#/components/schemas/PutConstraintParameters'
+          description: This field is required when `type` is `Constraint`.
+        awareness_provider:
+          anyOf:
+          - $ref: '#/components/schemas/PutAirspaceAwarenessProviderDetails'
+          description: This field is required when `type` is `AirspaceAwarenessProvider`.
+    PutEntityReferenceResponse:
+      description: Response to a request to create or update a reference to an Entity
+        in the DSS.
+      required:
+      - entity_reference
+      - subscribers
+      - signature
+      type: object
+      properties:
+        subscribers:
+          description: DSS subscribers that this client now has the obligation to
+            notify of the Entity changes just made.  This client must call PUT for
+            each provided URL according to the `/entity_details` path API.
+          type: array
+          items:
+            $ref: '#/components/schemas/SubscriberToNotify'
+        entity_reference:
+          anyOf:
+          - $ref: '#/components/schemas/EntityReference'
+          description: Resulting reference stored in DSS.
+        signature:
+          anyOf:
+          - $ref: '#/components/schemas/EntitySignature'
+          description: Signature for this version of this Entity.  Must be provided
+            to peer clients so they can verify that they have retrieved the details
+            of this Entity.  This is required before they are allowed to place deconflicted
+            Entities into the airspace.
+    SignatureEntry:
+      description: Mapping between an EntityUUID and an EntitySignature.
+      required:
+      - id
+      - sig
+      type: object
+      properties:
+        id:
+          $ref: '#/components/schemas/EntityUUID'
+          description: ""
+        sig:
+          $ref: '#/components/schemas/EntitySignature'
+          description: ""
+    SignatureDictionary:
+      description: Collection of mappings between EntityUUID and EntitySignature.
+      type: array
+      items:
+        $ref: '#/components/schemas/SignatureEntry'
+    DeleteEntityReferenceResponse:
+      description: Response for a request to delete an Entity.
+      required:
+      - entity_reference
+      - subscribers
+      type: object
+      properties:
+        subscribers:
+          description: DSS subscribers that this client now has the obligation to
+            notify of the Entity just deleted.  This client must call DELETE for each
+            provided URL according to the `/entity_details` path API.
+          type: array
+          items:
+            $ref: '#/components/schemas/SubscriberToNotify'
+        entity_reference:
+          anyOf:
+          - $ref: '#/components/schemas/EntityReference'
+          description: DSS reference to Entity that was just deleted.
+        signature:
+          anyOf:
+          - $ref: '#/components/schemas/EntitySignature'
+          description: Signature for the version of the EntityReference just deleted.
   securitySchemes:
     AuthFromAuthorizationAuthority:
       flows:

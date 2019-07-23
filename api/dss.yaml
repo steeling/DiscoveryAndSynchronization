@@ -67,7 +67,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GetEntitiesResponse'
+                $ref: '#/components/schemas/GetEntityReferencesResponse'
           description: Declarations of Entities were successfully retrieved.
         400:
           content:
@@ -114,7 +114,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PutEntityParameters'
+              $ref: '#/components/schemas/PutEntityReferenceParameters'
         required: true
       tags:
       - dss
@@ -134,14 +134,14 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PutEntityResponse'
+                $ref: '#/components/schemas/PutEntityReferenceResponse'
           description: An existing Entity reference was updated successfully in the
             DSS.
         201:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PutEntityResponse'
+                $ref: '#/components/schemas/PutEntityReferenceResponse'
           description: A new Entity reference was created successfully in the DSS.
         400:
           content:
@@ -937,7 +937,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PutEntityParameters'
+              $ref: '#/components/schemas/PutEntityReferenceParameters'
         required: true
       tags:
       - dss_miniuss
@@ -946,14 +946,14 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PutEntityResponse'
+                $ref: '#/components/schemas/PutEntityReferenceResponse'
           description: Existing Constraint was successfully updated, and its details
             will be served from the DSS.
         201:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PutEntityResponse'
+                $ref: '#/components/schemas/PutEntityReferenceResponse'
           description: New Constraint was successfully added to the airspace.
       security:
       - AuthFromAuthorizationAuthority:
@@ -1090,19 +1090,6 @@ components:
           - $ref: '#/components/schemas/EntityDetailsURL'
           description: The endpoint that the client mutating the airspace should provide
             the updated Entity to.
-    GetEntitiesResponse:
-      description: Response to DSS query for references to Entities in an area of
-        interest.
-      required:
-      - entities
-      type: object
-      properties:
-        entities:
-          description: Declarations/summaries/references of Entities in the area of
-            interest.
-          type: array
-          items:
-            $ref: '#/components/schemas/EntityReference'
     GetSubscriptionsResponse:
       description: Response to DSS query for subscriptions in a particular area.
       required:
@@ -1541,69 +1528,6 @@ components:
           description: Unique value associated with a specific version of a specific
             Entity.  Token value may not be reused for any other Entity versions;
             it must change each time the Entity changes.
-    PutEntityParameters:
-      description: Parameters for a request to create or update a reference to an
-        Entity in the DSS.
-      required:
-      - extents
-      - type
-      type: object
-      properties:
-        extents:
-          anyOf:
-          - $ref: '#/components/schemas/Volume4D'
-          description: The bounding spacetime extents of this Entity.  Start and end
-            times must be specified.  Spatial information is translated into DAR cells
-            internally by the DSS then discarded.
-        type:
-          $ref: '#/components/schemas/EntityType'
-        details_url:
-          anyOf:
-          - $ref: '#/components/schemas/EntityDetailsURL'
-          description: The URL at which details about an Entity may be exchanged.  See
-            the `/entity_details` path for specification of this endpoint.  This field
-            is required when `type` is not `PositionReporting`.
-        signature:
-          anyOf:
-          - $ref: '#/components/schemas/EntitySignature'
-          description: |-
-            Signature for this version of this Entity.  May be used to verify that peer clients have retrieved the details of this Entity before being allowed to place deconflicted Entities into the airspace.
-            This field is required when `type` is not `PositionReporting`.
-        position_reporting:
-          anyOf:
-          - $ref: '#/components/schemas/PutPositionReportingDetails'
-          description: This field is required when `type` is `PositionReporting`.
-        operation:
-          anyOf:
-          - $ref: '#/components/schemas/PutOperationParameters'
-          description: This field is required when `type` is `Operation`.
-        constraint:
-          anyOf:
-          - $ref: '#/components/schemas/PutConstraintParameters'
-          description: This field is required when `type` is `Constraint`.
-        awareness_provider:
-          anyOf:
-          - $ref: '#/components/schemas/PutAirspaceAwarenessProviderDetails'
-          description: This field is required when `type` is `AirspaceAwarenessProvider`.
-    PutEntityResponse:
-      description: Response to a request to create or update a reference to an Entity
-        in the DSS.
-      required:
-      - entity_reference
-      - subscribers
-      type: object
-      properties:
-        subscribers:
-          description: DSS subscribers that this client now has the obligation to
-            notify of the Entity changes just made.  This client must call PUT for
-            each provided URL according to the `/entity_details` path API.
-          type: array
-          items:
-            $ref: '#/components/schemas/SubscriberToNotify'
-        entity_reference:
-          anyOf:
-          - $ref: '#/components/schemas/EntityReference'
-          description: Resulting reference stored in DSS.
     DeleteSubscriptionResponse:
       description: Response for a successful request to delete an Subscription.
       required:
@@ -2448,6 +2372,82 @@ components:
           anyOf:
           - $ref: '#/components/schemas/EntityReference'
           description: Information about this Entity accessible outside the DSS.
+    GetEntityReferencesResponse:
+      description: Response to DSS query for references to Entities in an area of
+        interest.
+      required:
+      - entities
+      type: object
+      properties:
+        entities:
+          description: Declarations/summaries/references of Entities in the area of
+            interest.
+          type: array
+          items:
+            $ref: '#/components/schemas/EntityReference'
+    PutEntityReferenceParameters:
+      description: Parameters for a request to create or update a reference to an
+        Entity in the DSS.
+      required:
+      - extents
+      - type
+      type: object
+      properties:
+        extents:
+          anyOf:
+          - $ref: '#/components/schemas/Volume4D'
+          description: The bounding spacetime extents of this Entity.  Start and end
+            times must be specified.  Spatial information is translated into DAR cells
+            internally by the DSS then discarded.
+        type:
+          $ref: '#/components/schemas/EntityType'
+        details_url:
+          anyOf:
+          - $ref: '#/components/schemas/EntityDetailsURL'
+          description: The URL at which details about an Entity may be exchanged.  See
+            the `/entity_details` path for specification of this endpoint.  This field
+            is required when `type` is not `PositionReporting`.
+        signature:
+          anyOf:
+          - $ref: '#/components/schemas/EntitySignature'
+          description: |-
+            Signature for this version of this Entity.  May be used to verify that peer clients have retrieved the details of this Entity before being allowed to place deconflicted Entities into the airspace.
+            This field is required when `type` is not `PositionReporting`.
+        position_reporting:
+          anyOf:
+          - $ref: '#/components/schemas/PutPositionReportingDetails'
+          description: This field is required when `type` is `PositionReporting`.
+        operation:
+          anyOf:
+          - $ref: '#/components/schemas/PutOperationParameters'
+          description: This field is required when `type` is `Operation`.
+        constraint:
+          anyOf:
+          - $ref: '#/components/schemas/PutConstraintParameters'
+          description: This field is required when `type` is `Constraint`.
+        awareness_provider:
+          anyOf:
+          - $ref: '#/components/schemas/PutAirspaceAwarenessProviderDetails'
+          description: This field is required when `type` is `AirspaceAwarenessProvider`.
+    PutEntityReferenceResponse:
+      description: Response to a request to create or update a reference to an Entity
+        in the DSS.
+      required:
+      - entity_reference
+      - subscribers
+      type: object
+      properties:
+        subscribers:
+          description: DSS subscribers that this client now has the obligation to
+            notify of the Entity changes just made.  This client must call PUT for
+            each provided URL according to the `/entity_details` path API.
+          type: array
+          items:
+            $ref: '#/components/schemas/SubscriberToNotify'
+        entity_reference:
+          anyOf:
+          - $ref: '#/components/schemas/EntityReference'
+          description: Resulting reference stored in DSS.
   securitySchemes:
     AuthFromAuthorizationAuthority:
       flows:
@@ -2512,7 +2512,7 @@ tags:
 - name: config
   description: Communication necessary to coordinate interoperable system configurations.
 - name: dss_miniuss
-  description: USS-like endpoints hosted by DSS providers.  These endpoints would
-    be used by a USS that does not want to host their own Constraint details, instead
-    having the DSS act as a mini USS to host those details in addition to managing
-    the (separate) EntityReference.
+  description: '`[UTM only]` USS-like endpoints hosted by DSS providers.  These endpoints
+    would be used by a USS that does not want to host their own Constraint details,
+    instead having the DSS act as a mini USS to host those details in addition to
+    managing the (separate) EntityReference.'

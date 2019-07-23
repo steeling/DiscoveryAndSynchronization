@@ -12,7 +12,7 @@ info:
     * All elements marked `[UTM only]`
     * Everything mentioning Constraint, Operation, AirspaceAwareness, Deconfliction, or Key
 paths:
-  /entities:
+  /entity_references:
     summary: Set of airspace Entities in the DSS.
     description: ""
     get:
@@ -102,11 +102,158 @@ paths:
         - dss.write.airspace_awareness
         - dss.write.operations
         - dss.read.airspace_awareness
-      summary: 'DSS: /entities'
+      summary: 'DSS: /entity_references'
       description: |-
         Retrieve references to all visible airspace Entities in the DAR for a given area during the given time.  Note that some Entities returned will lie entirely outside the requested area because an individual DAR cell cannot filter EntityReferences by exact geography.
 
         Only PositionReporting Entities shall be visible to clients providing the `dss.read.position_reporting_entities` scope.
+  /entity_references/{id}:
+    summary: An Entity reference in the DSS (does not include all Entity details).
+    put:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PutEntityParameters'
+        required: true
+      tags:
+      - dss
+      parameters:
+      - name: id
+        description: EntityUUID of the Entity.  If creating (declaring for the first
+          time) an Entity that follows the details workflow (this is optional for
+          PositionReporting Entities), the client must be ready to respond to requests
+          for details about it as soon as the PUT request is issued (before a response
+          is received from the DSS).
+        schema:
+          $ref: '#/components/schemas/EntityUUID'
+        in: path
+        required: true
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PutEntityResponse'
+          description: An existing Entity reference was updated successfully in the
+            DSS.
+        201:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PutEntityResponse'
+          description: A new Entity reference was created successfully in the DSS.
+        400:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: |-
+            * One or more input parameters were missing or invalid.
+            * The request attempted to mutate the Entity in a disallowed way (e.g., changing the Entity type).
+        401:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bearer access token was not provided in Authorization header,
+            token could not be decoded, or token was invalid.
+        403:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The access token was decoded successfully but did not include
+            a scope appropriate to this endpoint.
+        409:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: |-
+            * An Entity with the specified ID already exists and is owned by a different client.
+            * Despite repeated attempts, the DSS was unable to update the DAR because of other simultaneous changes.
+        413:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The area of the Entity is too large.
+      security:
+      - AuthFromAuthorizationAuthority:
+        - dss.write.position_reporting_entities
+        - dss.write.airspace_awareness
+        - dss.write.operations
+      summary: 'DSS: /entity_references/{id}'
+      description: |-
+        Create or update reference to an Entity.  Unless otherwise specified, the EntityType of an existing Entity may not be changed.
+
+        The `details_url` field in the request body is required for all Entities except PositionReporting Entities.
+
+        `PositionReporting Entities`:
+        Authorization scope `dss.write.position_reporting_entities` is required.  The DSS assumes the USS has already added the appropriate retention period to operation end time in EntityReference's `time_end` extents field before storing it.  Updating `time_start` is not allowed if it is before the current time.
+
+        `Operation Entities`:
+        Authorization scope `dss.write.operation_entities` is required.
+    delete:
+      tags:
+      - dss
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteEntityResponse'
+          description: Reference to Entity was successfully deleted from DSS.
+        400:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: One or more input parameters were missing or invalid.
+        401:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bearer access token was not provided in Authorization header,
+            token could not be decoded, or token was invalid.
+        403:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: |-
+            * The access token was decoded successfully but did not include a scope appropriate to this endpoint.
+            * The Entity does not belong to the client requesting deletion.
+        404:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Entity could not be deleted because it could not be found.
+        409:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Despite repeated attempts, the DSS was unable to update the
+            DAR because of other simultaneous changes.
+      security:
+      - AuthFromAuthorizationAuthority:
+        - dss.write.position_reporting_entities
+        - dss.write.airspace_awareness
+        - dss.write.operations
+      summary: 'DSS: /entity_references/{id}'
+      description: Delete reference to an Entity.  USSs should not delete PositionReporting
+        Entities before the end of the last managed flight plus the retention period.
+    parameters:
+    - name: id
+      description: EntityUUID of the Entity.
+      schema:
+        $ref: '#/components/schemas/EntityUUID'
+      in: path
+      required: true
   /flights:
     summary: Basic operation details to meet remote ID requirements.
     description: This endpoint may be polled by remote ID display providers to display
@@ -296,153 +443,6 @@ paths:
         Retrieve all information necessary to interoperate with the portion of the DAR provided by this provider.  This endpoint will nominally only be used when a change is made to the distributed DAR system configuration.
 
         When a provider is approved by the jurisdictional authority, they will provide a URL to and endpoint with this API that the jurisdictional authority will distribute to all other providers.
-  /entities/{id}:
-    summary: An Entity reference in the DSS (does not include all Entity details).
-    put:
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PutEntityParameters'
-        required: true
-      tags:
-      - dss
-      parameters:
-      - name: id
-        description: EntityUUID of the Entity.  If creating (declaring for the first
-          time) an Entity that follows the details workflow (this is optional for
-          PositionReporting Entities), the client must be ready to respond to requests
-          for details about it as soon as the PUT request is issued (before a response
-          is received from the DSS).
-        schema:
-          $ref: '#/components/schemas/EntityUUID'
-        in: path
-        required: true
-      responses:
-        200:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PutEntityResponse'
-          description: An existing Entity reference was updated successfully in the
-            DSS.
-        201:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PutEntityResponse'
-          description: A new Entity reference was created successfully in the DSS.
-        400:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: |-
-            * One or more input parameters were missing or invalid.
-            * The request attempted to mutate the Entity in a disallowed way (e.g., changing the Entity type).
-        401:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: Bearer access token was not provided in Authorization header,
-            token could not be decoded, or token was invalid.
-        403:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: The access token was decoded successfully but did not include
-            a scope appropriate to this endpoint.
-        409:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: |-
-            * An Entity with the specified ID already exists and is owned by a different client.
-            * Despite repeated attempts, the DSS was unable to update the DAR because of other simultaneous changes.
-        413:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: The area of the Entity is too large.
-      security:
-      - AuthFromAuthorizationAuthority:
-        - dss.write.position_reporting_entities
-        - dss.write.airspace_awareness
-        - dss.write.operations
-      summary: 'DSS: /entities/{id}'
-      description: |-
-        Create or update reference to an Entity.  Unless otherwise specified, the EntityType of an existing Entity may not be changed.
-
-        The `details_url` field in the request body is required for all Entities except PositionReporting Entities.
-
-        `PositionReporting Entities`:
-        Authorization scope `dss.write.position_reporting_entities` is required.  The DSS assumes the USS has already added the appropriate retention period to operation end time in EntityReference's `time_end` extents field before storing it.  Updating `time_start` is not allowed if it is before the current time.
-
-        `Operation Entities`:
-        Authorization scope `dss.write.operation_entities` is required.
-    delete:
-      tags:
-      - dss
-      responses:
-        200:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DeleteEntityResponse'
-          description: Reference to Entity was successfully deleted from DSS.
-        400:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: One or more input parameters were missing or invalid.
-        401:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: Bearer access token was not provided in Authorization header,
-            token could not be decoded, or token was invalid.
-        403:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: |-
-            * The access token was decoded successfully but did not include a scope appropriate to this endpoint.
-            * The Entity does not belong to the client requesting deletion.
-        404:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: Entity could not be deleted because it could not be found.
-        409:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: Despite repeated attempts, the DSS was unable to update the
-            DAR because of other simultaneous changes.
-      security:
-      - AuthFromAuthorizationAuthority:
-        - dss.write.position_reporting_entities
-        - dss.write.airspace_awareness
-        - dss.write.operations
-      summary: 'DSS: /entities/{id}'
-      description: Delete reference to an Entity.  USSs should not delete PositionReporting
-        Entities before the end of the last managed flight plus the retention period.
-    parameters:
-    - name: id
-      description: EntityUUID of the Entity.
-      schema:
-        $ref: '#/components/schemas/EntityUUID'
-      in: path
-      required: true
   /entity_details/{id}:
     summary: Details of a UTM Entity.
     get:
@@ -915,7 +915,7 @@ paths:
     summary: Public Constraint Entities stored in the DSS.
     get:
       tags:
-      - dss
+      - dss_miniuss
       responses:
         200:
           content:
@@ -940,7 +940,7 @@ paths:
               $ref: '#/components/schemas/PutEntityParameters'
         required: true
       tags:
-      - dss
+      - dss_miniuss
       responses:
         200:
           content:
@@ -964,7 +964,7 @@ paths:
         by the requesting client).'
     delete:
       tags:
-      - dss
+      - dss_miniuss
       responses:
         200:
           content:
@@ -2511,3 +2511,8 @@ tags:
     details, including DSS-triggered subscription notifications.
 - name: config
   description: Communication necessary to coordinate interoperable system configurations.
+- name: dss_miniuss
+  description: USS-like endpoints hosted by DSS providers.  These endpoints would
+    be used by a USS that does not want to host their own Constraint details, instead
+    having the DSS act as a mini USS to host those details in addition to managing
+    the (separate) EntityReference.

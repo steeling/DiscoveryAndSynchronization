@@ -1261,15 +1261,6 @@ components:
           - $ref: '#/components/schemas/RIDFlightsURL'
           description: For PositionReporting Entities, this field contains the `/flights`
             URL at which the `ridclient` endpoints may be found.
-    PutPositionReportingDetails:
-      description: Additional parameters for a request to create or update a reference
-        to a PositionReporting Entity in the DSS.
-      required:
-      - flights_url
-      type: object
-      properties:
-        flights_url:
-          $ref: '#/components/schemas/RIDFlightsURL'
     EntityDetailsURL:
       anyOf:
       - $ref: '#/components/schemas/URL'
@@ -2084,6 +2075,11 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/EntityType'
+        begins:
+          format: date-time
+          description: If set, this Subscription will not generate any notifications
+            before this time.
+          type: string
     InternalSubscription:
       description: The information about a Subscription that the DSS stores internally
         and synchronizes between different DSS instances.
@@ -2208,41 +2204,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/LatLngPoint'
-    PutSubscriptionParameters:
-      description: Parameters for a request to create or update a subscription in
-        the DSS.
-      required:
-      - extents
-      - url
-      type: object
-      properties:
-        extents:
-          anyOf:
-          - $ref: '#/components/schemas/Volume3D'
-          description: The geographic extents of the volume to subscribe to.
-        expiry:
-          format: date-time
-          description: This subscription will automatically be deleted after this
-            time if it has not been refreshed by then.  If not specified when creating
-            a subscription with a UTM scope, this subscription will be automatically
-            deleted if it hasn't been used for a certain amount of time.  If not specified
-            when creating a subscription without a UTM scope (such as for PositionReporting
-            Entities), this value will be automatically set the maximum allowed Subscription
-            duration in the future.
-          type: string
-        url:
-          anyOf:
-          - $ref: '#/components/schemas/EntityDetailsURL'
-          description: Other clients will be instructed by the DSS to call this endpoint
-            with created/updated Entity details when they create, update, or delete
-            an Entity relevant to this Subscription.
-        types_filter:
-          description: EntityTypes whose creation, mutation, or deletion should trigger
-            notifications for this Subscription.
-          minItems: 1
-          type: array
-          items:
-            $ref: '#/components/schemas/EntityType'
     EntityTypeListString:
       description: String of comma-separated list of EntityTypes.
       pattern: ^(?:PositionReporting|Constraint|AirspaceAwarenessProvider|Operation)(?:,(?:PositionReporting|Constraint|AirspaceAwarenessProvider|Operation)){0,3}$
@@ -2415,7 +2376,7 @@ components:
             This field is required when `type` is not `PositionReporting`.
         position_reporting:
           anyOf:
-          - $ref: '#/components/schemas/PutPositionReportingDetails'
+          - $ref: '#/components/schemas/PutPositionReportingParameters'
           description: This field is required when `type` is `PositionReporting`.
         operation:
           anyOf:
@@ -2448,6 +2409,42 @@ components:
           anyOf:
           - $ref: '#/components/schemas/EntityReference'
           description: Resulting reference stored in DSS.
+    PutPositionReportingParameters:
+      description: Additional parameters for a request to create or update a reference
+        to a PositionReporting Entity in the DSS.
+      required:
+      - flights_url
+      type: object
+      properties:
+        flights_url:
+          $ref: '#/components/schemas/RIDFlightsURL'
+    PutSubscriptionParameters:
+      description: Parameters for a request to create or update a subscription in
+        the DSS.
+      required:
+      - extents
+      - url
+      type: object
+      properties:
+        extents:
+          anyOf:
+          - $ref: '#/components/schemas/Volume4D'
+          description: |-
+            The geographic extents of the volume to subscribe to.
+            This subscription will automatically be deleted after its end time if it has not been refreshed by then.  If end time is not specified when creating a subscription with a UTM scope, this subscription will be automatically deleted if it hasn't been used for a certain amount of time.  If end time is not specified when creating a subscription without a UTM scope (such as for PositionReporting Entities), the value will be automatically set the maximum allowed Subscription duration in the future.
+        url:
+          anyOf:
+          - $ref: '#/components/schemas/EntityDetailsURL'
+          description: Other clients will be instructed by the DSS to call this endpoint
+            with created/updated Entity details when they create, update, or delete
+            an Entity relevant to this Subscription.
+        types_filter:
+          description: EntityTypes whose creation, mutation, or deletion should trigger
+            notifications for this Subscription.
+          minItems: 1
+          type: array
+          items:
+            $ref: '#/components/schemas/EntityType'
   securitySchemes:
     AuthFromAuthorizationAuthority:
       flows:

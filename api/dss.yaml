@@ -2,7 +2,7 @@
 openapi: 3.0.2
 info:
   title: Discovery and Synchronization Service
-  version: 0.0.1
+  version: 0.0.2
   description: |-
     Interface to Discovery and Synchronization Service and service providers used by participating clients to discover and inform other service providers.
 
@@ -12,145 +12,104 @@ info:
     * All elements marked `[UTM only]`
     * Everything mentioning Constraint, Operation, AirspaceAwareness, Deconfliction, or Key
 paths:
-  /entity_references:
-    summary: Set of airspace Entities in the DSS.
-    description: ""
+  /configuration:
+    summary: Configuration of a DAR participant's portion of the DAR.
     get:
       tags:
-      - dss
-      parameters:
-      - name: area
-        description: The area in which to search for Entities.  Some Entities near
-          this area but wholly outside it may also be returned.
-        schema:
-          $ref: '#/components/schemas/GeoPolygonString'
-        in: query
-        required: true
-      - name: earliest_time
-        description: If specified, indicates non-interest in any Entities that end
-          before this time.
-        schema:
-          format: date-time
-          type: string
-        in: query
-        required: true
-      - name: latest_time
-        description: If specified, indicates non-interest in any Entities that start
-          after this time.
-        schema:
-          format: date-time
-          type: string
-        in: query
-        required: true
-      - name: min_altitude
-        description: If specified, indicates non-interest in Entities entirely below
-          this altitude in meters above the WGS84 datum.
-        schema:
-          type: number
-        in: query
-      - name: max_altitude
-        description: If specified, indicates non-interest in Entities entirely above
-          this altitude in meters above the WGS84 datum.
-        schema:
-          type: number
-        in: query
-        required: true
-      - name: types_filter
-        description: The types of Entities that should be returned from this query.  If
-          not specified, all EntityTypes visible with the provided access token will
-          be returned.
-        schema:
-          $ref: '#/components/schemas/EntityTypeListString'
-        in: query
+      - config
       responses:
         200:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GetEntityReferencesResponse'
-          description: Declarations of Entities were successfully retrieved.
+                $ref: '#/components/schemas/GetDARConfigurationResponse'
+          description: Configuration information was successfully retrieved.
+      security:
+      - AuthFromAuthorizationAuthority:
+        - dss.read.dar_configuration
+      summary: /configuration
+      description: |-
+        Retrieve all information necessary to interoperate with the portion of the DAR provided by this provider.  This endpoint will nominally only be used when a change is made to the distributed DAR system configuration.
+
+        When a provider is approved by the jurisdictional authority, they will provide a URL to and endpoint with this API that the jurisdictional authority will distribute to all other providers.
+  /dss/constraints/{id}:
+    summary: Public Constraint Entities stored in the DSS.
+    put:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PutOperationReferenceParameters'
+        required: true
+      tags:
+      - dss_miniuss
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PutConstraintResponse'
+          description: Existing Constraint was successfully updated, and its details
+            will be served from the DSS.
+        201:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PutConstraintResponse'
+          description: New Constraint was successfully added to the airspace.
+      security:
+      - AuthFromAuthorizationAuthority:
+        - dss.write.constraints
+      summary: /dss/constraints/{id}
+      description: '`[UTM only]` Publish a new public Constraint that will be stored
+        in the DAR and exposed by DSS instances (full information does not need to
+        be hosted by the requesting client).  The DSS will call PUT `/dss/references/constraints/{id}`
+        internally, so the client does not need to call that endpoint in addition
+        to this one.'
+    delete:
+      tags:
+      - dss_miniuss
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteConstraintResponse'
+          description: Constraint was successfully deleted from DSS.
+      security:
+      - AuthFromAuthorizationAuthority:
+        - dss.write.constraints
+      summary: /dss/constraints/{id}
+      description: '`[UTM only]` Delete a public Constraint stored in the DAR and
+        served from the DSS.  The DSS will call DELETE `/dss/references/constraints/{id}`
+        internally, so the client does not need to call that endpoint in addition
+        to this one.'
+    parameters:
+    - name: id
+      description: EntityUUID of the Constraint.
+      schema:
+        type: string
+      in: path
+      required: true
+  /uss/constraints/{id}:
+    summary: '`[UTM only]` Full information of a UTM Constraint.'
+    get:
+      tags:
+      - p2p_utm
+      - dss_miniuss
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Constraint'
+          description: Full information of the Constraint was retrieved successfully.
         400:
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: One or more input parameters were missing or invalid.
-        401:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: Bearer access token was not provided in Authorization header,
-            token could not be decoded, or token was invalid.
-        403:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: |-
-            * The access token was decoded successfully but did not include a scope appropriate to this endpoint.
-            * An EntityType was specified in `types_filter` to which the scopes included in the access token do not provide access.
-        413:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: The requested area was too large.
-      security:
-      - AuthFromAuthorizationAuthority:
-        - dss.read.position_reporting_entities
-        - dss.write.airspace_awareness
-        - dss.write.operations
-        - dss.read.airspace_awareness
-      summary: 'DSS: /entity_references'
-      description: |-
-        Retrieve references to all visible airspace Entities in the DAR for a given area during the given time.  Note that some Entities returned will lie entirely outside the requested area because an individual DAR cell cannot filter EntityReferences by exact geography.
-
-        Only PositionReporting Entities shall be visible to clients providing the `dss.read.position_reporting_entities` scope.
-  /entity_references/{id}:
-    summary: An Entity reference in the DSS (does not include all Entity details).
-    put:
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PutEntityReferenceParameters'
-        required: true
-      tags:
-      - dss
-      parameters:
-      - name: id
-        description: EntityUUID of the Entity.  If creating (declaring for the first
-          time) an Entity that follows the details workflow (this is optional for
-          PositionReporting Entities), the client must be ready to respond to requests
-          for details about it as soon as the PUT request is issued (before a response
-          is received from the DSS).
-        schema:
-          $ref: '#/components/schemas/EntityUUID'
-        in: path
-        required: true
-      responses:
-        200:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PutEntityReferenceResponse'
-          description: An existing Entity reference was updated successfully in the
-            DSS.
-        201:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PutEntityReferenceResponse'
-          description: A new Entity reference was created successfully in the DSS.
-        400:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: |-
-            * One or more input parameters were missing or invalid.
-            * The request attempted to mutate the Entity in a disallowed way (e.g., changing the Entity type).
         401:
           content:
             application/json:
@@ -165,52 +124,39 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
           description: The access token was decoded successfully but did not include
             a scope appropriate to this endpoint.
-        409:
+        404:
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-          description: |-
-            * An Entity with the specified ID already exists and is owned by a different client.
-            * Despite repeated attempts, the DSS was unable to update the DAR because of other simultaneous changes.
-        413:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: The area of the Entity is too large.
+          description: The requested Entity could not be found.
       security:
       - AuthFromAuthorizationAuthority:
-        - dss.write.position_reporting_entities
-        - dss.write.airspace_awareness
-        - dss.write.operations
-      summary: 'DSS: /entity_references/{id}'
-      description: |-
-        Create or update reference to an Entity.  Unless otherwise specified, the EntityType of an existing Entity may not be changed.
-
-        The `details_url` field in the request body is required for all Entities except PositionReporting Entities.
-
-        `PositionReporting Entities`:
-        Authorization scope `dss.write.position_reporting_entities` is required.  The DSS assumes the USS has already added the appropriate retention period to operation end time in EntityReference's `time_end` extents field before storing it.  Updating `time_start` is not allowed if it is before the current time.
-
-        `Operation Entities`:
-        Authorization scope `dss.write.operation_entities` is required.
-    delete:
+        - dss.read.constraints
+      summary: /uss/constraints/{id}
+      description: '`[UTM only]` Retrieve full information of a Constraint owned by
+        the client.  The DSS, in its role as a mini-USS hosting the full information
+        for some non-private Constraints, would also host this endpoint.'
+    put:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PutConstraintNotificationParameters'
+        required: true
       tags:
-      - dss
+      - p2p_utm
       responses:
-        200:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DeleteEntityReferenceResponse'
-          description: Reference to Entity was successfully deleted from DSS.
+        204:
+          description: Full information of Constraint was received successfully.
         400:
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-          description: One or more input parameters were missing or invalid.
+          description: |-
+            * One or more parameters were missing or invalid.
+            * The Entity could not be parsed, or contains illegal data.
         401:
           content:
             application/json:
@@ -225,42 +171,70 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
           description: |-
             * The access token was decoded successfully but did not include a scope appropriate to this endpoint.
-            * The Entity does not belong to the client requesting deletion.
-        404:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: Entity could not be deleted because it could not be found.
+            * The client identified in the access token is not the owner of this Constraint according to the receiving client's records.
         409:
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-          description: Despite repeated attempts, the DSS was unable to update the
-            DAR because of other simultaneous changes.
+          description: The Entity version specified in this message is lower than
+            a previously-received notification, or identical to a previously-received
+            notification and the Entity is different.
       security:
       - AuthFromAuthorizationAuthority:
-        - dss.write.position_reporting_entities
-        - dss.write.airspace_awareness
-        - dss.write.operations
-      summary: 'DSS: /entity_references/{id}'
-      description: Delete reference to an Entity.  USSs should not delete PositionReporting
-        Entities before the end of the last managed flight plus the retention period.
+        - dss.write.constraints
+      summary: /uss/constraints/{id}
+      description: '`[UTM only]` Publish new information about a Constraint to the
+        host of this endpoint (usually because of instructions from the DSS triggered
+        by a subscription).'
+    delete:
+      tags:
+      - p2p_utm
+      responses:
+        204:
+          description: Notification of Constraint deletion was received successfully,
+            even if the host USS was previously unaware of the specified Constraint.
+        400:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: One or more parameters were missing or invalid.
+        401:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bearer access token was not provided in Authorization header,
+            token could not be decoded, or token was invalid.
+        403:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: |-
+            * The access token was decoded successfully but did not include a scope appropriate to this endpoint.
+            * The client identified in the access token is not the owner of this Constraint according to the receiving client's records.
+      security:
+      - AuthFromAuthorizationAuthority:
+        - dss.write.constraints
+      summary: /uss/constraints/{id}
+      description: '`[UTM only]` Publish a notification about the deletion of a Constraint
+        to the host of this endpoint (usually because of instructions from the DSS
+        triggered by a subscription).'
     parameters:
     - name: id
-      description: EntityUUID of the Entity.
+      description: EntityUUID of the Constraint.
       schema:
         $ref: '#/components/schemas/EntityUUID'
       in: path
       required: true
-  /flights:
+  /uss/flights/{id}:
     summary: Basic operation details to meet remote ID requirements.
-    description: This endpoint may be polled by remote ID display providers to display
-      basic aircraft activity near a user in real time.
+    description: ""
     get:
       tags:
-      - p2p_rid
+      - p2p_utm
       responses:
         200:
           content:
@@ -293,36 +267,21 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-          description: The requested view is entirely outside any remote ID service
-            provision areas (PositionReporting Entity volumes) this provider has.  A
-            display provider receiving this response should discontinue polling for
-            this endpoint for the view port requested until otherwise directed by
-            DSS interactions.
-        413:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: The requested view rectangle was too large.
+          description: The requested flight could not be found.
       security:
       - AuthFromAuthorizationAuthority:
-        - dss.read.position_reporting_entities
-        - dss.read.airspace_awareness
-        - dss.write.operations
-      summary: 'RID: /flights'
-      description: Retrieve basic flight information to meet remote ID requirements.  This
-        endpoint will be polled by remote ID display providers to display basic aircraft
-        activity near a user in real time.  All flights that have any recent position
-        history (duration defined in standard) inside the requested view must be returned.
+        - dss.read.operations
+      summary: /uss/flights/{id}
+      description: '`[UTM only]` This endpoint may be polled to maintain situational
+        awareness of an aircraft engaging in a UTM Operation, especially during off-nominal
+        events.'
     parameters:
-    - name: view
-      description: 'The area of this view: latmin,lngmin,latmax,lngmax.  Size may
-        not exceed a diagonal length specified in the standard.'
+    - name: id
+      description: Remote ID flight ID for this flight; may be obtained in general
+        /flights query.
       schema:
-        pattern: ^-?\d{1,3}(?:\.\d*)?,-?\d{1,3}(?:\.\d*)?,-?\d{1,3}(?:\.\d*)?,-?\d{1,3}(?:\.\d*)?$
-        type: string
-        example: 29.97816,31.13296,29.98025,31.13535
-      in: query
+        $ref: '#/components/schemas/RIDFlightID'
+      in: path
       required: true
     - name: include_history
       description: |-
@@ -332,128 +291,17 @@ paths:
       schema:
         type: boolean
       in: query
-  /flights/{id}/details:
-    summary: A remote ID flight reported by a remote ID service provider.
+  /uss/operations/{id}:
+    summary: '`[UTM only]` Full information of an Operation.'
     get:
       tags:
-      - p2p_rid
+      - p2p_utm
       responses:
         200:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GetFlightDetailsResponse'
-          description: Flight details were successfully retrieved.
-        400:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: One or more input parameters were missing or invalid.
-        401:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: Bearer access token was not provided in Authorization header,
-            token could not be decoded, or token was invalid.
-        403:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: The access token was decoded successfully but did not include
-            a scope appropriate to this endpoint.
-        404:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: The requested flight could not be found.
-      security:
-      - AuthFromAuthorizationAuthority:
-        - dss.read.position_reporting_entities
-        - dss.read.airspace_awareness
-        - dss.write.operations
-      summary: 'RID: /flights/{id}/details'
-      description: Retrieve details of a flight to meet remote ID requirements.
-    parameters:
-    - name: id
-      description: Remote ID flight ID for this flight; may be obtained in general
-        /flights query.
-      schema:
-        $ref: '#/components/schemas/RIDFlightID'
-      in: path
-      required: true
-  /dar_transaction:
-    summary: Update information DSS airspace representation internal to the DSS constellation.
-    post:
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PostDARTransactionParameters'
-        required: true
-      tags:
-      - dar
-      responses:
-        200:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PostDARTransactionResponse'
-          description: The specified DAR cells were updated successfully.
-        409:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PostDARTransactionResponse'
-          description: DAR information could not be updated because at least one resource
-            had been changed before this transaction could be executed.
-      summary: 'DAR: /dar_transaction'
-      description: |-
-        Update the contents of the DSS airspace representation.
-
-        Note that this pseudo-endpoint will be replaced by specification of the minimum CockroachDB database schema, and then atomic transactions will be made using the CockroachDB client interface.  This pseudo-endpoint serves to illustrate the intended schema before it is formalized; each of the key-value mappings below will become a table in the database schema.
-
-        All updates included in the request must succeed or fail atomically -- no changes shall be made to the DAR unless all updates are successful.
-
-        The assumption for this intercommunication synchronization is that the DAR data schema will consist of the following key-value mappings:
-        * DARCellID -> {List of EntityUUID, List of SubscriptionUUID}
-        * EntityUUID -> InternalEntityReference
-        * SubscriptionUUID -> InternalSubscription
-        * EntityUUID -> InternalConstraint `[UTM only]`
-  /configuration:
-    summary: Configuration of a DAR participant's portion of the DAR.
-    get:
-      tags:
-      - config
-      responses:
-        200:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GetDARConfigurationResponse'
-          description: Configuration information was successfully retrieved.
-      security:
-      - AuthFromAuthorizationAuthority:
-        - dss.read.dar_configuration
-      summary: 'DAR: /configuration'
-      description: |-
-        Retrieve all information necessary to interoperate with the portion of the DAR provided by this provider.  This endpoint will nominally only be used when a change is made to the distributed DAR system configuration.
-
-        When a provider is approved by the jurisdictional authority, they will provide a URL to and endpoint with this API that the jurisdictional authority will distribute to all other providers.
-  /entity_details/{id}:
-    summary: Details of a UTM Entity.
-    get:
-      tags:
-      - p2p_entities
-      responses:
-        200:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/EntityDetails'
+                $ref: '#/components/schemas/Operation'
           description: The Entity details were retrieved successfully.
         400:
           content:
@@ -483,36 +331,22 @@ paths:
           description: The requested Entity could not be found.
       security:
       - AuthFromAuthorizationAuthority:
-        - dss.read.position_reporting_entities
-        - dss.read.airspace_awareness
         - dss.write.operations
-      summary: 'Entities: /entity_details/{id}'
-      description: |-
-        Retrieve the details of an Entity owned by the client.  Note that this request should be denied if the authorization scope does not provide access to the type of Entity being requested.
-
-        Implementation of this endpoint is not required for remote ID service providers (nor remote ID display providers since they do not create Entities).
+      summary: /uss/operation/{id}
+      description: '`[UTM only]` Retrieve full information of an Operation owned by
+        the client.'
     put:
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PutEntityDetailsParameters'
+              $ref: '#/components/schemas/PutOperationNotificationParameters'
         required: true
       tags:
-      - p2p_entities
+      - p2p_utm
       responses:
-        200:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PutEntityDetailsResponse'
-          description: Details of previously-known Entity were updated successfully.
-        201:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PutEntityDetailsResponse'
-          description: Details of new (previously-unknown) Entity were received successfully.
+        204:
+          description: New or updated full Operation information received successfully.
         400:
           content:
             application/json:
@@ -546,15 +380,14 @@ paths:
             notification and the Entity is different.
       security:
       - AuthFromAuthorizationAuthority:
-        - dss.write.position_reporting_entities
-        - dss.write.airspace_awareness
         - dss.write.operations
-      summary: 'Entities: /entity_details/{id}'
-      description: Publish new information about an Entity to the host of this endpoint
-        (usually because of instructions from the DSS triggered by a subscription).
+      summary: /uss/operations{id}
+      description: '`[UTM only]` Publish new information about an Operation to the
+        host of this endpoint (usually because of instructions from the DSS triggered
+        by a subscription).'
     delete:
       tags:
-      - p2p_entities
+      - p2p_utm
       responses:
         204:
           description: Notification of Entity deletion was received successfully,
@@ -585,17 +418,238 @@ paths:
         - dss.write.position_reporting_entities
         - dss.write.airspace_awareness
         - dss.write.operations
-      summary: 'Entities: /entity_details/{id}'
-      description: Publish a notification about the deletion of an Entity to this
-        client (usually because of instructions from the DSS triggered by a subscription).
+      summary: /uss/operations{id}
+      description: '`[UTM only]` Publish a notification about the deletion of an Operation
+        to the host of this endpoint (usually because of instructions from the DSS
+        triggered by a subscription).'
     parameters:
     - name: id
-      description: EntityUUID of the Entity details.
+      description: EntityUUID of the Operation.
       schema:
         $ref: '#/components/schemas/EntityUUID'
       in: path
       required: true
-  /subscriptions:
+  /dss/identification_service_areas:
+    summary: Set of Identification Service Areas in the DSS.
+    description: ""
+    get:
+      tags:
+      - dss
+      parameters:
+      - name: area
+        description: The area in which to search for Identification Service Areas.  Some
+          Identification Service Areas near this area but wholly outside it may also
+          be returned.
+        schema:
+          $ref: '#/components/schemas/GeoPolygonString'
+        in: query
+        required: true
+      - name: earliest_time
+        description: If specified, indicates non-interest in any Identification Service
+          Areas that end before this time.
+        schema:
+          format: date-time
+          type: string
+        in: query
+        required: true
+      - name: latest_time
+        description: If specified, indicates non-interest in any Identification Service
+          Areas that start after this time.
+        schema:
+          format: date-time
+          type: string
+        in: query
+        required: true
+      - name: min_altitude
+        description: If specified, indicates non-interest in Identification Service
+          Areas entirely below this altitude in meters above the WGS84 ellipsoid.
+        schema:
+          type: number
+        in: query
+      - name: max_altitude
+        description: If specified, indicates non-interest in Identification Service
+          Areas entirely above this altitude in meters above the WGS84 ellipsoid.
+        schema:
+          type: number
+        in: query
+        required: true
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetIdentificationServiceAreasResponse'
+          description: Identification Service Areas were successfully retrieved.
+        400:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: One or more input parameters were missing or invalid.
+        401:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bearer access token was not provided in Authorization header,
+            token could not be decoded, or token was invalid.
+        403:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The access token was decoded successfully but did not include
+            a scope appropriate to this endpoint.
+        413:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The requested area was too large.
+      security:
+      - AuthFromAuthorizationAuthority:
+        - dss.read.identification_service_areas
+      summary: /dss/identification_service_areas
+      description: Retrieve all Identification Service Areas in the DAR for a given
+        area during the given time.  Note that some Identification Service Areas returned
+        will lie entirely outside the requested area because an individual DAR cell
+        cannot filter by exact geography.
+  /dss/identification_service_areas/{id}:
+    summary: An Identification Service Area in the DSS.
+    put:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PutIdentificationServiceAreaParameters'
+        required: true
+      tags:
+      - dss
+      parameters:
+      - name: id
+        description: EntityUUID of the Identification Service Area.
+        schema:
+          $ref: '#/components/schemas/EntityUUID'
+        in: path
+        required: true
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PutIdentificationServiceAreaResponse'
+          description: An existing Identification Service Area was updated successfully
+            in the DSS.
+        201:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PutIdentificationServiceAreaResponse'
+          description: A new Identification Service Area was created successfully
+            in the DSS.
+        400:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: |-
+            * One or more input parameters were missing or invalid.
+            * The request attempted to mutate the Identification Service Area in a disallowed way.
+        401:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bearer access token was not provided in Authorization header,
+            token could not be decoded, or token was invalid.
+        403:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The access token was decoded successfully but did not include
+            a scope appropriate to this endpoint.
+        409:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: |-
+            * An Identification Service Area with the specified ID already exists and is owned by a different client.
+            * Despite repeated attempts, the DSS was unable to update the DAR because of other simultaneous changes.
+        413:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The area of the Identification Service Area is too large.
+      security:
+      - AuthFromAuthorizationAuthority:
+        - dss.write.identification_service_areas
+      summary: /dss/identification_service_areas/{id}
+      description: |-
+        Create or update an Identification Service Area.
+
+        The DSS assumes the USS has already added the appropriate retention period to operation end time in `time_end` field before storing it.  Updating `time_start` is not allowed if it is before the current time.
+    delete:
+      tags:
+      - dss
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteIdentificationServiceAreaResponse'
+          description: Identification Service Area was successfully deleted from DSS.
+        400:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: One or more input parameters were missing or invalid.
+        401:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bearer access token was not provided in Authorization header,
+            token could not be decoded, or token was invalid.
+        403:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: |-
+            * The access token was decoded successfully but did not include a scope appropriate to this endpoint.
+            * The Identification Service Area does not belong to the client requesting deletion.
+        404:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Entity could not be deleted because it could not be found.
+        409:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Despite repeated attempts, the DSS was unable to update the
+            DAR because of other simultaneous changes.
+      security:
+      - AuthFromAuthorizationAuthority:
+        - dss.write.identification_service_areas
+      summary: /dss/identification_service_areas/{id}
+      description: Delete an Identification Service Area.  USSs should not delete
+        Identification Service Areas before the end of the last managed flight plus
+        the retention period.
+    parameters:
+    - name: id
+      description: EntityUUID of the Identification Service Area.
+      schema:
+        $ref: '#/components/schemas/EntityUUID'
+      in: path
+      required: true
+  /dss/subscriptions:
     summary: Subscriptions for airspace updates to a volume of interest.
     get:
       tags:
@@ -619,12 +673,6 @@ paths:
           entirely above this altitude in meters above the WGS84 datum.
         schema:
           type: number
-        in: query
-      - name: types_filter
-        description: If specified, only return Subscriptions that are capable of producing
-          notifications for the specified EntityTypes.
-        schema:
-          $ref: '#/components/schemas/EntityTypeListString'
         in: query
       responses:
         200:
@@ -661,17 +709,15 @@ paths:
           description: The requested area was too large.
       security:
       - AuthFromAuthorizationAuthority:
-        - dss.read.position_reporting_entities
-        - dss.write.position_reporting_entities
-        - dss.read.airspace_awareness
-        - dss.write.airspace_awareness
-        - dss.write.operations
-      summary: 'DSS: /subscriptions'
-      description: Retrieve subscriptions intersecting an area of interest.  Subscription
-        notifications are only triggered by (and contain details of) changes to Entities
-        in the DSS; they do not involve any other data transfer such as remote ID
-        telemetry updates.  Only Subscriptions belonging to the caller are returned.
-  /subscriptions/{id}:
+        - dss.read.identification_service_areas
+        - dss.read.operations
+        - dss.read.constraints
+      summary: /dss/subscriptions
+      description: |-
+        Retrieve subscriptions intersecting an area of interest.  Subscription notifications are only triggered by (and contain details of) changes to, creation of, or deletion of, Entities referenced by the DSS; they do not involve any data transfer (such as remote ID telemetry updates) apart from Entity information.
+
+        Only Subscriptions belonging to the caller are returned.  This endpoint would be used if a USS lost track of Subscriptions they had created and/or wanted to resolve an error indicating that they had too many existing Subscriptions in an area.
+  /dss/subscriptions/{id}:
     summary: Subscription for airspace updates to a volume of interest.
     get:
       tags:
@@ -710,7 +756,7 @@ paths:
         - dss.read.airspace_awareness
         - dss.write.airspace_awareness
         - dss.write.operations
-      summary: 'DSS: /subscriptions/{id}'
+      summary: /dss/subscriptions/{id}
       description: Verify the existence/valdity and state of a particular subscription.
     put:
       requestBody:
@@ -765,7 +811,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: |-
-            * The access token was decoded successfully but did not include a scope appropriate to this endpoint.
+            * The access token was decoded successfully but did not include a scope appropriate to this endpoint or the request.
             * An EntityType was specified in `types_filter` to which the scopes included in the access token do not provide access.
         409:
           content:
@@ -791,16 +837,14 @@ paths:
             a Subscription for each of their display client users' views.
       security:
       - AuthFromAuthorizationAuthority:
-        - dss.read.position_reporting_entities
-        - dss.write.position_reporting_entities
-        - dss.read.airspace_awareness
-        - dss.write.operations
-        - dss.write.airspace_awareness
-      summary: 'DSS: /subscriptions/{id}'
-      description: |-
-        Create or update a subscription.  Subscription notifications are only triggered by (and contain details of) changes to Entities in the DSS; they do not involve any other data transfer such as remote ID telemetry updates.
-
-        Note that the types of content that should be sent to the created subscription depends on the scope in the provided access token.
+        - dss.read.identification_service_areas
+        - dss.read.operations
+        - dss.read.constraints
+      summary: /dss/subscriptions/{id}
+      description: Create or update a subscription.  Subscription notifications are
+        only triggered by (and contain details of) changes to, creation of, or deletion
+        of, Entities referenced by the DSS; they do not involve any data transfer
+        (such as remote ID telemetry updates) apart from Entity information.
     delete:
       tags:
       - dss
@@ -848,11 +892,9 @@ paths:
       security:
       - AuthFromAuthorizationAuthority:
         - dss.read.position_reporting_entities
-        - dss.write.position_reporting_entities
-        - dss.read.airspace_awareness
-        - dss.write.airspace_awareness
-        - dss.write.operations
-      summary: 'DSS: /subscriptions/{id}'
+        - dss.read.operations
+        - dss.read.constraints
+      summary: /dss/subscriptions/{id}
       description: Delete a subscription.
     parameters:
     - name: id
@@ -861,9 +903,10 @@ paths:
         $ref: '#/components/schemas/SubscriptionUUID'
       in: path
       required: true
-  /flights/{id}:
+  /uss/flights:
     summary: Basic operation details to meet remote ID requirements.
-    description: ""
+    description: This endpoint may be polled by remote ID display providers to display
+      basic aircraft activity near a user in real time.
     get:
       tags:
       - p2p_rid
@@ -899,23 +942,34 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-          description: The requested flight could not be found.
+          description: The requested view is entirely outside any remote ID service
+            provision areas (PositionReporting Entity volumes) this provider has.  A
+            display provider receiving this response should discontinue polling for
+            this endpoint for the view port requested until otherwise directed by
+            DSS interactions.
+        413:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The requested view rectangle was too large.
       security:
       - AuthFromAuthorizationAuthority:
-        - dss.read.position_reporting_entities
-        - dss.read.airspace_awareness
-        - dss.write.operations
-      summary: 'RID: /flights/{id}'
-      description: '`[UTM only]` This endpoint may be polled to maintain situational
-        awareness of an aircraft engaging in a UTM Operation, especially during off-nominal
-        events.'
+        - dss.read.identification_service_areas
+      summary: /uss/flights
+      description: Retrieve basic flight information to meet remote ID requirements.  This
+        endpoint will be polled by remote ID display providers to display basic aircraft
+        activity near a user in real time.  All flights that have any recent position
+        history (duration defined in standard) inside the requested view must be returned.
     parameters:
-    - name: id
-      description: Remote ID flight ID for this flight; may be obtained in general
-        /flights query.
+    - name: view
+      description: 'The area of this view: latmin,lngmin,latmax,lngmax.  Size may
+        not exceed a diagonal length specified in the standard.'
       schema:
-        $ref: '#/components/schemas/RIDFlightID'
-      in: path
+        pattern: ^-?\d{1,3}(?:\.\d*)?,-?\d{1,3}(?:\.\d*)?,-?\d{1,3}(?:\.\d*)?,-?\d{1,3}(?:\.\d*)?$
+        type: string
+        example: 29.97816,31.13296,29.98025,31.13535
+      in: query
       required: true
     - name: include_history
       description: |-
@@ -925,78 +979,597 @@ paths:
       schema:
         type: boolean
       in: query
-  /constraint_details/{id}:
-    summary: Public Constraint Entities stored in the DSS.
+  /uss/flights/{id}/details:
+    summary: A remote ID flight reported by a remote ID service provider.
     get:
       tags:
-      - dss_miniuss
+      - p2p_rid
       responses:
         200:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/EntityDetails'
-          description: The Constraint details were retrieved successfully.
+                $ref: '#/components/schemas/GetFlightDetailsResponse'
+          description: Flight details were successfully retrieved.
+        400:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: One or more input parameters were missing or invalid.
+        401:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bearer access token was not provided in Authorization header,
+            token could not be decoded, or token was invalid.
+        403:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The access token was decoded successfully but did not include
+            a scope appropriate to this endpoint.
+        404:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The requested flight could not be found.
       security:
       - AuthFromAuthorizationAuthority:
-        - dss.read.airspace_awareness
-        - dss.write.airspace_awareness
-        - dss.write.operations
-      summary: 'DSS: /constraint_details/{id}'
-      description: '`[UTM only]` Retrieve the details of a public Constraint Entity
-        stored in the DAR and exposed by DSS instances.  This path''s GET API is compatible
-        with a GET for an EntityDetailsURLs.'
+        - dss.read.identification_service_areas
+      summary: /uss/flights/{id}/details
+      description: Retrieve details of a flight to meet remote ID requirements.
+    parameters:
+    - name: id
+      description: Remote ID flight ID for this flight; may be obtained in general
+        /flights query.
+      schema:
+        $ref: '#/components/schemas/RIDFlightID'
+      in: path
+      required: true
+  /uss/identification_service_areas/{id}:
+    summary: Notifications of change to Identification Service Areas.
     put:
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PutEntityReferenceParameters'
+              $ref: '#/components/schemas/PutIdentificationServiceAreaNotificationParameters'
         required: true
       tags:
-      - dss_miniuss
+      - p2p_rid
+      responses:
+        204:
+          description: Full information for Identification Service Area was updated
+            successfully.
+        400:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: |-
+            * One or more parameters were missing or invalid.
+            * The Identification Service Area information could not be parsed, or contains illegal data.
+        401:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bearer access token was not provided in Authorization header,
+            token could not be decoded, or token was invalid.
+        403:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: |-
+            * The access token was decoded successfully but did not include a scope appropriate to this endpoint.
+            * The client identified in the access token is not the owner of this Entity according to the receiving client's records.
+        409:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The Entity version specified in this message is lower than
+            a previously-received notification, or identical to a previously-received
+            notification and the Entity is different.
+      security:
+      - AuthFromAuthorizationAuthority:
+        - dss.write.identification_service_areas
+      summary: /uss/identification_service_areas/{id}
+      description: Publish new full information of an Identification Service Area
+        to the host of this endpoint (usually because of instructions from the DSS
+        triggered by a subscription).
+    delete:
+      tags:
+      - p2p_rid
+      responses:
+        204:
+          description: Notification of Identification Service Area deletion was received
+            successfully, even if the host USS was previously unaware of the specified
+            Identification Service Area.
+        400:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: One or more parameters were missing or invalid.
+        401:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bearer access token was not provided in Authorization header,
+            token could not be decoded, or token was invalid.
+        403:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: |-
+            * The access token was decoded successfully but did not include a scope appropriate to this endpoint.
+            * The client identified in the access token is not the owner of this Entity according to the receiving client's records.
+      security:
+      - AuthFromAuthorizationAuthority:
+        - dss.write.identification_service_areas
+      summary: /uss/identification_service_areas/{id}
+      description: Publish a notification about the deletion of an Identification
+        Service Area to the host of this endpoint (usually because of instructions
+        from the DSS triggered by a subscription).
+    parameters:
+    - name: id
+      description: EntityUUID of the Identification Service Area.
+      schema:
+        $ref: '#/components/schemas/EntityUUID'
+      in: path
+      required: true
+  /dss/references/constraints/{id}:
+    summary: A reference in the DSS to a Constraint.
+    put:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PutConstraintReferenceParameters'
+        required: true
+      tags:
+      - dss_utm
       responses:
         200:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PutEntityReferenceResponse'
-          description: Existing Constraint was successfully updated, and its details
-            will be served from the DSS.
+                $ref: '#/components/schemas/PutConstraintReferenceResponse'
+          description: An existing Constraint reference was updated successfully in
+            the DSS.
         201:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PutEntityReferenceResponse'
-          description: New Constraint was successfully added to the airspace.
+                $ref: '#/components/schemas/PutConstraintReferenceResponse'
+          description: A new Constraint reference was created successfully in the
+            DSS.
+        400:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: |-
+            * One or more input parameters were missing or invalid.
+            * The request attempted to mutate the Constraint in a disallowed way.
+        401:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bearer access token was not provided in Authorization header,
+            token could not be decoded, or token was invalid.
+        403:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The access token was decoded successfully but did not include
+            a scope appropriate to this endpoint.
+        409:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: |-
+            * A Constraint with the specified ID already exists and is owned by a different client.
+            * Despite repeated attempts, the DSS was unable to update the DAR because of other simultaneous changes.
+        413:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The area of the Operation is too large.
       security:
       - AuthFromAuthorizationAuthority:
         - dss.write.constraints
-      summary: 'DSS: /constraint_details/{id}'
-      description: '`[UTM only]` Publish a new public Constraint that will be stored
-        in the DAR and exposed by DSS instances (details do not need to be hosted
-        by the requesting client).'
+      summary: /dss/references/constraints/{id}
+      description: '`[UTM only]` Create or update reference in the DSS to a Constraint.'
     delete:
       tags:
-      - dss_miniuss
+      - dss_utm
       responses:
         200:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DeleteEntityReferenceResponse'
-          description: Constraint was successfully deleted from DSS.
+                $ref: '#/components/schemas/DeleteConstraintReferenceResponse'
+          description: Reference to Constraint was successfully deleted from DSS.
+        400:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: One or more input parameters were missing or invalid.
+        401:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bearer access token was not provided in Authorization header,
+            token could not be decoded, or token was invalid.
+        403:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: |-
+            * The access token was decoded successfully but did not include a scope appropriate to this endpoint.
+            * The Constraint reference does not belong to the client requesting deletion.
+        404:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Operation reference could not be deleted because it could not
+            be found.
+        409:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Despite repeated attempts, the DSS was unable to update the
+            DAR because of other simultaneous changes.
       security:
       - AuthFromAuthorizationAuthority:
         - dss.write.constraints
-      summary: 'DSS: /constraint_details/{id}'
-      description: '`[UTM only]` Delete a public Constraint stored in the DAR and
-        served from the DSS.'
+      summary: /dss/references/constraints/{id}
+      description: '`[UTM only]` Delete reference to an Constraint.'
     parameters:
     - name: id
       description: EntityUUID of the Constraint.
       schema:
-        type: string
+        $ref: '#/components/schemas/EntityUUID'
+      in: path
+      required: true
+  /dar/transaction:
+    summary: Update information DSS airspace representation internal to the DSS constellation.
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostDARTransactionParameters'
+        required: true
+      tags:
+      - dar
+      responses:
+        204:
+          description: The specified DAR information was updated successfully.
+        409:
+          description: DAR information could not be updated because at least one resource
+            had been changed before this transaction could be completed.
+      summary: DAR transaction
+      description: |-
+        Update the contents of the DSS airspace representation.
+
+        This pseudo-endpoint specifies the data that shall be synchronized between DAR participants via CockroachDB.  It will not be implemented directly, but instead implicitly through the CockroachDB configuration and table schemas.
+
+        All updates included in the transaction must succeed or fail atomically -- no changes shall be made to the DAR unless all updates are successful.
+
+        The assumption for this intercommunication synchronization is that the DAR data schema will consist of the following key-value mappings:
+        * DARCellID -> {List of EntityUUID, List of SubscriptionUUID}
+        * SubscriptionUUID -> InternalSubscription
+        * EntityUUID -> InternalIdentificationServiceArea
+        * EntityUUID -> InternalEntityReference `[UTM only]`
+        * EntityUUID -> InternalConstraint `[UTM only]`
+  /dss/references/constraints:
+    summary: Set of references in the DSS to Constraints defined by USS (or DSS) hosts.
+    description: ""
+    get:
+      tags:
+      - dss_utm
+      parameters:
+      - name: area
+        description: The area in which to search for Constraints.  Some Constraints
+          near this area but wholly outside it may also be returned.
+        schema:
+          $ref: '#/components/schemas/GeoPolygonString'
+        in: query
+        required: true
+      - name: earliest_time
+        description: If specified, indicates non-interest in any Constraints that
+          end before this time.
+        schema:
+          format: date-time
+          type: string
+        in: query
+        required: true
+      - name: latest_time
+        description: If specified, indicates non-interest in any Constraints that
+          start after this time.
+        schema:
+          format: date-time
+          type: string
+        in: query
+        required: true
+      - name: min_altitude
+        description: If specified, indicates non-interest in Constraints entirely
+          below this altitude in meters above the WGS84 ellipsoid.
+        schema:
+          type: number
+        in: query
+      - name: max_altitude
+        description: If specified, indicates non-interest in Constraints entirely
+          above this altitude in meters above the WGS84 ellipsoid.
+        schema:
+          type: number
+        in: query
+        required: true
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetConstraintReferencesResponse'
+          description: References to Constraints were successfully retrieved.
+        400:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: One or more input parameters were missing or invalid.
+        401:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bearer access token was not provided in Authorization header,
+            token could not be decoded, or token was invalid.
+        403:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The access token was decoded successfully but did not include
+            a scope appropriate to this endpoint.
+        413:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The requested area was too large.
+      security:
+      - AuthFromAuthorizationAuthority:
+        - dss.read.constraints
+      summary: /dss/references/constraints
+      description: '`[UTM only]` Retrieve references to all Constraint references
+        in the DAR for a given area during the given time.  Note that some Constraints
+        returned will lie entirely outside the requested area because an individual
+        DAR cell cannot filter by exact geography.'
+  /dss/references/operations:
+    summary: Set of references in the DSS to Operations defined by USS hosts.
+    description: ""
+    get:
+      tags:
+      - dss_utm
+      parameters:
+      - name: area
+        description: The area in which to search for Operations.  Some Operations
+          near this area but wholly outside it may also be returned.
+        schema:
+          $ref: '#/components/schemas/GeoPolygonString'
+        in: query
+        required: true
+      - name: earliest_time
+        description: If specified, indicates non-interest in any Operations that end
+          before this time.
+        schema:
+          format: date-time
+          type: string
+        in: query
+        required: true
+      - name: latest_time
+        description: If specified, indicates non-interest in any Operations that start
+          after this time.
+        schema:
+          format: date-time
+          type: string
+        in: query
+        required: true
+      - name: min_altitude
+        description: If specified, indicates non-interest in Operations entirely below
+          this altitude in meters above the WGS84 ellipsoid.
+        schema:
+          type: number
+        in: query
+      - name: max_altitude
+        description: If specified, indicates non-interest in Operations entirely above
+          this altitude in meters above the WGS84 ellipsoid.
+        schema:
+          type: number
+        in: query
+        required: true
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetOperationReferencesResponse'
+          description: References to Operations were successfully retrieved.
+        400:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: One or more input parameters were missing or invalid.
+        401:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bearer access token was not provided in Authorization header,
+            token could not be decoded, or token was invalid.
+        403:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The access token was decoded successfully but did not include
+            a scope appropriate to this endpoint.
+        413:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The requested area was too large.
+      security:
+      - AuthFromAuthorizationAuthority:
+        - dss.read.operations
+      summary: /dss/references/operations
+      description: '`[UTM only]` Retrieve references to all Operations in the DAR
+        for a given area during the given time.  Note that some Operations returned
+        will lie entirely outside the requested area because an individual DAR cell
+        cannot filter by exact geography.'
+  /dss/references/operations/{id}:
+    summary: A reference in the DSS to an Operation.
+    put:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PutOperationReferenceParameters'
+        required: true
+      tags:
+      - dss_utm
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PutOperationReferenceResponse'
+          description: An existing Operation reference was updated successfully in
+            the DSS.
+        201:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PutOperationReferenceResponse'
+          description: A new Operation reference was created successfully in the DSS.
+        400:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: |-
+            * One or more input parameters were missing or invalid.
+            * The request attempted to mutate the Operation in a disallowed way.
+        401:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bearer access token was not provided in Authorization header,
+            token could not be decoded, or token was invalid.
+        403:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The access token was decoded successfully but did not include
+            a scope appropriate to this endpoint.
+        409:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: |-
+            * An Operation with the specified ID already exists and is owned by a different client.
+            * Despite repeated attempts, the DSS was unable to update the DAR because of other simultaneous changes.
+        413:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The area of the Operation is too large.
+      security:
+      - AuthFromAuthorizationAuthority:
+        - dss.write.operations
+      summary: /dss/references/operations/{id}
+      description: '`[UTM only]` Create or update reference in the DSS to an Operation.'
+    delete:
+      tags:
+      - dss_utm
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteOperationReferenceResponse'
+          description: Reference to Operation was successfully deleted from DSS.
+        400:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: One or more input parameters were missing or invalid.
+        401:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bearer access token was not provided in Authorization header,
+            token could not be decoded, or token was invalid.
+        403:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: |-
+            * The access token was decoded successfully but did not include a scope appropriate to this endpoint.
+            * The Operation reference does not belong to the client requesting deletion.
+        404:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Operation reference could not be deleted because it could not
+            be found.
+        409:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Despite repeated attempts, the DSS was unable to update the
+            DAR because of other simultaneous changes.
+      security:
+      - AuthFromAuthorizationAuthority:
+        - dss.write.operations
+      summary: /dss/references/operations/{id}
+      description: '`[UTM only]` Delete reference to an Operation.'
+    parameters:
+    - name: id
+      description: EntityUUID of the Operation.
+      schema:
+        $ref: '#/components/schemas/EntityUUID'
       in: path
       required: true
 components:
@@ -1084,26 +1657,6 @@ components:
           format: date-time
           description: End time of this volume.
           type: string
-    SubscriberToNotify:
-      description: Subscriber to notify of a change/mutation in the airspace.  This
-        is provided by the DSS to a client changing the airspace, and it is the responsibility
-        of the client changing the airspace (they will receive a set of SubscriberToNotifies)
-        to send an AreaChangeNotification to each specified `callback`.
-      required:
-      - subscriptions
-      - url
-      type: object
-      properties:
-        subscriptions:
-          description: Subscription(s) prompting this notification.
-          type: array
-          items:
-            $ref: '#/components/schemas/SubscriptionState'
-        url:
-          anyOf:
-          - $ref: '#/components/schemas/EntityDetailsURL'
-          description: The endpoint that the client mutating the airspace should provide
-            the updated Entity to.
     GetSubscriptionsResponse:
       description: Response to DSS query for subscriptions in a particular area.
       required:
@@ -1145,7 +1698,7 @@ components:
       type: object
       properties:
         constraint:
-          $ref: '#/components/schemas/EntityDetails'
+          $ref: '#/components/schemas/Constraint'
         signature:
           $ref: '#/components/schemas/EntitySignature'
     AuthorizationScope:
@@ -1176,23 +1729,6 @@ components:
       pattern: ^[0-9a-zA-Z+\/]{43}=$
       type: string
       example: d8NoNy0cPAd7D3b8Qb0DSzcrBVJElwBfmqVcytIoWsk=
-    PutSubscriptionResponse:
-      description: Response for a request to create or update a subscription.
-      required:
-      - subscription
-      - entities
-      type: object
-      properties:
-        entities:
-          description: Declarations/summaries/references of Entities in the subscription
-            area at the time of creation/update.
-          type: array
-          items:
-            $ref: '#/components/schemas/EntityReference'
-        subscription:
-          anyOf:
-          - $ref: '#/components/schemas/Subscription'
-          description: Result of the operation on the subscription.
     RIDFlightsURL:
       anyOf:
       - $ref: '#/components/schemas/URL'
@@ -1257,46 +1793,6 @@ components:
       pattern: ^[^\0\t\r\n#%\/:?@[\\\]]+$
       type: string
       example: uss1.JA6kHYCcByQ-6AfU
-    DSSEntityDetails:
-      description: |-
-        Entity data fields stored in the DSS specific to particular Entity Types.
-
-        For `PositionReporting` Entities, `flights_url` is required.
-      type: object
-      properties:
-        flights_url:
-          anyOf:
-          - $ref: '#/components/schemas/RIDFlightsURL'
-          description: For PositionReporting Entities, this field contains the `/flights`
-            URL at which the `ridclient` endpoints may be found.
-    EntityDetailsURL:
-      anyOf:
-      - $ref: '#/components/schemas/URL'
-      description: |-
-        The URL at which details about an Entity may be exchanged.  See the `/entity_details` path for specification of this endpoint.
-        This URL is the base entity_details resource.  If this URL is specified as https://example.com/entity_details then the Entity details for a particular {id} may be exchanged at the URL https://example.com/entity_details/{id}.  This URL may not have a trailing / character.
-      pattern: '[^\/]$'
-      type: string
-      example: https://example.com/entity_details
-    AirspaceAwarenessProviderDetails:
-      description: Entity details specific to an airspace awareness provider.
-      type: object
-    PutAirspaceAwarenessProviderDetails:
-      description: Additional parameters for a request to create or update a reference
-        to an AirspaceAwarenessProvider Entity in the DSS.
-      type: object
-    PutConstraintParameters:
-      description: Additional parameters for a request to create or update a reference
-        to a Constraint Entity in the DSS.
-      type: object
-    PositionReportingDetails:
-      description: Entity details specific to a PositionReporting Entity.
-      required:
-      - flights_url
-      type: object
-      properties:
-        flights_url:
-          $ref: '#/components/schemas/RIDFlightsURL'
     RIDAircraftType:
       description: |-
         Type of aircraft for the purposes of remote ID.
@@ -1424,65 +1920,6 @@ components:
           description: Human-readable message indicating what error occurred and/or
             why.
           type: string
-    PostDARTransactionParameters:
-      description: Parameters for a request to update information in the DSS airspace
-        representation.
-      type: object
-      properties:
-        cell_updates:
-          description: A set of updates to DAR cells to apply in this transaction.
-          type: array
-          items:
-            $ref: '#/components/schemas/DARCellUpdate'
-        entity_updates:
-          description: A set of updates to Entities in the DAR to apply in this transaction.
-          type: array
-          items:
-            $ref: '#/components/schemas/DAREntityUpdate'
-        subscription_updates:
-          description: A set of updates to Subscriptions in the DAR to apply in this
-            transaction.
-          type: array
-          items:
-            $ref: '#/components/schemas/DARSubscriptionUpdate'
-        constraint_updates:
-          description: A set of updates to Constraint details in the DAR to apply
-            in this transaction.
-          type: array
-          items:
-            $ref: '#/components/schemas/DARConstraintUpdate'
-    PostDARTransactionResponse:
-      description: Response to a request to update information in the DAR.
-      type: object
-      properties:
-        conflicted_cells:
-          description: If any cells had been updated since the information used to
-            form the transaction request, those out-of-date cells will be listed here
-            in the case of a 409 Conflict response.
-          type: array
-          items:
-            $ref: '#/components/schemas/DARCellID'
-        conflicted_entities:
-          description: If any Entities had been updated since the information used
-            to form the transaction request, those out-of-date Entities will be listed
-            here in the case of a 409 Conflict response.
-          type: array
-          items:
-            $ref: '#/components/schemas/EntityUUID'
-        conflicted_subscriptions:
-          description: If any Subscriptions had been updated since the information
-            used to form the transaction request, those out-of-date Subscriptions
-            will be listed here in the case of a 409 Conflict response.
-          type: array
-          items:
-            $ref: '#/components/schemas/SubscriptionUUID'
-        conflicted_constraints:
-          description: If any Constraint details had been updated since the information
-            used to form the transaction request, those out-of-date Constraint details
-            will be listed here in the case of a 409 Conflict response.
-          type: array
-          items:
-            $ref: '#/components/schemas/EntityUUID'
     InternalDARCell:
       description: The information about a DAR cell that the DSS stores internally
         and synchronizes between different DSS instances.
@@ -1547,16 +1984,6 @@ components:
       - ControlLoss
       - AirborneOther
       type: string
-    PutOperationParameters:
-      description: Additional parameters for a request to create or update a reference
-        to an Operation Entity in the DSS.
-      type: object
-      properties:
-        key:
-          anyOf:
-          - $ref: '#/components/schemas/DeconflictionKey'
-          description: Proof that the client is aware of (and has deconflicted with)
-            all relevant Entities.  Required unless Operation is declared rogue.
     SpeedAccuracy:
       description: |-
         This is the same enumeration scale and values from ADS-B NACv.
@@ -1777,29 +2204,6 @@ components:
           - $ref: '#/components/schemas/InternalConstraint'
           description: New full representation of Constraint.  If omitted, the Entity
             will be deleted from the DAR.
-    DAREntityUpdate:
-      description: Updated data for an Entity stored internally in the DAR within
-        the DSS.  Must be exchanged in a standardized format between DSS instances
-        to maintain a DSS airspace representation.
-      required:
-      - id
-      type: object
-      properties:
-        id:
-          anyOf:
-          - $ref: '#/components/schemas/EntityUUID'
-          description: The Entity being created, updated, or deleted.
-        previous_version:
-          description: The previous version of this Entity within the DAR.  An update
-            will only be successful if the Entity has not changed since the request
-            was formed.  Omit this field if the Entity did not previously exist in
-            the DAR.
-          type: integer
-        entity:
-          anyOf:
-          - $ref: '#/components/schemas/InternalEntityReference'
-          description: New full representation of Entity.  If omitted, the Entity
-            will be deleted from the DAR.
     DARSubscriptionUpdate:
       description: Updated data for a Subscription stored internally in the DAR within
         the DSS.  Must be exchanged in a standardized format between DSS instances
@@ -1823,18 +2227,6 @@ components:
           - $ref: '#/components/schemas/InternalSubscription'
           description: New full representation of Subscription.  If omitted, the Subscription
             will be deleted from the DAR.
-    ConstraintDetails:
-      description: Constraint-specific Entity details.
-      type: object
-    OperationDetails:
-      description: Operation-specific Entity details.
-      type: object
-      properties:
-        rogue_flight:
-          oneOf:
-          - $ref: '#/components/schemas/RogueFlight'
-          description: If this Operation is rogue, this field contains the details
-            for tracking that flight.
     RogueFlight:
       description: Details about a rogue flight inside a Constraint.
       type: object
@@ -1847,23 +2239,6 @@ components:
             ID interface.
           allOf:
           - $ref: '#/components/schemas/RIDFlightID'
-    EntityType:
-      description: |-
-        Type of Entity.  The API of the URL associated with an Entity depends on its EntityType.
-
-        `PositionReporting`: A spacetime volume in which a remote ID service provider will provide remote ID services.
-
-        `Constraint`: A region of airspacetime that imposes limitations on, or provides special information to, flights within it.
-
-        `AirspaceAwarenessProvider`: A spacetime volume in which a consumer wishes to receive notifications about UTM airspace changes, but is not conducting an Operation.
-
-        `Operation`: A single deconflicted UTM operation.
-      enum:
-      - PositionReporting
-      - Constraint
-      - AirspaceAwarenessProvider
-      - Operation
-      type: string
     RIDHistoricalAircraftPosition:
       description: ""
       required:
@@ -1877,34 +2252,6 @@ components:
           type: string
         position:
           $ref: '#/components/schemas/RIDAircraftPosition'
-    PutEntityDetailsParameters:
-      description: Parameters of a message informing of new Entity details.  Usually
-        pushed (by a client, not the DSS) directly to clients with subscriptions when
-        another client makes a change to airspace within a cell with a subscription.
-      required:
-      - entity
-      - subscriptions
-      type: object
-      properties:
-        subscriptions:
-          description: Subscription(s) prompting this notification.
-          type: array
-          items:
-            $ref: '#/components/schemas/SubscriptionState'
-        entity:
-          anyOf:
-          - $ref: '#/components/schemas/EntityDetails'
-          description: Entity that the notifying client changed or created.
-    PutEntityDetailsResponse:
-      description: Response to a USS-USS notification of new or updated Entity details.
-      required:
-      - entity
-      type: object
-      properties:
-        entity:
-          anyOf:
-          - $ref: '#/components/schemas/EntityDetails'
-          description: Current representation of the affected Entity.
     Latitude:
       format: double
       description: Degrees of latitude north of the equator, with reference to the
@@ -2018,56 +2365,6 @@ components:
       description: An altitude, in meters, above the WGS84 ellipsoid.
       type: number
       example: 19.5
-    Subscription:
-      description: Specification of a geographic area that a client is interested
-        in on an ongoing basis (e.g., “planning area”).  Internal to the DSS.
-      required:
-      - id
-      - url
-      - notification_index
-      - owner
-      type: object
-      properties:
-        id:
-          anyOf:
-          - $ref: '#/components/schemas/SubscriptionUUID'
-          description: Unique identifier for this subscription.
-        owner:
-          description: Assigned by the DSS based on creating client’s ID (via access
-            token).  Used for restricting mutation and deletion operations to owner.
-          type: string
-          example: myuss
-        url:
-          anyOf:
-          - $ref: '#/components/schemas/EntityDetailsURL'
-          description: Other clients must call this endpoint with created/updated
-            Entity details when requested by the DSS (requested when they change the
-            airspace in the associated cells).
-        notification_index:
-          $ref: '#/components/schemas/SubscriptionNotificationIndex'
-        expires:
-          format: date-time
-          description: If set, this subscription will be automatically removed after
-            this time.
-          type: string
-        last_used:
-          format: date-time
-          description: Used to automatically delete stale UTM subscriptions (subscriptions
-            not used to create or modify any Key-requiring Entities in the recent
-            past).
-          type: string
-        types_filter:
-          description: EntityTypes whose creation, mutation, or deletion should trigger
-            notifications for this Subscription.
-          minItems: 1
-          type: array
-          items:
-            $ref: '#/components/schemas/EntityType'
-        begins:
-          format: date-time
-          description: If set, this Subscription will not generate any notifications
-            before this time.
-          type: string
     InternalSubscription:
       description: The information about a Subscription that the DSS stores internally
         and synchronizes between different DSS instances.
@@ -2091,57 +2388,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/DARCellID'
-    EntityDetails:
-      description: Detailed specification of obstacle, thing, or region of special
-        significance in the airspace (Constraint or Operation are concrete/specific
-        types of Entities). Note that this data is not stored in the DSS; only with
-        the clients. Note that this may be expanded to include other types of volume-based
-        entities in the airspace.
-      required:
-      - id
-      - type
-      - signature
-      type: object
-      properties:
-        id:
-          anyOf:
-          - $ref: '#/components/schemas/EntityUUID'
-          description: Unique identifier for this entity.  Created by client.
-        type:
-          $ref: '#/components/schemas/EntityType'
-        volumes:
-          description: Volumes that wholly contain the Entity while being as small
-            as practical.  This field is required unless the Entity `type` is `PositionReporting`.
-          minItems: 1
-          type: array
-          items:
-            $ref: '#/components/schemas/Volume4D'
-        position_reporting:
-          anyOf:
-          - $ref: '#/components/schemas/PositionReportingDetails'
-          description: If this Entity is a PositionReporting Entity, this property
-            is required and contains details about the PositionReporting Entity.
-        constraint:
-          anyOf:
-          - $ref: '#/components/schemas/ConstraintDetails'
-          description: If this Entity is a Constraint, this property is required and
-            contains details about the Constraint.
-        operation:
-          anyOf:
-          - $ref: '#/components/schemas/OperationDetails'
-          description: If this Entity is an Operation, this property is required and
-            contains details about the Operation.
-        awareness_provider:
-          anyOf:
-          - $ref: '#/components/schemas/AirspaceAwarenessProviderDetails'
-          description: If this Entity is an airspace awareness provider, this property
-            is required and contains details about that provider.
-        signature:
-          anyOf:
-          - $ref: '#/components/schemas/EntitySignature'
-          description: Signature for this version of this Entity.  Includes information
-            about the version of this Entity.  Obtained from the DSS upon creation
-            or modification of an EntityReference.
     RIDFlight:
       description: Description of a remote ID flight.
       required:
@@ -2241,53 +2487,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/URL'
-    EntityReference:
-      description: |-
-        A declaration of an Entity.  The DSS reports only these EntityReferences and clients must obtain full details peer-to-peer from the creator/owner.
-
-        `details_url` is required for all Entity types except `PositionReporting`.
-      required:
-      - id
-      - owner
-      - type
-      - version
-      type: object
-      properties:
-        id:
-          anyOf:
-          - $ref: '#/components/schemas/EntityUUID'
-          description: Unique identifier for this object.  Created by client, and
-            client must respond to a peer request for details about this Entity according
-            to this ID.
-        owner:
-          description: Assigned by the DSS based on creating client’s ID (via access
-            token).  Used for restricting mutation and deletion operations to owner,
-            and only requiring EntitySignatures for unowned Entities.
-          type: string
-          example: myuss
-        type:
-          $ref: '#/components/schemas/EntityType'
-        version:
-          format: int32
-          description: Assigned and incremented automatically by the DSS, included
-            in EntitySignatures.  When increased, indicates that an Entity has changed
-            (allows another client client to optimize full Entity retrieval for only
-            those Entities which have changed since client’s cache).
-          type: integer
-        time_end:
-          format: date-time
-          description: A planning client does not need to consider this Entity when
-            considering time periods that will start after time_end.
-          type: string
-        time_start:
-          format: date-time
-          description: A planning client does not need to consider this Entity when
-            considering time periods that will end before start_time.
-          type: string
-        details_url:
-          $ref: '#/components/schemas/EntityDetailsURL'
-        details:
-          $ref: '#/components/schemas/DSSEntityDetails'
     InternalEntityReference:
       description: The information about an Entity that the DSS stores internally
         and synchronizes between different DSS instances.
@@ -2313,129 +2512,16 @@ components:
         subscription:
           anyOf:
           - $ref: '#/components/schemas/SubscriptionUUID'
-          description: A subscription created automatically for this EntityReference.  If
-            no subscription was provided upon creation of an Entity that requires
-            airspace awareness, the DSS will create an appropriate AreaSubscription
-            to provide flight-critical notifications like rogue aircraft or UVRs.  This
-            automatic subscription is not necessary for Position Reporting Entities.
+          description: '`[UTM only]` A subscription created automatically for this
+            EntityReference.  If no subscription was provided upon creation of an
+            Entity that requires airspace awareness, the DSS will create an appropriate
+            Subscription to provide flight-critical notifications like rogue aircraft
+            or UVRs.  This automatic subscription is not necessary for Position Reporting
+            Entities.'
         reference:
           anyOf:
-          - $ref: '#/components/schemas/EntityReference'
+          - $ref: '#/components/schemas/IdentificationServiceArea'
           description: Information about this Entity accessible outside the DSS.
-    GetEntityReferencesResponse:
-      description: Response to DSS query for references to Entities in an area of
-        interest.
-      required:
-      - entity_references
-      type: object
-      properties:
-        entity_references:
-          description: Declarations/summaries/references of Entities in the area of
-            interest.
-          type: array
-          items:
-            $ref: '#/components/schemas/EntityReference'
-    PutPositionReportingParameters:
-      description: Additional parameters for a request to create or update a reference
-        to a PositionReporting Entity in the DSS.
-      required:
-      - flights_url
-      type: object
-      properties:
-        flights_url:
-          $ref: '#/components/schemas/RIDFlightsURL'
-    PutSubscriptionParameters:
-      description: Parameters for a request to create or update a subscription in
-        the DSS.
-      required:
-      - extents
-      - url
-      type: object
-      properties:
-        extents:
-          anyOf:
-          - $ref: '#/components/schemas/Volume4D'
-          description: |-
-            The geographic extents of the volume to subscribe to.
-            This subscription will automatically be deleted after its end time if it has not been refreshed by then.  If end time is not specified when creating a subscription with a UTM scope, this subscription will be automatically deleted if it hasn't been used for a certain amount of time.  If end time is not specified when creating a subscription without a UTM scope (such as for PositionReporting Entities), the value will be automatically set the maximum allowed Subscription duration in the future.
-        url:
-          anyOf:
-          - $ref: '#/components/schemas/EntityDetailsURL'
-          description: Other clients will be instructed by the DSS to call this endpoint
-            with created/updated Entity details when they create, update, or delete
-            an Entity relevant to this Subscription.
-        types_filter:
-          description: EntityTypes whose creation, mutation, or deletion should trigger
-            notifications for this Subscription.
-          minItems: 1
-          type: array
-          items:
-            $ref: '#/components/schemas/EntityType'
-    PutEntityReferenceParameters:
-      description: Parameters for a request to create or update a reference to an
-        Entity in the DSS.
-      required:
-      - extents
-      - type
-      type: object
-      properties:
-        extents:
-          anyOf:
-          - $ref: '#/components/schemas/Volume4D'
-          description: The bounding spacetime extents of this Entity.  Start and end
-            times must be specified.  Spatial information is translated into DAR cells
-            internally by the DSS then discarded.
-        type:
-          $ref: '#/components/schemas/EntityType'
-        details_url:
-          anyOf:
-          - $ref: '#/components/schemas/EntityDetailsURL'
-          description: The URL at which details about an Entity may be exchanged.  See
-            the `/entity_details` path for specification of this endpoint.  This field
-            is required when `type` is not `PositionReporting`.
-        position_reporting:
-          anyOf:
-          - $ref: '#/components/schemas/PutPositionReportingParameters'
-          description: This field is required when `type` is `PositionReporting`.
-        operation:
-          anyOf:
-          - $ref: '#/components/schemas/PutOperationParameters'
-          description: This field is required when `type` is `Operation`.
-        constraint:
-          anyOf:
-          - $ref: '#/components/schemas/PutConstraintParameters'
-          description: This field is required when `type` is `Constraint`.
-        awareness_provider:
-          anyOf:
-          - $ref: '#/components/schemas/PutAirspaceAwarenessProviderDetails'
-          description: This field is required when `type` is `AirspaceAwarenessProvider`.
-    PutEntityReferenceResponse:
-      description: Response to a request to create or update a reference to an Entity
-        in the DSS.
-      required:
-      - entity_reference
-      - subscribers
-      - signature
-      type: object
-      properties:
-        subscribers:
-          description: DSS subscribers that this client now has the obligation to
-            notify of the Entity changes just made.  This client must call PUT for
-            each provided URL according to the `/entity_details` path API.
-          type: array
-          items:
-            $ref: '#/components/schemas/SubscriberToNotify'
-        entity_reference:
-          anyOf:
-          - $ref: '#/components/schemas/EntityReference'
-          description: Resulting reference stored in DSS.
-        signature:
-          anyOf:
-          - $ref: '#/components/schemas/EntitySignature'
-          description: Signature for this version of this Entity.  Must be provided
-            to peer clients so they can verify that they have retrieved the details
-            of this Entity.  This is required before they are allowed to place deconflicted
-            Entities into the airspace.
     SignatureEntry:
       description: Mapping between an EntityUUID and an EntitySignature.
       required:
@@ -2454,56 +2540,786 @@ components:
       type: array
       items:
         $ref: '#/components/schemas/SignatureEntry'
-    DeleteEntityReferenceResponse:
-      description: Response for a request to delete an Entity.
+    EntityReference:
+      description: Common information tracked by the DSS for all Entity references.
       required:
-      - entity_reference
+      - type
+      type: object
+      properties:
+        id:
+          anyOf:
+          - $ref: '#/components/schemas/EntityUUID'
+          description: Unique identifier for this object.  Created by client, and
+            client must respond to a peer request for details about this Entity according
+            to this ID.
+        owner:
+          description: Assigned by the DSS based on creating client’s ID (via access
+            token).  Used for restricting mutation and deletion operations to owner,
+            and only requiring EntitySignatures for unowned Entities.
+          type: string
+          example: myuss
+        version:
+          format: int32
+          description: Assigned and incremented automatically by the DSS, included
+            in EntitySignatures.  When increased, indicates that an Entity has changed
+            (allows another client client to optimize full Entity retrieval for only
+            those Entities which have changed since client’s cache).
+          type: integer
+        time_end:
+          format: date-time
+          description: A planning client does not need to consider this Entity when
+            considering time periods that will start after time_end.
+          type: string
+        time_start:
+          format: date-time
+          description: A planning client does not need to consider this Entity when
+            considering time periods that will end before start_time.
+          type: string
+        type:
+          $ref: '#/components/schemas/EntityType'
+          description: ""
+    OperationReference:
+      description: A reference to an Operation.  The DSS reports only these references
+        and clients must exchange more information peer-to-peer.
+      required:
+      - reference
+      - details_url
+      type: object
+      properties:
+        reference:
+          $ref: '#/components/schemas/EntityReference'
+        details_url:
+          $ref: '#/components/schemas/OperationURL'
+    PutIdentificationServiceAreaResponse:
+      description: Response to a request to create or update a reference to an Identification
+        Service Area in the DSS.
+      required:
+      - service_area
       - subscribers
       type: object
       properties:
         subscribers:
           description: DSS subscribers that this client now has the obligation to
-            notify of the Entity just deleted.  This client must call DELETE for each
-            provided URL according to the `/entity_details` path API.
+            notify of the Identification Service Area changes just made.  This client
+            must call PUT for each provided URL according to the `/uss/identification_service_areas/{id}`
+            path API.
           type: array
           items:
             $ref: '#/components/schemas/SubscriberToNotify'
-        entity_reference:
+        service_area:
           anyOf:
-          - $ref: '#/components/schemas/EntityReference'
-          description: DSS reference to Entity that was just deleted.
+          - $ref: '#/components/schemas/IdentificationServiceArea'
+          description: Resulting service area stored in DSS.
+    GetIdentificationServiceAreasResponse:
+      description: Response to DSS query for Identification Service Areas in an area
+        of interest.
+      required:
+      - service_areas
+      type: object
+      properties:
+        service_areas:
+          description: Identification Service Areas in the area of interest.
+          type: array
+          items:
+            $ref: '#/components/schemas/IdentificationServiceArea'
+    GetOperationReferencesResponse:
+      description: Response to DSS query for references to Operations in an area of
+        interest.
+      required:
+      - references
+      type: object
+      properties:
+        references:
+          description: References to Operations in the area of interest.
+          type: array
+          items:
+            $ref: '#/components/schemas/OperationReference'
+    DeleteOperationReferenceResponse:
+      description: Response for a request to delete an Operation reference from the
+        DSS.
+      required:
+      - reference
+      - subscribers
+      - signature
+      type: object
+      properties:
+        reference:
+          anyOf:
+          - $ref: '#/components/schemas/OperationReference'
+          description: Operation reference that was just deleted.
         signature:
           anyOf:
           - $ref: '#/components/schemas/EntitySignature'
-          description: Signature for the version of the EntityReference just deleted.
+          description: Signature for the version of the Operation reference just deleted.
+        subscribers:
+          description: DSS subscribers that this client now has the obligation to
+            notify of the Operation just deleted.  This client must call DELETE for
+            each provided URL according to the `/operations/{id}` path API.
+          type: array
+          items:
+            $ref: '#/components/schemas/SubscriberToNotify'
+    OperationReferenceSubscriberToNotify:
+      description: Subscriber to notify of a change/mutation in the airspace.  This
+        is provided by the DSS to a client changing the airspace, and it is the responsibility
+        of the client changing the airspace (they will receive a set of SubscriberToNotifies)
+        to send a notification to each specified `url`.
+      required:
+      - subscriptions
+      - url
+      type: object
+      properties:
+        subscriptions:
+          description: Subscription(s) prompting this notification.
+          type: array
+          items:
+            $ref: '#/components/schemas/SubscriptionState'
+        url:
+          anyOf:
+          - $ref: '#/components/schemas/URL'
+          description: The endpoint that the client mutating the airspace should provide
+            the update to.  API depends on the DSS action taken that triggered this
+            notification request.
+    Operation:
+      description: Full specification of a UTM Operation. Note that this data is not
+        stored in the DSS; only with the clients.
+      required:
+      - id
+      - volumes
+      - signature
+      type: object
+      properties:
+        id:
+          anyOf:
+          - $ref: '#/components/schemas/EntityUUID'
+          description: Unique identifier for this Operation.  Created by client.
+        volumes:
+          description: Volumes that wholly contain the Operation while being as small
+            as practical.
+          minItems: 1
+          type: array
+          items:
+            $ref: '#/components/schemas/Volume4D'
+        rogue_flight:
+          oneOf:
+          - $ref: '#/components/schemas/RogueFlight'
+          description: If this Operation is rogue, this field contains the details
+            for tracking that flight.
+        signature:
+          anyOf:
+          - $ref: '#/components/schemas/EntitySignature'
+          description: Signature for this version of this Operation.  Includes information
+            about the version of this Operation.  Obtained from the DSS upon creation
+            or modification of a reference.
+    PutIdentificationServiceAreaNotificationParameters:
+      description: Parameters of a message informing of new full information for an
+        Identification Service Area.  Pushed (by a client, not the DSS) directly to
+        clients with subscriptions when another client makes a change to airspace
+        within a cell with a subscription.
+      required:
+      - service_area
+      - subscriptions
+      type: object
+      properties:
+        service_area:
+          anyOf:
+          - $ref: '#/components/schemas/IdentificationServiceArea'
+          description: Identification Service Area that the notifying client changed
+            or created.
+        subscriptions:
+          description: Subscription(s) prompting this notification.
+          type: array
+          items:
+            $ref: '#/components/schemas/SubscriptionState'
+    OperationURL:
+      anyOf:
+      - $ref: '#/components/schemas/URL'
+      description: The URL at which the full information of an Operation may be exchanged.  See
+        the `/uss/operations/{id}` path for specification of this endpoint.
+      type: string
+      example: https://example.com/operations/98758ef1-172b-4a8f-827c-971226adf7e1
+    GetConstraintReferencesResponse:
+      description: Response to DSS query for references to Constraints in an area
+        of interest.
+      required:
+      - references
+      type: object
+      properties:
+        references:
+          description: References to Constraints in the area of interest.
+          type: array
+          items:
+            $ref: '#/components/schemas/ConstraintReference'
+    ConstraintReference:
+      description: A reference to a Constraint.  The DSS reports only these references
+        and clients must exchange more information peer-to-peer.
+      required:
+      - reference
+      - details_url
+      type: object
+      properties:
+        reference:
+          $ref: '#/components/schemas/EntityReference'
+        details_url:
+          $ref: '#/components/schemas/ConstraintURL'
+    ConstraintURL:
+      anyOf:
+      - $ref: '#/components/schemas/URL'
+      description: The URL at which the full information of a Constraint may be exchanged.  See
+        the `/uss/constraints/{id}` path for specification of this endpoint.
+      type: string
+      example: https://example.com/constraints/7d7f85df-cda9-4edd-b541-d891ad9ad46c
+    Constraint:
+      description: Full specification of a UTM Constraint.
+      required:
+      - id
+      - volumes
+      - signature
+      type: object
+      properties:
+        id:
+          anyOf:
+          - $ref: '#/components/schemas/EntityUUID'
+          description: Unique identifier for this Constraint.  Created by client.
+        volumes:
+          description: Volumes that wholly contain the Constraint while being as small
+            as practical.
+          minItems: 1
+          type: array
+          items:
+            $ref: '#/components/schemas/Volume4D'
+        signature:
+          anyOf:
+          - $ref: '#/components/schemas/EntitySignature'
+          description: Signature for this version of this Constraint.  Includes information
+            about the version of this Constraint.  Obtained from the DSS upon creation
+            or modification of a reference.
+    PutConstraintReferenceResponse:
+      description: Response to a request to create or update a reference to a Constraint
+        in the DSS.
+      required:
+      - reference
+      - subscribers
+      - signature
+      type: object
+      properties:
+        reference:
+          anyOf:
+          - $ref: '#/components/schemas/ConstraintReference'
+          description: Resulting reference stored in DSS.
+        signature:
+          anyOf:
+          - $ref: '#/components/schemas/EntitySignature'
+          description: Signature for this version of this Entity.  Must be provided
+            to peer clients so they can verify that they have retrieved the details
+            of this Entity.  This is required before they are allowed to place deconflicted
+            Entities into the airspace.
+        subscribers:
+          description: DSS subscribers that this client now has the obligation to
+            notify of the Entity changes just made.  This client must call PUT for
+            each provided URL according to the `/uss/constraints/{id}` path API.
+          type: array
+          items:
+            $ref: '#/components/schemas/SubscriberToNotify'
+    PutOperationReferenceParameters:
+      description: Parameters for a request to create or update a reference to an
+        Operation in the DSS.
+      required:
+      - extents
+      - details_url
+      - key
+      type: object
+      properties:
+        extents:
+          anyOf:
+          - $ref: '#/components/schemas/Volume4D'
+          description: The bounding spacetime extents of this Entity.  Start and end
+            times must be specified.  Spatial information is translated into DAR cells
+            internally by the DSS then discarded.
+        details_url:
+          anyOf:
+          - $ref: '#/components/schemas/OperationURL'
+          description: The URL at which details about this Operation may be exchanged.  See
+            the `/uss/operations/{id}` path for specification of this endpoint.  Implementation
+            of GET verb is required, but not PUT or DELETE.
+        key:
+          anyOf:
+          - $ref: '#/components/schemas/DeconflictionKey'
+          description: Proof that the client is aware of (and has deconflicted with)
+            all relevant Entities.  Required unless Operation is declared rogue.
+    PutOperationReferenceResponse:
+      description: Response to a request to create or update a reference to an Operation
+        in the DSS.
+      required:
+      - reference
+      - subscribers
+      - signature
+      type: object
+      properties:
+        reference:
+          anyOf:
+          - $ref: '#/components/schemas/OperationReference'
+          description: Resulting reference stored in DSS.
+        signature:
+          anyOf:
+          - $ref: '#/components/schemas/EntitySignature'
+          description: Signature for this version of this Entity.  Must be provided
+            to peer clients so they can verify that they have retrieved the details
+            of this Entity.  This is required before they are allowed to place deconflicted
+            Entities into the airspace.
+        subscribers:
+          description: DSS subscribers that this client now has the obligation to
+            notify of the Entity changes just made.  This client must call PUT for
+            each provided URL according to the `uss/operations/{id}` path API.
+          type: array
+          items:
+            $ref: '#/components/schemas/SubscriberToNotify'
+    SubscriberToNotify:
+      description: Subscriber to notify of a creation/change/deletion of a change
+        in the airspace.  This is provided by the DSS to a client changing the airspace,
+        and it is the responsibility of the client changing the airspace (they will
+        receive a set of these notification requests) to send a notification to each
+        specified `url`.
+      required:
+      - subscriptions
+      - url
+      type: object
+      properties:
+        subscriptions:
+          description: Subscription(s) prompting this notification.
+          type: array
+          items:
+            $ref: '#/components/schemas/SubscriptionState'
+        url:
+          anyOf:
+          - $ref: '#/components/schemas/URL'
+          description: The endpoint that the client mutating the airspace should provide
+            the update to.  API depends on the DSS action taken that triggered this
+            notification request.
+    PutConstraintReferenceParameters:
+      description: Parameters for a request to create or update a reference to a Constraint
+        in the DSS.
+      required:
+      - extents
+      - details_url
+      type: object
+      properties:
+        extents:
+          anyOf:
+          - $ref: '#/components/schemas/Volume4D'
+          description: The bounding spacetime extents of this Entity.  Start and end
+            times must be specified.  Spatial information is translated into DAR cells
+            internally by the DSS then discarded.
+        details_url:
+          anyOf:
+          - $ref: '#/components/schemas/ConstraintURL'
+          description: The URL at which details about this Constraint may be exchanged.  See
+            the `/uss/constraints/{id}` path for specification of this endpoint.  Implementation
+            of GET verb is required, but not PUT or DELETE.
+    PutConstraintResponse:
+      description: Response to a request to create or update full information of a
+        Constraint in the DSS.
+      required:
+      - constraint
+      - subscribers
+      type: object
+      properties:
+        constraint:
+          anyOf:
+          - $ref: '#/components/schemas/Constraint'
+          description: Resulting Constraint stored and hosted in DSS, after the DSS
+            automatically added a reference to that Constraint as well.
+        subscribers:
+          description: DSS subscribers that this client now has the obligation to
+            notify of the Entity changes just made.  This client must call PUT for
+            each provided URL according to the `/uss/constraints/{id}` path API.
+          type: array
+          items:
+            $ref: '#/components/schemas/SubscriberToNotify'
+    DeleteConstraintResponse:
+      description: Response to a request to delete full information of a Constraint
+        from the DSS.
+      required:
+      - constraint
+      - subscribers
+      type: object
+      properties:
+        constraint:
+          anyOf:
+          - $ref: '#/components/schemas/Constraint'
+          description: Full information of Constraint deleted from the DSS, after
+            the DSS automatically removed the reference to that Constraint as well.
+        subscribers:
+          description: DSS subscribers that this client now has the obligation to
+            notify of the Entity changes just made.  This client must call DELETE
+            for each provided URL according to the `/uss/constraints/{id}` path API.
+          type: array
+          items:
+            $ref: '#/components/schemas/SubscriberToNotify'
+    PutIdentificationServiceAreaParameters:
+      description: Parameters for a request to create or update a reference to an
+        Identification Service Area in the DSS.
+      required:
+      - extents
+      - flights_url
+      type: object
+      properties:
+        extents:
+          anyOf:
+          - $ref: '#/components/schemas/Volume4D'
+          description: |-
+            The bounding spacetime extents of this Identification Service Area.  Start and end times must be specified.
+
+            These extents should not reveal any sensitive information about the flight or flights within them.  This means, for instance, that extents should not tightly-wrap a flight path, nor should they generally be centered around the takeoff point of a single flight.
+        flights_url:
+          $ref: '#/components/schemas/RIDFlightsURL'
+    DeleteIdentificationServiceAreaResponse:
+      description: Response for a request to delete an Identification Service Area.
+      required:
+      - service_area
+      - subscribers
+      type: object
+      properties:
+        service_area:
+          anyOf:
+          - $ref: '#/components/schemas/IdentificationServiceArea'
+          description: Indentification Service Area that was just deleted.
+        subscribers:
+          description: DSS subscribers that this client now has the obligation to
+            notify of the Identification Service Area just deleted.  This client must
+            call DELETE for each provided URL according to the `/identification_service_areas`
+            path API.
+          type: array
+          items:
+            $ref: '#/components/schemas/SubscriberToNotify'
+    IdentificationServiceArea:
+      description: An Identification Service Area (area in which remote ID services
+        are being provided).  The DSS reports only these declarations and clients
+        must exchange flight information peer-to-peer.
+      required:
+      - extents
+      - flights_url
+      - owner
+      type: object
+      properties:
+        extents:
+          anyOf:
+          - $ref: '#/components/schemas/Volume4D'
+          description: The bounding spacetime extents of this Identification Service
+            Area.  Start and end times will both be specified.
+        flights_url:
+          $ref: '#/components/schemas/RIDFlightsURL'
+        owner:
+          description: Assigned by the DSS based on creating client’s ID (via access
+            token).  Used for restricting mutation and deletion operations to owner,
+            and only requiring EntitySignatures for unowned Entities.
+          type: string
+          example: myuss
+    EntityType:
+      description: |-
+        Type of Entity.  The API of the URL associated with an Entity depends on its EntityType.
+
+        `IdentificationServiceArea`: A spacetime volume in which a remote ID service provider will provide remote ID services.
+
+        `Constraint`: A region of airspacetime that imposes limitations on, or provides special information to, flights within it.
+
+        `Operation`: A single deconflicted UTM operation.
+      enum:
+      - IdentificationServiceArea
+      - Constraint
+      - Operation
+      type: string
+    IdentificationServiceAreaURL:
+      anyOf:
+      - $ref: '#/components/schemas/URL'
+      description: The URL at which notifications regarding Identification Service
+        Areas may be delivered.  See the `/uss/identification_service_areas/{id}`
+        path for specification of this endpoint.
+      type: string
+      example: https://example.com/identification_service_areas/a4c6f8c0-ad77-4d93-9cc2-ec8601383f96
+    Subscription:
+      description: Specification of a geographic area that a client is interested
+        in on an ongoing basis (e.g., “planning area”).  Internal to the DSS.
+      required:
+      - id
+      - url
+      - notification_index
+      - owner
+      type: object
+      properties:
+        id:
+          anyOf:
+          - $ref: '#/components/schemas/SubscriptionUUID'
+          description: Unique identifier for this subscription.
+        callbacks:
+          $ref: '#/components/schemas/SubscriptionCallbacks'
+        owner:
+          description: Assigned by the DSS based on creating client’s ID (via access
+            token).  Used for restricting mutation and deletion operations to owner.
+          type: string
+          example: myuss
+        notification_index:
+          $ref: '#/components/schemas/SubscriptionNotificationIndex'
+        expires:
+          format: date-time
+          description: If set, this subscription will be automatically removed after
+            this time.
+          type: string
+        last_used:
+          format: date-time
+          description: Used to automatically delete stale UTM subscriptions (subscriptions
+            not used to create or modify any Key-requiring Entities in the recent
+            past).
+          type: string
+        begins:
+          format: date-time
+          description: If set, this Subscription will not generate any notifications
+            before this time.
+          type: string
+    SubscriptionCallbacks:
+      description: Endpoints that should be called when an applicable event occurs.  At
+        least one field must be specified.
+      type: object
+      properties:
+        identification_service_area_url:
+          anyOf:
+          - $ref: '#/components/schemas/IdentificationServiceAreaURL'
+          description: If specified, other clients will be instructed by the DSS to
+            call this endpoint when an Identification Service Area relevant to this
+            Subscription is created, modified, or deleted.  Must implement PUT and
+            DELETE according to the `/uss/identification_service_areas/{id}` path
+            API.
+        operation_url:
+          anyOf:
+          - $ref: '#/components/schemas/OperationURL'
+          description: If specified, other clients will be instructed by the DSS to
+            call this endpoint when an Operation relevant to this Subscription is
+            created, modified, or deleted.  Must implement PUT and DELETE according
+            to the `/uss/operations/{id}` path API.
+        constraint_url:
+          anyOf:
+          - $ref: '#/components/schemas/ConstraintURL'
+          description: If specified, other clients will be instructed by the DSS to
+            call this endpoint when a Constraint relevant to this Subscription is
+            created, modified, or deleted.  Must implement PUT and DELETE according
+            to the `/uss/constraints/{id}` path API.
+    PutSubscriptionParameters:
+      description: Parameters for a request to create or update a subscription in
+        the DSS.
+      required:
+      - extents
+      - callbacks
+      type: object
+      properties:
+        extents:
+          anyOf:
+          - $ref: '#/components/schemas/Volume4D'
+          description: |-
+            The geographic extents of the volume to subscribe to.
+            This subscription will automatically be deleted after its end time if it has not been refreshed by then.  If end time is not specified when creating a subscription with a UTM scope, this subscription will be automatically deleted if it hasn't been used for a certain amount of time.  If end time is not specified when creating a subscription without a UTM scope (such as for PositionReporting Entities), the value will be automatically set the maximum allowed Subscription duration in the future.
+
+            Note that some Entities triggering notifications will lie entirely outside the requested area because an individual DAR cell cannot filter by exact geography.
+        callbacks:
+          $ref: '#/components/schemas/SubscriptionCallbacks'
+    PutSubscriptionResponse:
+      description: Response for a request to create or update a subscription.
+      required:
+      - subscription
+      type: object
+      properties:
+        service_areas:
+          description: Identification Service Areas in or near the subscription area
+            at the time of creation/update, if `identification_service_area_url` callback
+            was specified.
+          type: array
+          items:
+            $ref: '#/components/schemas/IdentificationServiceArea'
+        operation_references:
+          description: Operation references in or near the subscription area at the
+            time of creation/update, if `operation_url` callback was specified.
+          type: array
+          items:
+            $ref: '#/components/schemas/OperationReference'
+        constraint_references:
+          description: Constraint references in or near the subscription area at the
+            time of creation/update, if `constraint_url` callback was specified.
+          type: array
+          items:
+            $ref: '#/components/schemas/ConstraintReference'
+        subscription:
+          anyOf:
+          - $ref: '#/components/schemas/Subscription'
+          description: Result of the operation on the subscription.
+    DeleteConstraintReferenceResponse:
+      description: Response for a request to delete a Constraint reference from the
+        DSS.
+      required:
+      - reference
+      - subscribers
+      - signature
+      type: object
+      properties:
+        reference:
+          anyOf:
+          - $ref: '#/components/schemas/OperationReference'
+          description: Constraint reference that was just deleted.
+        signature:
+          anyOf:
+          - $ref: '#/components/schemas/EntitySignature'
+          description: Signature for the version of the Constraint reference just
+            deleted.
+        subscribers:
+          description: DSS subscribers that this client now has the obligation to
+            notify of the Constraint just deleted.  This client must call DELETE for
+            each provided URL according to the `/constraints/{id}` path API.
+          type: array
+          items:
+            $ref: '#/components/schemas/SubscriberToNotify'
+    PutOperationNotificationParameters:
+      description: Parameters for a notification of a change to an Operation.
+      required:
+      - operation
+      - subscriptions
+      type: object
+      properties:
+        operation:
+          $ref: '#/components/schemas/Operation'
+        subscriptions:
+          description: Subscription(s) prompting this notification.
+          type: array
+          items:
+            $ref: '#/components/schemas/SubscriptionState'
+    PutConstraintNotificationParameters:
+      description: Parameters for a notification of a change to a Constraint.
+      required:
+      - constraint
+      - subscriptions
+      type: object
+      properties:
+        constraint:
+          $ref: '#/components/schemas/Constraint'
+        subscriptions:
+          description: Subscription(s) prompting this notification.
+          type: array
+          items:
+            $ref: '#/components/schemas/SubscriptionState'
+    DARIdentificationServiceAreaUpdate:
+      description: '`[UTM only]` Updated data for the full details of an Identification
+        Service Area stored in the DAR within the DSS.'
+      required:
+      - id
+      type: object
+      properties:
+        id:
+          anyOf:
+          - $ref: '#/components/schemas/EntityUUID'
+          description: The Identification Service Area being created, updated, or
+            deleted.
+        previous_version:
+          description: The previous version of this Constraint within the DAR.  An
+            update will only be successful if the Constraint has not changed since
+            the request was formed.  Omit this field if the Constraint did not previously
+            exist in the DAR.
+          type: integer
+        service_area:
+          anyOf:
+          - $ref: '#/components/schemas/InternalIdentificationServiceArea'
+          description: New full information of Identification Service Area.  If omitted,
+            the Identification Service Area will be deleted from the DAR.
+    PostDARTransactionParameters:
+      description: Parameters for a request to update information in the DSS airspace
+        representation.
+      type: object
+      properties:
+        cell_updates:
+          description: A set of updates to DAR cells to apply in this transaction.
+          type: array
+          items:
+            $ref: '#/components/schemas/DARCellUpdate'
+        entity_reference_updates:
+          description: '`[UTM only]` A set of updates to Entity references in the
+            DAR to apply in this transaction.'
+          type: array
+          items:
+            $ref: '#/components/schemas/DAREntityReferenceUpdate'
+        subscription_updates:
+          description: A set of updates to Subscriptions in the DAR to apply in this
+            transaction.
+          type: array
+          items:
+            $ref: '#/components/schemas/DARSubscriptionUpdate'
+        constraint_updates:
+          description: A set of updates to Constraints in the DAR to apply in this
+            transaction.
+          type: array
+          items:
+            $ref: '#/components/schemas/DARConstraintUpdate'
+        id_service_area_updates:
+          description: A set of updates to Identification Service Areas in the DAR
+            to apply in this transaction.
+          type: array
+          items:
+            $ref: '#/components/schemas/DARIdentificationServiceAreaUpdate'
+    DAREntityReferenceUpdate:
+      description: Updated data for an Entity stored internally in the DAR within
+        the DSS.  Must be exchanged in a standardized format between DSS instances
+        to maintain a DSS airspace representation.
+      required:
+      - id
+      type: object
+      properties:
+        id:
+          anyOf:
+          - $ref: '#/components/schemas/EntityUUID'
+          description: The Entity being created, updated, or deleted.
+        previous_version:
+          description: The previous version of this Entity within the DAR.  An update
+            will only be successful if the Entity has not changed since the request
+            was formed.  Omit this field if the Entity did not previously exist in
+            the DAR.
+          type: integer
+        entity:
+          anyOf:
+          - $ref: '#/components/schemas/InternalEntityReference'
+          description: New full representation of Entity.  If omitted, the Entity
+            will be deleted from the DAR.
+    InternalIdentificationServiceArea:
+      description: Data stored in the DAR for a Constraint whose details are stored
+        in the DAR and provided by the DSS.
+      required:
+      - service_area
+      type: object
+      properties:
+        service_area:
+          $ref: '#/components/schemas/IdentificationServiceArea'
   securitySchemes:
     AuthFromAuthorizationAuthority:
       flows:
         clientCredentials:
           tokenUrl: https://example.com/oauth/token
           scopes:
-            dss.read.position_reporting_entities: Client may query, read, or create
-              subscriptions for PositionReporting Entities for remote ID.  Does not
-              provide access to UTM-related Entities.  A remote ID display provider
+            dss.read.identification_service_areas: Client may query, read, or create
+              subscriptions for Identification Service Areas for remote ID.  Does
+              not provide access to UTM-related Entities.  A remote ID display provider
               shall be granted this scope upon request.
-            dss.write.position_reporting_entities: Client may create, edit, and delete
-              PositionReporting Entities for remote ID.  A remote ID service provider
+            dss.write.identification_service_areas: Client may create, edit, and delete
+              Identification Service Areas for remote ID.  A remote ID service provider
               shall be granted this scope upon request.
-            dss.read.airspace_awareness: '`[UTM only]` In addition to `dss.read.position_reporting_entities`,
-              client may query or read Entities related to airspace awareness.  A
-              VLOS airspace awareness provider might use this scope.'
             dss.write.airspace_awareness: '`[UTM only]` In addition to `dss.read.airspace_awareness`,
               client may create airspace awareness Entities.  A VLOS airspace awareness
               provider would likely use this scope.'
-            dss.write.operations: '`[UTM only]` In addition to `dss.write.airspace_awareness`,
-              client may query, read, and create Operation Entities.  A strategic
-              planning UTM provider would use this scope.'
+            dss.write.operations: '`[UTM only]` Client may create Operation Entities.  A
+              strategic planning UTM provider would use this scope, along with dss.read.operations.'
             dss.write.constraints: '`[UTM only]` Client may create un-deconflicted
               constraints in the airspace.  A client acting on behalf of a governmental
               organization would use this scope.'
             dss.read.dar_configuration: Client may read information about the configuration
               of this DAR participant's portion of the DAR.  Any airspace service
               provider shall be granted this scope upon request.
+            dss.read.operations: '`[UTM only]` Client may query, read, and subscribe
+              to Operation Entities.  A strategic planning UTM provider would use
+              this scope, along with dss.write.operations.'
+            dss.read.constraints: '`[UTM only]` Client may read, query, or subscribe
+              to constraints in the airspace.'
       type: oauth2
       description: |-
         Authorization from, or on behalf of, an authorization authority.  This authority shall issue access tokens that are JSON Web Tokens as defined in RFC 7519, using the `RS256` algorithm for the signature, and publish to all providers the public key for verifying that signature.
@@ -2534,9 +3350,9 @@ tags:
 - name: dar
   description: Communication necessary to synchronize DSS airspace representation
     information.
-- name: p2p_entities
-  description: Endpoints exposed by DSS clients for peer-peer communication of Entity
-    details, including DSS-triggered subscription notifications.
+- name: p2p_utm
+  description: '`[UTM only]` Endpoints exposed by DSS clients for peer-peer communication
+    of Entity details, including DSS-triggered subscription notifications.'
 - name: config
   description: Communication necessary to coordinate interoperable system configurations.
 - name: dss_miniuss
@@ -2544,3 +3360,5 @@ tags:
     would be used by a USS that does not want to host their own Constraint details,
     instead having the DSS act as a mini USS to host those details in addition to
     managing the (separate) EntityReference.'
+- name: dss_utm
+  description: Endpoints exposed by the DSS server only used for UTM.

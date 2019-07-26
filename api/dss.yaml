@@ -446,7 +446,7 @@ paths:
         required: true
       - name: earliest_time
         description: If specified, indicates non-interest in any Identification Service
-          Areas that end before this time.
+          Areas that end before this time.  RFC 3339 format, per OpenAPI specification.
         schema:
           format: date-time
           type: string
@@ -454,7 +454,7 @@ paths:
         required: true
       - name: latest_time
         description: If specified, indicates non-interest in any Identification Service
-          Areas that start after this time.
+          Areas that start after this time.  RFC 3339 format, per OpenAPI specification.
         schema:
           format: date-time
           type: string
@@ -1298,7 +1298,7 @@ paths:
         required: true
       - name: earliest_time
         description: If specified, indicates non-interest in any Constraints that
-          end before this time.
+          end before this time.  RFC 3339 format, per OpenAPI specification.
         schema:
           format: date-time
           type: string
@@ -1306,7 +1306,7 @@ paths:
         required: true
       - name: latest_time
         description: If specified, indicates non-interest in any Constraints that
-          start after this time.
+          start after this time.  RFC 3339 format, per OpenAPI specification.
         schema:
           format: date-time
           type: string
@@ -1382,7 +1382,7 @@ paths:
         required: true
       - name: earliest_time
         description: If specified, indicates non-interest in any Operations that end
-          before this time.
+          before this time.  RFC 3339 format, per OpenAPI specification.
         schema:
           format: date-time
           type: string
@@ -1390,7 +1390,7 @@ paths:
         required: true
       - name: latest_time
         description: If specified, indicates non-interest in any Operations that start
-          after this time.
+          after this time.  RFC 3339 format, per OpenAPI specification.
         schema:
           format: date-time
           type: string
@@ -1652,11 +1652,12 @@ components:
           description: Constant spatial extent of this volume.
         time_start:
           format: date-time
-          description: Beginning time of this volume.
+          description: Beginning time of this volume.  RFC 3339 format, per OpenAPI
+            specification.
           type: string
         time_end:
           format: date-time
-          description: End time of this volume.
+          description: End time of this volume.  RFC 3339 format, per OpenAPI specification.
           type: string
     GetSubscriptionsResponse:
       description: Response to DSS query for subscriptions in a particular area.
@@ -1680,7 +1681,7 @@ components:
         timestamp:
           format: date-time
           description: The remote ID service provider's timestamp for when this information
-            was current.
+            was current.  RFC 3339 format, per OpenAPI specification.
           type: string
         flights:
           description: A list of all flights that have been within the requested area
@@ -2249,7 +2250,8 @@ components:
       properties:
         time:
           format: date-time
-          description: Time at which this position applied.
+          description: Time at which this position applied.  RFC 3339 format, per
+            OpenAPI specification.
           type: string
         position:
           $ref: '#/components/schemas/RIDAircraftPosition'
@@ -2303,7 +2305,8 @@ components:
           description: Time at which this state was valid.  This may be the time coming
             from the source, such as a GPS, or the time when the system computes the
             values using an algorithm such as an Extended Kalman Filter (EKF).  Timestamp
-            must be expressed with a minimum resolution of 1/10th of a second.
+            must be expressed with a minimum resolution of 1/10th of a second.  RFC
+            3339 format, per OpenAPI specification.
           type: string
         timestamp_accuracy:
           format: float
@@ -2456,12 +2459,13 @@ components:
         time_effective:
           format: date-time
           description: The datetime at which this configuration became effective,
-            or will become effective.
+            or will become effective.  RFC 3339 format, per OpenAPI specification.
           type: string
         time_end:
           format: date-time
           description: The datetime at which this configuration will no longer apply.  If
-            omitted, this configuration is intended to be active indefinitely.
+            omitted, this configuration is intended to be active indefinitely.  RFC
+            3339 format, per OpenAPI specification.
           type: string
         dar_nodes:
           description: |-
@@ -2569,12 +2573,14 @@ components:
         time_end:
           format: date-time
           description: A planning client does not need to consider this Entity when
-            considering time periods that will start after time_end.
+            considering time periods that will start after time_end.  RFC 3339 format,
+            per OpenAPI specification.
           type: string
         time_start:
           format: date-time
           description: A planning client does not need to consider this Entity when
-            considering time periods that will end before start_time.
+            considering time periods that will end before start_time.  RFC 3339 format,
+            per OpenAPI specification.
           type: string
         type:
           $ref: '#/components/schemas/EntityType'
@@ -3063,18 +3069,18 @@ components:
         expires:
           format: date-time
           description: If set, this subscription will be automatically removed after
-            this time.
+            this time.  RFC 3339 format, per OpenAPI specification.
           type: string
         last_used:
           format: date-time
           description: Used to automatically delete stale UTM subscriptions (subscriptions
             not used to create or modify any Key-requiring Entities in the recent
-            past).
+            past).  RFC 3339 format, per OpenAPI specification.
           type: string
         begins:
           format: date-time
           description: If set, this Subscription will not generate any notifications
-            before this time.
+            before this time.  RFC 3339 format, per OpenAPI specification.
           type: string
     SubscriptionCallbacks:
       description: Endpoints that should be called when an applicable event occurs.  At

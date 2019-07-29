@@ -512,8 +512,7 @@ paths:
       summary: /dss/identification_service_areas
       description: Retrieve all Identification Service Areas in the DAR for a given
         area during the given time.  Note that some Identification Service Areas returned
-        will lie entirely outside the requested area because an individual DAR cell
-        cannot filter by exact geography.
+        may lie entirely outside the requested area.
   /dss/identification_service_areas/{id}:
     summary: An Identification Service Area in the DSS.
     put:
@@ -958,10 +957,11 @@ paths:
       - AuthFromAuthorizationAuthority:
         - dss.read.identification_service_areas
       summary: /uss/flights
-      description: Retrieve basic flight information to meet remote ID requirements.  This
-        endpoint will be polled by remote ID display providers to display basic aircraft
-        activity near a user in real time.  All flights that have any recent position
-        history (duration defined in standard) inside the requested view must be returned.
+      description: Retrieve basic flight information from a remote ID service provider
+        to meet remote ID requirements.  This endpoint will be polled by remote ID
+        display providers to display basic aircraft activity near a user in real time.  All
+        flights that have any recent position history (duration defined in standard)
+        inside the requested view must be returned.
     parameters:
     - name: view
       description: 'The area of this view: latmin,lngmin,latmax,lngmax.  Size may
@@ -1022,7 +1022,8 @@ paths:
       - AuthFromAuthorizationAuthority:
         - dss.read.identification_service_areas
       summary: /uss/flights/{id}/details
-      description: Retrieve details of a flight to meet remote ID requirements.
+      description: Retrieve details of a flight from a remote ID service provider
+        to meet remote ID requirements.
     parameters:
     - name: id
       description: Remote ID flight ID for this flight; may be obtained in general
@@ -1081,9 +1082,9 @@ paths:
       - AuthFromAuthorizationAuthority:
         - dss.write.identification_service_areas
       summary: /uss/identification_service_areas/{id}
-      description: Publish new full information of an Identification Service Area
-        to the host of this endpoint (usually because of instructions from the DSS
-        triggered by a subscription).
+      description: 'Hosted by a remote ID display provider using Subscriptions: publish
+        new full information of an Identification Service Area to the host of this
+        endpoint (usually because of instructions from the DSS triggered by a subscription).'
     delete:
       tags:
       - p2p_rid
@@ -1117,9 +1118,10 @@ paths:
       - AuthFromAuthorizationAuthority:
         - dss.write.identification_service_areas
       summary: /uss/identification_service_areas/{id}
-      description: Publish a notification about the deletion of an Identification
-        Service Area to the host of this endpoint (usually because of instructions
-        from the DSS triggered by a subscription).
+      description: 'Hosted by a remote ID display provider using Subscriptions: publish
+        a notification about the deletion of an Identification Service Area to the
+        host of this endpoint (usually because of instructions from the DSS triggered
+        by a subscription).'
     parameters:
     - name: id
       description: EntityUUID of the Identification Service Area.
@@ -2113,53 +2115,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/DARConfiguration'
-    RIDFlightDetails:
-      description: Details about a flight reported by a remote ID service provider.  At
-        least one of the registration or serial fields must be filled if required
-        by CAA.
-      required:
-      - id
-      type: object
-      properties:
-        id:
-          description: ID for this flight, matching argument in request.
-          type: string
-          example: a3423b-213401-0023
-        registration:
-          description: Country/State registration number of the aircraft.
-          type: string
-          example: FA12345897
-        serial:
-          description: Serial number of the aircraft.
-          type: string
-          example: INTCJ123-4567-890
-        operator_id:
-          description: 'CAA-issued registration/license ID for the remote pilot or
-            operator. '
-          type: string
-        operator_location:
-          anyOf:
-          - $ref: '#/components/schemas/LatLngPoint'
-          description: Location of party controlling the aircraft.
-        operation_description:
-          description: Free-text field that enables the operator to describe the purpose
-            of a flight, if so desired.
-          type: string
-          example: SafeFlightDrone company doing survey with DJI Inspire 2. See my
-            privacy policy www.example.com/privacy.
-        takeoff_location:
-          anyOf:
-          - $ref: '#/components/schemas/LatLngPoint'
-          description: Location of the takeoff point for this flight.
-        group_count:
-          format: int32
-          description: When operating a group (or formation or swarm), number of aircraft
-            in group.
-          minimum: 1
-          exclusiveMinimum: false
-          type: integer
-        auth_data:
-          $ref: '#/components/schemas/RIDAuthData'
     DARCellUpdate:
       description: Updated data stored internally in DAR cells within the DSS.  Must
         be exchanged in a standardized format between DSS instances to maintain a
@@ -2492,41 +2447,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/URL'
-    InternalEntityReference:
-      description: The information about an Entity that the DSS stores internally
-        and synchronizes between different DSS instances.
-      required:
-      - reference
-      - affected_cells
-      type: object
-      properties:
-        signature:
-          anyOf:
-          - $ref: '#/components/schemas/EntitySignature'
-          description: Created by DSS upon creation or modification of an EntityReference,
-            and provided to the requesting client to provide to other client when
-            they request full information of the referenced Entity.  Used to check
-            the validity of a Key provided for airspace that includes this EntityReference.
-        affected_cells:
-          description: Ensure consistent mutation and deletion of EntityReferences
-            in/from the DSS.
-          minItems: 1
-          type: array
-          items:
-            $ref: '#/components/schemas/DARCellID'
-        subscription:
-          anyOf:
-          - $ref: '#/components/schemas/SubscriptionUUID'
-          description: '`[UTM only]` A subscription created automatically for this
-            EntityReference.  If no subscription was provided upon creation of an
-            Entity that requires airspace awareness, the DSS will create an appropriate
-            Subscription to provide flight-critical notifications like rogue aircraft
-            or UVRs.  This automatic subscription is not necessary for Position Reporting
-            Entities.'
-        reference:
-          anyOf:
-          - $ref: '#/components/schemas/IdentificationServiceArea'
-          description: Information about this Entity accessible outside the DSS.
     SignatureEntry:
       description: Mapping between an EntityUUID and an EntitySignature.
       required:
@@ -3098,17 +3018,17 @@ components:
         operation_url:
           anyOf:
           - $ref: '#/components/schemas/OperationURL'
-          description: If specified, other clients will be instructed by the DSS to
-            call this endpoint when an Operation relevant to this Subscription is
-            created, modified, or deleted.  Must implement PUT and DELETE according
-            to the `/uss/operations/{id}` path API.
+          description: '`[UTM only]` If specified, other clients will be instructed
+            by the DSS to call this endpoint when an Operation relevant to this Subscription
+            is created, modified, or deleted.  Must implement PUT and DELETE according
+            to the `/uss/operations/{id}` path API.'
         constraint_url:
           anyOf:
           - $ref: '#/components/schemas/ConstraintURL'
-          description: If specified, other clients will be instructed by the DSS to
-            call this endpoint when a Constraint relevant to this Subscription is
-            created, modified, or deleted.  Must implement PUT and DELETE according
-            to the `/uss/constraints/{id}` path API.
+          description: '`[UTM only]` If specified, other clients will be instructed
+            by the DSS to call this endpoint when a Constraint relevant to this Subscription
+            is created, modified, or deleted.  Must implement PUT and DELETE according
+            to the `/uss/constraints/{id}` path API.'
     PutSubscriptionParameters:
       description: Parameters for a request to create or update a subscription in
         the DSS.
@@ -3298,6 +3218,91 @@ components:
       properties:
         service_area:
           $ref: '#/components/schemas/IdentificationServiceArea'
+    InternalEntityReference:
+      description: The information about an Entity that the DSS stores internally
+        and synchronizes between different DSS instances.
+      required:
+      - reference
+      - affected_cells
+      type: object
+      properties:
+        signature:
+          anyOf:
+          - $ref: '#/components/schemas/EntitySignature'
+          description: Created by DSS upon creation or modification of an EntityReference,
+            and provided to the requesting client to provide to other client when
+            they request full information of the referenced Entity.  Used to check
+            the validity of a Key provided for airspace that includes this EntityReference.
+        affected_cells:
+          description: Ensure consistent mutation and deletion of EntityReferences
+            in/from the DSS.
+          minItems: 1
+          type: array
+          items:
+            $ref: '#/components/schemas/DARCellID'
+        subscription:
+          anyOf:
+          - $ref: '#/components/schemas/SubscriptionUUID'
+          description: '`[UTM only]` A subscription created automatically for this
+            EntityReference.  If no subscription was provided upon creation of an
+            Entity that requires airspace awareness, the DSS will create an appropriate
+            Subscription to provide flight-critical notifications like rogue aircraft
+            or UVRs.  This automatic subscription is not necessary for Position Reporting
+            Entities.'
+        reference:
+          anyOf:
+          - $ref: '#/components/schemas/EntityReference'
+          description: Information about this Entity accessible outside the DSS.
+    RIDIDType:
+      description: "Type of identification information provided in `id` field.\n\n\
+        `UTM`: UTM-provided unique ID traceable to the registration ID that can act\
+        \ like a \"session id\" to protect exposure of operationally sensitive information.\n\
+        \n`Registration`: If a CAA provides a method of registering UAS, this number\
+        \ is provided by the CAA or its authorized representative. \n\n`Serial`: Can\
+        \ be used when no registration ID exists.  This is expressed in the ANSI/CTA-2063\
+        \ Physical Serial Number format."
+      enum:
+      - UTM
+      - Registration
+      - Serial
+      type: string
+    RIDFlightDetails:
+      description: Details about a flight reported by a remote ID service provider.  At
+        least one of the registration or serial fields must be filled if required
+        by CAA.
+      required:
+      - id
+      type: object
+      properties:
+        id:
+          description: ID for this flight, matching argument in request.
+          type: string
+          example: a3423b-213401-0023
+        id_type:
+          $ref: '#/components/schemas/RIDIDType'
+        operator_id:
+          description: 'CAA-issued registration/license ID for the remote pilot or
+            operator. '
+          type: string
+        operator_location:
+          anyOf:
+          - $ref: '#/components/schemas/LatLngPoint'
+          description: Location of party controlling the aircraft.
+        operation_description:
+          description: Free-text field that enables the operator to describe the purpose
+            of a flight, if so desired.
+          type: string
+          example: SafeFlightDrone company doing survey with DJI Inspire 2. See my
+            privacy policy www.example.com/privacy.
+        group_count:
+          format: int32
+          description: When operating a group (or formation or swarm), number of aircraft
+            in group.
+          minimum: 1
+          exclusiveMinimum: false
+          type: integer
+        auth_data:
+          $ref: '#/components/schemas/RIDAuthData'
   securitySchemes:
     AuthFromAuthorizationAuthority:
       flows:

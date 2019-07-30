@@ -2381,6 +2381,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/RIDHistoricalAircraftPosition'
+        simulated:
+          description: If specified as true, this flight is not a physical aircraft;
+            it is just a simulation to test the system.
+          type: boolean
     GeoPolygon:
       description: |-
         An enclosed area on the earth.
@@ -3041,8 +3045,9 @@ components:
           anyOf:
           - $ref: '#/components/schemas/Volume4D'
           description: |-
-            The geographic extents of the volume to subscribe to.
-            This subscription will automatically be deleted after its end time if it has not been refreshed by then.  If end time is not specified when creating a subscription with a UTM scope, this subscription will be automatically deleted if it hasn't been used for a certain amount of time.  If end time is not specified when creating a subscription without a UTM scope (such as for PositionReporting Entities), the value will be automatically set the maximum allowed Subscription duration in the future.
+            The spacetime extents of the volume to subscribe to.
+
+            This subscription will automatically be deleted after its end time if it has not been refreshed by then.  If end time is not specified when creating a subscription with a UTM scope, this subscription will be automatically deleted if it hasn't been used for a certain amount of time.  If end time is not specified when creating a subscription without a UTM scope (such as for PositionReporting Entities), the value will be automatically set to 24 hours in the future.
 
             Note that some Entities triggering notifications will lie entirely outside the requested area because an individual DAR cell cannot filter by exact geography.
         callbacks:

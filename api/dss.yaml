@@ -1686,6 +1686,18 @@ components:
       - Registration
       - Serial
       type: string
+    EntityType:
+      description: |-
+        Type of Entity.
+
+        `IdentificationServiceArea`: A spacetime volume in which a remote ID service provider will provide remote ID services.
+      enum:
+      - IdentificationServiceArea
+      type: string
+    EntityTypeListString:
+      description: String of comma-separated list of EntityTypes.
+      pattern: ^(?:IdentificationServiceArea)(?:,(?:IdentificationServiceArea)){0,3}$
+      type: string
     RIDFlightDetails:
       description: Details about a flight reported by a remote ID service provider.  At
         least one of the registration or serial fields must be filled if required
@@ -1698,8 +1710,18 @@ components:
           description: ID for this flight, matching argument in request.
           type: string
           example: a3423b-213401-0023
-        id_type:
-          $ref: '#/components/schemas/RIDIDType'
+        registration:
+          description: If a CAA provides a method of registering UAS, this number
+            is provided by the CAA or its authorized representative.  Required when
+            required by law in a region.
+          type: string
+          example: FA12345897
+        serial:
+          description: Can be specified when no registration ID exists and required
+            by law in a region. This is expressed in the ANSI/CTA-2063 Physical Serial
+            Number format.
+          type: string
+          example: INTCJ123-4567-890
         operator_id:
           description: 'CAA-issued registration/license ID for the remote pilot or
             operator. '
@@ -1723,18 +1745,6 @@ components:
           type: integer
         auth_data:
           $ref: '#/components/schemas/RIDAuthData'
-    EntityType:
-      description: |-
-        Type of Entity.
-
-        `IdentificationServiceArea`: A spacetime volume in which a remote ID service provider will provide remote ID services.
-      enum:
-      - IdentificationServiceArea
-      type: string
-    EntityTypeListString:
-      description: String of comma-separated list of EntityTypes.
-      pattern: ^(?:IdentificationServiceArea)(?:,(?:IdentificationServiceArea)){0,3}$
-      type: string
   securitySchemes:
     AuthFromAuthorizationAuthority:
       flows:

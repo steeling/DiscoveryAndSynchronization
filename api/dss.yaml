@@ -495,18 +495,6 @@ paths:
           $ref: '#/components/schemas/GeoPolygonString'
         in: query
         required: true
-      - name: min_altitude
-        description: If specified, indicates non-interest in subscriptions for volumes
-          entirely below this altitude in meters above the WGS84 datum.
-        schema:
-          type: number
-        in: query
-      - name: max_altitude
-        description: If specified, indicates non-interest in subscriptions for volumes
-          entirely above this altitude in meters above the WGS84 datum.
-        schema:
-          type: number
-        in: query
       responses:
         200:
           content:
@@ -800,43 +788,11 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/RIDFlight'
-    AuthorizationScope:
-      description: The scope included in an access token used to access one of the
-        endpoints in this API.
-      enum:
-      - dss.read.position_reporting_entities
-      - dss.write.position_reporting_entities
-      - dss.read.airspace_awareness
-      - dss.write.airspace_awareness
-      - dss.write.operation
-      type: string
     URL:
       description: Valid http or https URL.
       pattern: '^https?:\/\/(?:\[[0-9a-fA-F]{0,4}(?::[0-9a-fA-F]{0,4}){2,7}\]|[^\0\t\r\n
         #%\/:?@[\\\]]{1,63}(?:\.[^\0\t\r\n #%\/:?@[\\\]]{1,63}){1,126})(?::\d{1,5})?\/?'
       type: string
-    Hash:
-      description: Base64 representation of a SHA256 hash of the given inner content.  If
-        this Hash is for multiple entries, the entries should be concatenated together
-        with delimiting commas (but no spaces) before performing the hash.  For instance,
-        the Hash of the three UUIDs 4704a043-8212-4256-9dec-7ef5a79218e2, b1220203-fc2a-422d-9604-12464a9b45e0,
-        and cca95e90-3163-47d8-bb0e-a7c5c88f078f would be d8NoNy0cPAd7D3b8Qb0DSzcrBVJElwBfmqVcytIoWsk=
-        in base64 which is 77c368372d1c3c077b0f76fc41bd034b372b05524497005f9aa55ccad2285ac9
-        in hexadecimal.
-      maxLength: 44
-      minLength: 44
-      pattern: ^[0-9a-zA-Z+\/]{43}=$
-      type: string
-      example: d8NoNy0cPAd7D3b8Qb0DSzcrBVJElwBfmqVcytIoWsk=
-    RIDFlightsURL:
-      anyOf:
-      - $ref: '#/components/schemas/URL'
-      description: |-
-        The URL at which the remote ID flights and their details may be retrieved.  See `/flights`, `/flights/{id}`, and `/flights/{id}/details` paths for specification of this endpoint.
-        This URL is the base flights resource.  If this URL is specified as https://example.com/flights then the flight information for a particular {id} may be obtained at the URL https://example.com/flights/{id}.  This URL may not have a trailing / character.
-      pattern: '[^\/]$'
-      type: string
-      example: https://example.com/flights
     SubscriptionNotificationIndex:
       format: int32
       description: Tracks the notifications sent for a subscription so the subscriber
@@ -1673,31 +1629,6 @@ components:
       properties:
         service_area:
           $ref: '#/components/schemas/IdentificationServiceArea'
-    RIDIDType:
-      description: "Type of identification information provided in `id` field.\n\n\
-        `UTM`: UTM-provided unique ID traceable to the registration ID that can act\
-        \ like a \"session id\" to protect exposure of operationally sensitive information.\n\
-        \n`Registration`: If a CAA provides a method of registering UAS, this number\
-        \ is provided by the CAA or its authorized representative. \n\n`Serial`: Can\
-        \ be used when no registration ID exists.  This is expressed in the ANSI/CTA-2063\
-        \ Physical Serial Number format."
-      enum:
-      - UTM
-      - Registration
-      - Serial
-      type: string
-    EntityType:
-      description: |-
-        Type of Entity.
-
-        `IdentificationServiceArea`: A spacetime volume in which a remote ID service provider will provide remote ID services.
-      enum:
-      - IdentificationServiceArea
-      type: string
-    EntityTypeListString:
-      description: String of comma-separated list of EntityTypes.
-      pattern: ^(?:IdentificationServiceArea)(?:,(?:IdentificationServiceArea)){0,3}$
-      type: string
     RIDFlightDetails:
       description: Details about a flight reported by a remote ID service provider.  At
         least one of the registration or serial fields must be filled if required
@@ -1745,6 +1676,15 @@ components:
           type: integer
         auth_data:
           $ref: '#/components/schemas/RIDAuthData'
+    RIDFlightsURL:
+      anyOf:
+      - $ref: '#/components/schemas/URL'
+      description: |-
+        The URL at which the remote ID flights and their details may be retrieved.  See `/flights` and `/flights/{id}/details` paths for specification of this endpoint.
+        This URL is the base flights resource.  If this URL is specified as https://example.com/flights then the flight details for a particular {id} may be obtained at the URL https://example.com/flights/{id}/details.  This URL may not have a trailing / character.
+      pattern: '[^\/]$'
+      type: string
+      example: https://example.com/flights
   securitySchemes:
     AuthFromAuthorizationAuthority:
       flows:

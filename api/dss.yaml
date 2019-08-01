@@ -843,27 +843,6 @@ components:
       pattern: ^[^\0\t\r\n#%\/:?@[\\\]]+$
       type: string
       example: uss1.JA6kHYCcByQ-6AfU
-    RIDAircraftType:
-      description: |-
-        Type of aircraft for the purposes of remote ID.
-
-        'LTA' means 'Lighter Than Air'.  `LTAUnpowered` is a balloon.  `VTOL` is a fixed wing aircraft that can take off vertically.
-      enum:
-      - NotDeclared
-      - FixedWingPowered
-      - Rotorcraft
-      - Multirotor
-      - LTAPowered
-      - LTAUnpowered
-      - VTOL
-      - FreeFall
-      - Parachute
-      - Rocket
-      - Glider
-      - Tethered
-      - GroundObstacle
-      - Other
-      type: string
     RIDAuthData:
       description: Additional authentication data.
       required:
@@ -1682,6 +1661,28 @@ components:
       - Undeclared
       - Ground
       - Airborne
+      type: string
+    RIDAircraftType:
+      description: |-
+        Type of aircraft for the purposes of remote ID.
+
+        `VTOL` is a fixed wing aircraft that can take off vertically.  `Rotocraft` includes multirotor.
+      enum:
+      - NotDeclared
+      - Aeroplane
+      - Rotorcraft
+      - Gyroplane
+      - VTOL
+      - Ornithopter
+      - Glider
+      - Kite
+      - Free Balloon
+      - Captive Balloon
+      - Airship
+      - FreeFallOrParachute
+      - Rocket
+      - Ground Obstacle
+      - Other
       type: string
   securitySchemes:
     AuthFromAuthorizationAuthority:

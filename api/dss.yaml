@@ -1518,6 +1518,44 @@ components:
       properties:
         service_area:
           $ref: '#/components/schemas/IdentificationServiceArea'
+    RIDFlightsURL:
+      anyOf:
+      - $ref: '#/components/schemas/URL'
+      description: |-
+        The URL at which the remote ID flights and their details may be retrieved.  See `/flights` and `/flights/{id}/details` paths for specification of this endpoint.
+        This URL is the base flights resource.  If this URL is specified as https://example.com/flights then the flight details for a particular {id} may be obtained at the URL https://example.com/flights/{id}/details.  This URL may not have a trailing / character.
+      pattern: '[^\/]$'
+      type: string
+      example: https://example.com/flights
+    RIDOperationalStatus:
+      description: Indicates operational status of associated aircraft.
+      enum:
+      - Undeclared
+      - Ground
+      - Airborne
+      type: string
+    RIDAircraftType:
+      description: |-
+        Type of aircraft for the purposes of remote ID.
+
+        `VTOL` is a fixed wing aircraft that can take off vertically.  `Rotocraft` includes multirotor.
+      enum:
+      - NotDeclared
+      - Aeroplane
+      - Rotorcraft
+      - Gyroplane
+      - VTOL
+      - Ornithopter
+      - Glider
+      - Kite
+      - Free Balloon
+      - Captive Balloon
+      - Airship
+      - FreeFallOrParachute
+      - Rocket
+      - Ground Obstacle
+      - Other
+      type: string
     RIDFlightDetails:
       description: Details about a flight reported by a remote ID service provider.  At
         least one of the registration or serial fields must be filled if required
@@ -1544,13 +1582,6 @@ components:
           type: string
           example: SafeFlightDrone company doing survey with DJI Inspire 2. See my
             privacy policy www.example.com/privacy.
-        group_count:
-          format: int32
-          description: When operating a group (or formation or swarm), number of aircraft
-            in group.
-          minimum: 1
-          exclusiveMinimum: false
-          type: integer
         auth_data:
           $ref: '#/components/schemas/RIDAuthData'
         serial_number:
@@ -1565,15 +1596,6 @@ components:
             required by law in a region.
           type: string
           example: FA12345897
-    RIDFlightsURL:
-      anyOf:
-      - $ref: '#/components/schemas/URL'
-      description: |-
-        The URL at which the remote ID flights and their details may be retrieved.  See `/flights` and `/flights/{id}/details` paths for specification of this endpoint.
-        This URL is the base flights resource.  If this URL is specified as https://example.com/flights then the flight details for a particular {id} may be obtained at the URL https://example.com/flights/{id}/details.  This URL may not have a trailing / character.
-      pattern: '[^\/]$'
-      type: string
-      example: https://example.com/flights
     RIDAircraftState:
       description: State of an aircraft for the purposes of remote ID.
       required:
@@ -1655,35 +1677,13 @@ components:
           description: Minimum altitude (meters WGS84-HAE) of Group Operation.  If
             not specified, ground level shall be assumed.
           type: number
-    RIDOperationalStatus:
-      description: Indicates operational status of associated aircraft.
-      enum:
-      - Undeclared
-      - Ground
-      - Airborne
-      type: string
-    RIDAircraftType:
-      description: |-
-        Type of aircraft for the purposes of remote ID.
-
-        `VTOL` is a fixed wing aircraft that can take off vertically.  `Rotocraft` includes multirotor.
-      enum:
-      - NotDeclared
-      - Aeroplane
-      - Rotorcraft
-      - Gyroplane
-      - VTOL
-      - Ornithopter
-      - Glider
-      - Kite
-      - Free Balloon
-      - Captive Balloon
-      - Airship
-      - FreeFallOrParachute
-      - Rocket
-      - Ground Obstacle
-      - Other
-      type: string
+        group_count:
+          format: int32
+          description: When operating a group (or formation or swarm), number of aircraft
+            in group.
+          minimum: 1
+          exclusiveMinimum: false
+          type: integer
   securitySchemes:
     AuthFromAuthorizationAuthority:
       flows:

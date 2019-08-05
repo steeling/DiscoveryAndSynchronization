@@ -1702,12 +1702,11 @@ components:
 
         The following fields shall be included in the JWT claim for access tokens issued by this authority:
         * `iss`, with the URL at which the token generation request was received.
-        * `aud`, with audience requested by client.
         * `exp`, with a time no further than 1 hour in the future.
         * `sub`, with unique ID of the client requesting the access token.
         * `scope`, with an array of strings indicating the scopes granted.
 
-        Multiple scopes for a single token shall be granted if requested.
+        Multiple scopes for a single token shall be granted if requested.  The tokens granted by this authority shall protect against reuse of received tokens to impersonate the sender to other recipients (via use of the `aud` claim or other means).
 
         Clients shall provide these access tokens in an `Authorization` header in the form `Bearer <token>` in accordance with RFC 6750.
 security:

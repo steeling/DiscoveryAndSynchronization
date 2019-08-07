@@ -284,7 +284,7 @@ paths:
       description: Retrieve basic flight information from a remote ID service provider
         to meet remote ID requirements.  This endpoint will be polled by remote ID
         display providers to display basic aircraft activity near a user in real time.  All
-        flights that have any recent position history (duration defined in standard)
+        flights that have any recent positions (past [NetUasInAreaWindow] seconds)
         inside the requested view must be returned.
     parameters:
     - name: view
@@ -297,11 +297,11 @@ paths:
         example: 29.97816,31.13296,29.98025,31.13535
       in: query
       required: true
-    - name: include_history
+    - name: include_recent_positions
       description: |-
-        If specified as true, include position history.  Otherwise, do not include position history.
+        If specified as true, include recent positions.  Otherwise, do not include recent positions.
 
-        A display provider's first poll of this endpoint for a particular view will usually request position history while follow-up polls for that same view will usually not need to request position history.
+        A display provider's first poll of this endpoint for a particular view will usually request recent positions while follow-up polls for that same view will usually not need to request recent positions.
       schema:
         type: boolean
       in: query
@@ -569,6 +569,12 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
           description: The access token was decoded successfully but did not include
             a scope appropriate to this endpoint.
+        404:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: A Subscription with the specified ID was not found.
       security:
       - AuthFromAuthorizationAuthority:
         - dss.read.position_reporting_entities
@@ -1114,20 +1120,6 @@ components:
           - $ref: '#/components/schemas/InternalSubscription'
           description: New full representation of Subscription.  If omitted, the Subscription
             will be deleted from the DAR.
-    RIDHistoricalAircraftPosition:
-      description: ""
-      required:
-      - time
-      - position
-      type: object
-      properties:
-        time:
-          format: date-time
-          description: Time at which this position applied.  RFC 3339 format, per
-            OpenAPI specification.
-          type: string
-        position:
-          $ref: '#/components/schemas/RIDAircraftPosition'
     Latitude:
       format: double
       description: Degrees of latitude north of the equator, with reference to the
@@ -1213,18 +1205,18 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Volume4D'
-        position_history:
-          description: |-
-            A short history of recent aircraft movement, specified only when `include_history` is true.  If `volumes` is not specified and `include_history` is true, then this field is required.
-
-            Under no circumstances should more than 60 seconds of history be included.  A full 60 seconds of most recent history (excluding current position) is required, or as much history is available if there is less than 60 seconds of history.  This history does not need to include the current position.  The entries in this list should be in descending order according to time.
-          type: array
-          items:
-            $ref: '#/components/schemas/RIDHistoricalAircraftPosition'
         simulated:
           description: If specified as true, this flight is not a physical aircraft;
             it is just a simulation to test the system.
           type: boolean
+        recent_positions:
+          description: |-
+            A short collection of recent aircraft movement, specified only when `include_recent_positions` is true.  If `volumes` is not specified and `include_recent_positions` is true, then this field is required.
+
+            Under no circumstances should more than [NetUasInAreaWindow] seconds of positions be included.  A full [NetUasInAreaWindow] seconds of most recent positions (excluding current position) is required, or as many positions are available if there is less than [NetUasInAreaWindow] seconds of positions.  These positions do not need to include the current position.  The entries in this list should be in descending order according to time.
+          type: array
+          items:
+            $ref: '#/components/schemas/RIDRecentAircraftPosition'
     GeoPolygon:
       description: |-
         An enclosed area on the earth.
@@ -1347,34 +1339,11 @@ components:
         subscribers:
           description: DSS subscribers that this client now has the obligation to
             notify of the Identification Service Area just deleted.  This client must
-            call DELETE for each provided URL according to the `/identification_service_areas`
+            call DELETE for each provided URL according to the `/uss/identification_service_areas`
             path API.
           type: array
           items:
             $ref: '#/components/schemas/SubscriberToNotify'
-    IdentificationServiceArea:
-      description: An Identification Service Area (area in which remote ID services
-        are being provided).  The DSS reports only these declarations and clients
-        must exchange flight information peer-to-peer.
-      required:
-      - extents
-      - flights_url
-      - owner
-      type: object
-      properties:
-        extents:
-          anyOf:
-          - $ref: '#/components/schemas/Volume4D'
-          description: The bounding spacetime extents of this Identification Service
-            Area.  Start and end times will both be specified.
-        flights_url:
-          $ref: '#/components/schemas/RIDFlightsURL'
-        owner:
-          description: Assigned by the DSS based on creating client’s ID (via access
-            token).  Used for restricting mutation and deletion operations to owner,
-            and only requiring EntitySignatures for unowned Entities.
-          type: string
-          example: myuss
     IdentificationServiceAreaURL:
       anyOf:
       - $ref: '#/components/schemas/URL'
@@ -1443,7 +1412,7 @@ components:
           description: |-
             The spacetime extents of the volume to subscribe to.
 
-            This subscription will automatically be deleted after its end time if it has not been refreshed by then.  If end time is not specified, the value will be automatically set to 24 hours in the future.
+            This subscription will automatically be deleted after its end time if it has not been refreshed by then.  If end time is not specified, the value will be chosen automatically by the DSS.
 
             Note that some Entities triggering notifications may lie entirely outside the requested area.
         callbacks:
@@ -1695,6 +1664,47 @@ components:
       - GroundObstacle
       - Other
       type: string
+    IdentificationServiceArea:
+      description: An Identification Service Area (area in which remote ID services
+        are being provided).  The DSS reports only these declarations and clients
+        must exchange flight information peer-to-peer.
+      required:
+      - flights_url
+      - owner
+      - time_start
+      - time_end
+      type: object
+      properties:
+        flights_url:
+          $ref: '#/components/schemas/RIDFlightsURL'
+        owner:
+          description: Assigned by the DSS based on creating client’s ID (via access
+            token).  Used for restricting mutation and deletion operations to owner,
+            and only requiring EntitySignatures for unowned Entities.
+          type: string
+          example: myuss
+        time_start:
+          format: date-time
+          description: Beginning time of service.  RFC 3339 format, per OpenAPI specification.
+          type: string
+        time_end:
+          format: date-time
+          description: End time of service.  RFC 3339 format, per OpenAPI specification.
+          type: string
+    RIDRecentAircraftPosition:
+      description: ""
+      required:
+      - time
+      - position
+      type: object
+      properties:
+        time:
+          format: date-time
+          description: Time at which this position applied.  RFC 3339 format, per
+            OpenAPI specification.
+          type: string
+        position:
+          $ref: '#/components/schemas/RIDAircraftPosition'
   securitySchemes:
     AuthFromAuthorizationAuthority:
       flows:

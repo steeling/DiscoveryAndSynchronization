@@ -288,9 +288,9 @@ paths:
         inside the requested view must be returned.
     parameters:
     - name: view
-      description: 'The area of this view: latmin,lngmin,latmax,lngmax.  Size may
-        not exceed a diagonal length specified in the standard.  If lngmin > lngmax,
-        this box shall be interpreted as crossing the antimeridian.'
+      description: 'The area of this view: lat1,lng1,lat2,lng2.  Size may not exceed
+        a diagonal length specified in the standard.  The view is the smallest box
+        bounded by the provided corner points.'
       schema:
         pattern: ^-?\d{1,3}(?:\.\d*)?,-?\d{1,3}(?:\.\d*)?,-?\d{1,3}(?:\.\d*)?,-?\d{1,3}(?:\.\d*)?$
         type: string

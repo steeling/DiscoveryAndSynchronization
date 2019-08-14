@@ -39,19 +39,6 @@ paths:
           type: string
         in: query
         required: true
-      - name: min_altitude
-        description: If specified, indicates non-interest in Identification Service
-          Areas entirely below this altitude in meters above the WGS84 ellipsoid.
-        schema:
-          type: number
-        in: query
-      - name: max_altitude
-        description: If specified, indicates non-interest in Identification Service
-          Areas entirely above this altitude in meters above the WGS84 ellipsoid.
-        schema:
-          type: number
-        in: query
-        required: true
       responses:
         200:
           content:
@@ -166,7 +153,7 @@ paths:
         - dss.write.identification_service_areas
       summary: /dss/identification_service_areas/{id}
       description: |-
-        Create or update an Identification Service Area.
+        Create or update an Identification Service Area.  The full content of any existing Identification Service Area will be replaced with the provided information.
 
         The DSS assumes the USS has already added the appropriate retention period to operation end time in `time_end` field before storing it.  Updating `time_start` is not allowed if it is before the current time.
     delete:
@@ -454,35 +441,6 @@ paths:
         $ref: '#/components/schemas/EntityUUID'
       in: path
       required: true
-  /dar/transaction:
-    summary: Update information DSS airspace representation internal to the DSS constellation.
-    post:
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PostDARTransactionParameters'
-        required: true
-      tags:
-      - dar
-      responses:
-        204:
-          description: The specified DAR information was updated successfully.
-        409:
-          description: DAR information could not be updated because at least one resource
-            had been changed before this transaction could be completed.
-      summary: DAR transaction
-      description: |-
-        Update the contents of the DSS airspace representation.
-
-        This pseudo-endpoint specifies the data that shall be synchronized between DAR participants via a distributed database.  It will not be implemented directly, but instead implicitly through the distributed database configuration and table schemas.
-
-        All updates included in the transaction must succeed or fail atomically -- no changes shall be made to the DAR unless all updates are successful.
-
-        The assumption for this intercommunication synchronization is that the DAR data schema will consist of the following key-value mappings:
-        * DARCellID -> {List of EntityUUID, List of SubscriptionUUID}
-        * SubscriptionUUID -> InternalSubscription
-        * EntityUUID -> InternalIdentificationServiceArea
   /dss/subscriptions:
     summary: Subscriptions for airspace updates to a volume of interest.
     get:
@@ -662,11 +620,10 @@ paths:
       - AuthFromAuthorizationAuthority:
         - dss.read.identification_service_areas
       summary: /dss/subscriptions/{id}
-      description: Create or update a subscription.  Subscription notifications are
-        only triggered by (and contain full information of) changes to, creation of,
-        or deletion of, Entities referenced by or stored in the DSS; they do not involve
-        any data transfer (such as remote ID telemetry updates) apart from Entity
-        information.
+      description: |-
+        Create or update a subscription.  The full content of any existing Identification Service Area will be replaced with the provided information.
+
+        Subscription notifications are only triggered by (and contain full information of) changes to, creation of, or deletion of, Entities referenced by or stored in the DSS; they do not involve any data transfer (such as remote ID telemetry updates) apart from Entity information.
     delete:
       tags:
       - dss
@@ -833,14 +790,6 @@ components:
       - $ref: '#/components/schemas/UUIDv4'
       description: Universally-unique identifier for a Subscription communicated through
         the DSS.  Formatted as UUIDv4.
-    DARCellID:
-      description: Descriptor for a particular cell in the DAR.  64-bit hexadecimal-string
-        S2 cell ID; see https://s2geometry.io
-      maxLength: 16
-      minLength: 1
-      pattern: ^[0-9a-fA-F]{1,16}$
-      type: string
-      example: 80cac31c
     RIDFlightID:
       description: ID, unique to a remote ID service provider, which identifies a
         particular flight for which the remote ID service provider is providing remote
@@ -956,21 +905,6 @@ components:
           description: Human-readable message indicating what error occurred and/or
             why.
           type: string
-    InternalDARCell:
-      description: The information about a DAR cell that the DSS stores internally
-        and synchronizes between different DSS instances.
-      type: object
-      properties:
-        subscriptions:
-          description: List of Subscriptions applicable to this cell.
-          type: array
-          items:
-            $ref: '#/components/schemas/SubscriptionUUID'
-        entities:
-          description: List of Entities applicable to this cell.
-          type: array
-          items:
-            $ref: '#/components/schemas/EntityUUID'
     DeleteSubscriptionResponse:
       description: Response for a successful request to delete an Subscription.
       required:
@@ -1074,52 +1008,6 @@ components:
           - TakeoffLocation
           - GroundLevel
           type: string
-    DARCellUpdate:
-      description: Updated data stored internally in DAR cells within the DSS.  Must
-        be exchanged in a standardized format between DSS instances to maintain a
-        DSS airspace representation.
-      required:
-      - id
-      type: object
-      properties:
-        id:
-          anyOf:
-          - $ref: '#/components/schemas/DARCellID'
-          description: The DAR cell containing this information.
-        previous_version:
-          description: The previous version of the contents of this cell.  An update
-            will only be successful if the cell contents have not changed since the
-            request was formed.  Omit this field if the cell did not previously exist
-            in the DAR.
-          type: integer
-        cell:
-          anyOf:
-          - $ref: '#/components/schemas/InternalDARCell'
-          description: New full representation of cell.  If omitted, the cell will
-            be deleted from the DAR.
-    DARSubscriptionUpdate:
-      description: Updated data for a Subscription stored internally in the DAR within
-        the DSS.  Must be exchanged in a standardized format between DSS instances
-        to maintain a DSS airspace representation.
-      required:
-      - id
-      type: object
-      properties:
-        id:
-          anyOf:
-          - $ref: '#/components/schemas/SubscriptionUUID'
-          description: The Subscription being created, updated, or deleted.
-        previous_version:
-          description: The previous version of this Subscription within the DAR.  An
-            update will only be successful if the Subscription has not changed since
-            the request was formed.  Omit this field if the Subscription did not previously
-            exist in the DAR.
-          type: integer
-        subscription:
-          anyOf:
-          - $ref: '#/components/schemas/InternalSubscription'
-          description: New full representation of Subscription.  If omitted, the Subscription
-            will be deleted from the DAR.
     Latitude:
       format: double
       description: Degrees of latitude north of the equator, with reference to the
@@ -1156,29 +1044,6 @@ components:
       description: An altitude, in meters, above the WGS84 ellipsoid.
       type: number
       example: 19.5
-    InternalSubscription:
-      description: The information about a Subscription that the DSS stores internally
-        and synchronizes between different DSS instances.
-      required:
-      - subscription
-      - affected_cells
-      - scopes
-      type: object
-      properties:
-        subscription:
-          anyOf:
-          - $ref: '#/components/schemas/Subscription'
-          description: Publicly-accessible information about the subscription.
-        affected_cells:
-          description: Ensure consistent mutation and deletion of subscriptions in/from
-            the DSS in the off-nominal case where a DSS client creates a subscription
-            in one area, but then deletes it from a slightly different area.  This
-            would otherwise leave behind a now-invalid subscription in the cells included
-            in the creation area but omitted from the deletion area.
-          minItems: 1
-          type: array
-          items:
-            $ref: '#/components/schemas/DARCellID'
     RIDFlight:
       description: Description of a remote ID flight.
       required:
@@ -1434,51 +1299,6 @@ components:
           anyOf:
           - $ref: '#/components/schemas/Subscription'
           description: Result of the operation on the subscription.
-    DARIdentificationServiceAreaUpdate:
-      description: Updated data for the full details of an Identification Service
-        Area stored in the DAR within the DSS.
-      required:
-      - id
-      type: object
-      properties:
-        id:
-          anyOf:
-          - $ref: '#/components/schemas/EntityUUID'
-          description: The Identification Service Area being created, updated, or
-            deleted.
-        previous_version:
-          description: The previous version of this Constraint within the DAR.  An
-            update will only be successful if the Constraint has not changed since
-            the request was formed.  Omit this field if the Constraint did not previously
-            exist in the DAR.
-          type: integer
-        service_area:
-          anyOf:
-          - $ref: '#/components/schemas/InternalIdentificationServiceArea'
-          description: New full information of Identification Service Area.  If omitted,
-            the Identification Service Area will be deleted from the DAR.
-    PostDARTransactionParameters:
-      description: Parameters for a request to update information in the DSS airspace
-        representation.
-      type: object
-      properties:
-        cell_updates:
-          description: A set of updates to DAR cells to apply in this transaction.
-          type: array
-          items:
-            $ref: '#/components/schemas/DARCellUpdate'
-        subscription_updates:
-          description: A set of updates to Subscriptions in the DAR to apply in this
-            transaction.
-          type: array
-          items:
-            $ref: '#/components/schemas/DARSubscriptionUpdate'
-        id_service_area_updates:
-          description: A set of updates to Identification Service Areas in the DAR
-            to apply in this transaction.
-          type: array
-          items:
-            $ref: '#/components/schemas/DARIdentificationServiceAreaUpdate'
     RIDFlightsURL:
       anyOf:
       - $ref: '#/components/schemas/URL'
@@ -1623,25 +1443,6 @@ components:
           minimum: 1
           exclusiveMinimum: false
           type: integer
-    InternalIdentificationServiceArea:
-      description: Data stored in the DAR for a Constraint whose details are stored
-        in the DAR and provided by the DSS.
-      required:
-      - service_area
-      type: object
-      properties:
-        service_area:
-          $ref: '#/components/schemas/IdentificationServiceArea'
-        affected_cells:
-          description: Ensure consistent mutation and deletion of Identification Service
-            Areas in/from the DSS in the off-nominal case where a DSS client creates
-            an ISA in one area, but then deletes it from a slightly different area.  This
-            would otherwise leave behind a now-invalid ISA in the cells included in
-            the creation area but omitted from the deletion area.
-          minItems: 1
-          type: array
-          items:
-            $ref: '#/components/schemas/DARCellID'
     RIDAircraftType:
       description: |-
         Type of aircraft for the purposes of remote ID.
@@ -1743,6 +1544,3 @@ tags:
   description: Endpoints exposed by the DSS server.
 - name: p2p_rid
   description: Endpoints exposed by remote ID service providers for peer-peer communication.
-- name: dar
-  description: Communication necessary to synchronize DSS airspace representation
-    information.

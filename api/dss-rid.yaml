@@ -594,7 +594,7 @@ components:
       properties:
         subscription:
           anyOf:
-          - $ref: '#/components/schemas/Subscription'
+          - $ref: 'base.yaml#/components/schemas/Subscription'
           description: The Subscription which was deleted.
     PutSubscriptionResponse:
       description: Response for a request to create or update a subscription.

@@ -468,19 +468,11 @@ security:
   - dss.write.operations
   - dss.write.constraints
 tags:
-- name: dss
-  description: Endpoints exposed by the DSS server.
-- name: p2p_rid
-  description: Endpoints exposed by remote ID service providers for peer-peer communication.
 - name: p2p_utm
   description: '`[UTM only]` Endpoints exposed by DSS clients for peer-peer communication
     of Entity details, including DSS-triggered subscription notifications.'
-- name: config
-  description: Communication necessary to coordinate interoperable system configurations.
 - name: dss_miniuss
   description: '`[UTM only]` USS-like endpoints hosted by DSS providers.  These endpoints
     would be used by a USS that does not want to host their own Constraint details,
     instead having the DSS act as a mini USS to host those details in addition to
     managing the (separate) EntityReference.'
-- name: dss_utm
-  description: Endpoints exposed by the DSS server only used for UTM.

@@ -11,6 +11,7 @@ info:
     This API contains both remote ID and UTM concepts.  For audiences solely interested in remote ID, ignore:
     * All elements marked `[UTM only]`
     * Everything mentioning Constraint, Operation, AirspaceAwareness, Deconfliction, or Key
+base_path: /v0
 paths:
   /configuration:
     summary: Configuration of a DAR participant's portion of the DAR.
@@ -478,7 +479,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GetIdentificationServiceAreasResponse'
+                $ref: '#/components/schemas/SearchIdentificationServiceAreasResponse'
           description: Identification Service Areas were successfully retrieved.
         400:
           content:
@@ -515,6 +516,55 @@ paths:
         may lie entirely outside the requested area.
   /dss/identification_service_areas/{id}:
     summary: An Identification Service Area in the DSS.
+    get:
+      tags:
+      - dss
+      parameters:
+      - name: id
+        description: EntityUUID of the Identification Service Area.
+        schema:
+          $ref: '#/components/schemas/EntityUUID'
+        in: path
+        required: true
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetIdentificationServiceAreaResponse'
+          description: Full information of the Constraint was retrieved successfully.
+        400:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: One or more input parameters were missing or invalid.
+        401:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bearer access token was not provided in Authorization header,
+            token could not be decoded, or token was invalid.
+        403:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The access token was decoded successfully but did not include
+            a scope appropriate to this endpoint.
+        404:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The requested Entity could not be found.
+      security:
+      - AuthFromAuthorizationAuthority:
+        - dss.read.position_reporting_entities
+      summary: /dss/identification/{id}
+      description: 'Retrieve full information of a Service Area owned by
+        the client.'
     put:
       requestBody:
         content:
@@ -538,13 +588,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/PutIdentificationServiceAreaResponse'
           description: An existing Identification Service Area was updated successfully
-            in the DSS.
-        201:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PutIdentificationServiceAreaResponse'
-          description: A new Identification Service Area was created successfully
             in the DSS.
         400:
           content:
@@ -593,6 +636,19 @@ paths:
     delete:
       tags:
       - dss
+      parameters:
+      - name: id
+        description: EntityUUID of the Identification Service Area.
+        schema:
+          $ref: '#/components/schemas/EntityUUID'
+        in: path
+        required: true
+      - name: version
+        description: Version of the Service Area to delete.
+        schema:
+          $ref: '#/components/schemas/Version'
+        in: query
+        required: true    
       responses:
         200:
           content:
@@ -641,13 +697,6 @@ paths:
       description: Delete an Identification Service Area.  USSs should not delete
         Identification Service Areas before the end of the last managed flight plus
         the retention period.
-    parameters:
-    - name: id
-      description: EntityUUID of the Identification Service Area.
-      schema:
-        $ref: '#/components/schemas/EntityUUID'
-      in: path
-      required: true
   /dss/subscriptions:
     summary: Subscriptions for airspace updates to a volume of interest.
     get:
@@ -678,7 +727,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GetSubscriptionsResponse'
+                $ref: '#/components/schemas/SearchSubscriptionsResponse'
           description: Subscriptions were retrieved successfully.
         400:
           content:
@@ -721,12 +770,19 @@ paths:
     get:
       tags:
       - dss
+      parameters:
+      - name: id
+        description: SubscriptionUUID of the subscription of interest.
+        schema:
+          $ref: '#/components/schemas/SubscriptionUUID'
+        in: path
+        required: true
       responses:
         200:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GetSubscriptionsResponse'
+                $ref: '#/components/schemas/GetSubscriptionResponse'
           description: Subscription information was retrieved successfully.
         400:
           content:
@@ -783,12 +839,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/PutSubscriptionResponse'
           description: An existing Subscription was updated successfully.
-        201:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PutSubscriptionResponse'
-          description: A new Subscription was created successfully.
         400:
           content:
             application/json:
@@ -848,6 +898,19 @@ paths:
     delete:
       tags:
       - dss
+      parameters:
+      - name: id
+        description: SubscriptionUUID of the subscription of interest.
+        schema:
+          $ref: '#/components/schemas/SubscriptionUUID'
+        in: path
+        required: true
+      - name: version
+        description: Version of the Service Area to delete.
+        schema:
+          $ref: '#/components/schemas/Version'
+        in: query
+        required: true  
       responses:
         200:
           content:
@@ -896,13 +959,6 @@ paths:
         - dss.read.constraints
       summary: /dss/subscriptions/{id}
       description: Delete a subscription.
-    parameters:
-    - name: id
-      description: SubscriptionUUID of the subscription of interest.
-      schema:
-        $ref: '#/components/schemas/SubscriptionUUID'
-      in: path
-      required: true
   /uss/flights:
     summary: Basic operation details to meet remote ID requirements.
     description: This endpoint may be polled by remote ID display providers to display
@@ -1596,7 +1652,7 @@ components:
           description: Optional (optimization).  May be provided for a set of Entities
             so that each of the included EntitySignatures does not need to be included
             in the `signatures` property.
-        subscription:
+        subscription_id:
           anyOf:
           - $ref: '#/components/schemas/SubscriptionUUID'
           description: If the client obtained the information in this DeconflictionKey
@@ -1661,7 +1717,23 @@ components:
           format: date-time
           description: End time of this volume.  RFC 3339 format, per OpenAPI specification.
           type: string
-    GetSubscriptionsResponse:
+    GetIdentificationServiceAreaResponse:
+      description: Response to DSS request for the identification service area with the given id.
+      required:
+      - identification_service_areas
+      type: object
+      properties:
+        identification_service_area:
+          $ref: '#/definitions/IdentificationServiceArea'
+    GetSubscriptionResponse:
+      description: Response to DSS request for the subscription with the given id.
+      required:
+      - subscription
+      type: object
+      properties:
+        subscription:
+          $ref: '#/definitions/Subscription'
+    SearchSubscriptionsResponse:
       description: Response to DSS query for subscriptions in a particular area.
       required:
       - subscriptions
@@ -1754,7 +1826,7 @@ components:
       - subscription
       type: object
       properties:
-        subscription:
+        subscription_id:
           $ref: '#/components/schemas/SubscriptionUUID'
         notification_index:
           $ref: '#/components/schemas/SubscriptionNotificationIndex'
@@ -1775,6 +1847,9 @@ components:
       - $ref: '#/components/schemas/UUIDv4'
       description: Universally-unique identifier for a Subscription communicated through
         the DSS.  Formatted as UUIDv4.
+    Version:
+      description: A version string used to reference an object at a particular point in time. Any updates to an object must contain the corresponding version to maintain idempotent updates.
+      type: string
     Token:
       anyOf:
       - $ref: '#/components/schemas/UUIDv4'
@@ -2320,10 +2395,10 @@ components:
             not specified, ground level shall be assumed.
           type: number
     Altitude:
-      format: float
-      description: An altitude, in meters, above the WGS84 ellipsoid.
+      format: integer
+      description: An altitude, in centimeters, above the WGS84 ellipsoid.
       type: number
-      example: 19.5
+      example: 2000 # 20 meters
     InternalSubscription:
       description: The information about a Subscription that the DSS stores internally
         and synchronizes between different DSS instances.
@@ -2541,7 +2616,7 @@ components:
           anyOf:
           - $ref: '#/components/schemas/IdentificationServiceArea'
           description: Resulting service area stored in DSS.
-    GetIdentificationServiceAreasResponse:
+    SearchIdentificationServiceAreasResponse:
       description: Response to DSS query for Identification Service Areas in an area
         of interest.
       required:
@@ -2891,7 +2966,7 @@ components:
         Identification Service Area in the DSS.
       required:
       - extents
-      - flights_url
+      - url
       type: object
       properties:
         extents:
@@ -2901,8 +2976,11 @@ components:
             The bounding spacetime extents of this Identification Service Area.  Start and end times must be specified.
 
             These extents should not reveal any sensitive information about the flight or flights within them.  This means, for instance, that extents should not tightly-wrap a flight path, nor should they generally be centered around the takeoff point of a single flight.
-        flights_url:
+        url:
           $ref: '#/components/schemas/RIDFlightsURL'
+        version:
+          description: 'Version string required for replacing existing Subscription'
+          $ref: '#/definitions/Version'
     DeleteIdentificationServiceAreaResponse:
       description: Response for a request to delete an Identification Service Area.
       required:
@@ -2928,8 +3006,9 @@ components:
         must exchange flight information peer-to-peer.
       required:
       - extents
-      - flights_url
+      - url
       - owner
+      - version
       type: object
       properties:
         extents:
@@ -2937,7 +3016,7 @@ components:
           - $ref: '#/components/schemas/Volume4D'
           description: The bounding spacetime extents of this Identification Service
             Area.  Start and end times will both be specified.
-        flights_url:
+        url:
           $ref: '#/components/schemas/RIDFlightsURL'
         owner:
           description: Assigned by the DSS based on creating client’s ID (via access
@@ -2945,6 +3024,8 @@ components:
             and only requiring EntitySignatures for unowned Entities.
           type: string
           example: myuss
+        version:
+          $ref: '#/definitions/Version'
     EntityType:
       description: |-
         Type of Entity.  The API of the URL associated with an Entity depends on its EntityType.
@@ -2975,6 +3056,7 @@ components:
       - url
       - notification_index
       - owner
+      - version
       type: object
       properties:
         id:
@@ -2990,7 +3072,7 @@ components:
           example: myuss
         notification_index:
           $ref: '#/components/schemas/SubscriptionNotificationIndex'
-        expires:
+        time_end:
           format: date-time
           description: If set, this subscription will be automatically removed after
             this time.  RFC 3339 format, per OpenAPI specification.
@@ -3001,38 +3083,24 @@ components:
             not used to create or modify any Key-requiring Entities in the recent
             past).  RFC 3339 format, per OpenAPI specification.
           type: string
-        begins:
+        time_start:
           format: date-time
           description: If set, this Subscription will not generate any notifications
             before this time.  RFC 3339 format, per OpenAPI specification.
           type: string
+        version:
+          $ref: '#/definitions/Version'
     SubscriptionCallbacks:
       description: Endpoints that should be called when an applicable event occurs.  At
         least one field must be specified.
       type: object
       properties:
-        identification_service_area_url:
+        url:
           anyOf:
-          - $ref: '#/components/schemas/IdentificationServiceAreaURL'
-          description: If specified, other clients will be instructed by the DSS to
-            call this endpoint when an Identification Service Area relevant to this
-            Subscription is created, modified, or deleted.  Must implement PUT and
-            DELETE according to the `/uss/identification_service_areas/{id}` path
-            API.
-        operation_url:
-          anyOf:
-          - $ref: '#/components/schemas/OperationURL'
-          description: '`[UTM only]` If specified, other clients will be instructed
-            by the DSS to call this endpoint when an Operation relevant to this Subscription
-            is created, modified, or deleted.  Must implement PUT and DELETE according
-            to the `/uss/operations/{id}` path API.'
-        constraint_url:
-          anyOf:
-          - $ref: '#/components/schemas/ConstraintURL'
-          description: '`[UTM only]` If specified, other clients will be instructed
-            by the DSS to call this endpoint when a Constraint relevant to this Subscription
-            is created, modified, or deleted.  Must implement PUT and DELETE according
-            to the `/uss/constraints/{id}` path API.'
+          - $ref: '#/components/schemas/URL'
+          # we need to determine whether or not URL's contain the full path or not.
+          # If they do, it is somewhat redundant to specify the path in the API spec.
+          description: Base URL to PUT updates to this subscription.
     PutSubscriptionParameters:
       description: Parameters for a request to create or update a subscription in
         the DSS.
@@ -3052,6 +3120,9 @@ components:
             Note that some Entities triggering notifications will lie entirely outside the requested area because an individual DAR cell cannot filter by exact geography.
         callbacks:
           $ref: '#/components/schemas/SubscriptionCallbacks'
+        version:
+          description: 'Version string required for replacing existing Subscription'
+          $ref: '#/definitions/Version'
     PutSubscriptionResponse:
       description: Response for a request to create or update a subscription.
       required:

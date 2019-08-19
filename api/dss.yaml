@@ -7,6 +7,7 @@ info:
     Interface to Discovery and Synchronization Service and service providers used by participating clients to discover and inform other service providers.
 
     Unless otherwise specified, fields specified in a message but not declared in the API shall be ignored.
+base_path: /v0
 paths:
   /dss/identification_service_areas:
     summary: Set of Identification Service Areas in the DSS.
@@ -44,7 +45,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GetIdentificationServiceAreasResponse'
+                $ref: '#/components/schemas/SearchIdentificationServiceAreasResponse'
           description: Identification Service Areas were successfully retrieved.
         400:
           content:
@@ -81,6 +82,55 @@ paths:
         may lie entirely outside the requested area.
   /dss/identification_service_areas/{id}:
     summary: An Identification Service Area in the DSS.
+    get:
+      tags:
+      - dss
+      parameters:
+      - name: id
+        description: EntityUUID of the Identification Service Area.
+        schema:
+          $ref: '#/components/schemas/EntityUUID'
+        in: path
+        required: true
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetIdentificationServiceAreaResponse'
+          description: Full information of the Constraint was retrieved successfully.
+        400:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: One or more input parameters were missing or invalid.
+        401:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bearer access token was not provided in Authorization header,
+            token could not be decoded, or token was invalid.
+        403:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The access token was decoded successfully but did not include
+            a scope appropriate to this endpoint.
+        404:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The requested Entity could not be found.
+      security:
+      - AuthFromAuthorizationAuthority:
+        - dss.read.position_reporting_entities
+      summary: /dss/identification/{id}
+      description: 'Retrieve full information of a Service Area owned by
+        the client.'
     put:
       requestBody:
         content:
@@ -104,13 +154,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/PutIdentificationServiceAreaResponse'
           description: An existing Identification Service Area was updated successfully
-            in the DSS.
-        201:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PutIdentificationServiceAreaResponse'
-          description: A new Identification Service Area was created successfully
             in the DSS.
         400:
           content:
@@ -156,9 +199,23 @@ paths:
         Create or update an Identification Service Area.  The full content of any existing Identification Service Area will be replaced with the provided information.
 
         The DSS assumes the USS has already added the appropriate retention period to operation end time in `time_end` field before storing it.  Updating `time_start` is not allowed if it is before the current time.
+        PUT is a full replace, not a partial update. If the Service Area already exists, the version string *must* be provided and correspond to the current version.
     delete:
       tags:
       - dss
+      parameters:
+      - name: id
+        description: EntityUUID of the Identification Service Area.
+        schema:
+          $ref: '#/components/schemas/EntityUUID'
+        in: path
+        required: true
+      - name: version
+        description: Version of the Service Area to delete.
+        schema:
+          $ref: '#/components/schemas/Version'
+        in: query
+        required: true
       responses:
         200:
           content:
@@ -207,13 +264,6 @@ paths:
       description: Delete an Identification Service Area.  USSs should not delete
         Identification Service Areas before the end of the last managed flight plus
         the retention period.
-    parameters:
-    - name: id
-      description: EntityUUID of the Identification Service Area.
-      schema:
-        $ref: '#/components/schemas/EntityUUID'
-      in: path
-      required: true
   /uss/flights:
     summary: Basic operation details to meet remote ID requirements.
     description: This endpoint may be polled by remote ID display providers to display
@@ -459,7 +509,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GetSubscriptionsResponse'
+                $ref: '#/components/schemas/SearchSubscriptionsResponse'
           description: Subscriptions were retrieved successfully.
         400:
           content:
@@ -500,12 +550,19 @@ paths:
     get:
       tags:
       - dss
+      parameters:
+      - name: id
+        description: SubscriptionUUID of the subscription of interest.
+        schema:
+          $ref: '#/components/schemas/SubscriptionUUID'
+        in: path
+        required: true
       responses:
         200:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GetSubscriptionsResponse'
+                $ref: '#/components/schemas/GetSubscriptionResponse'
           description: Subscription information was retrieved successfully.
         400:
           content:
@@ -565,12 +622,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/PutSubscriptionResponse'
           description: An existing Subscription was updated successfully.
-        201:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PutSubscriptionResponse'
-          description: A new Subscription was created successfully.
         400:
           content:
             application/json:
@@ -624,9 +675,23 @@ paths:
         Create or update a subscription.  The full content of any existing Identification Service Area will be replaced with the provided information.
 
         Subscription notifications are only triggered by (and contain full information of) changes to, creation of, or deletion of, Entities referenced by or stored in the DSS; they do not involve any data transfer (such as remote ID telemetry updates) apart from Entity information.
+        PUT is a full replace, not a partial update. If the Subscription already exists, the version string *must* be provided and correspond to the current version.
     delete:
       tags:
       - dss
+      parameters:
+      - name: id
+        description: SubscriptionUUID of the subscription of interest.
+        schema:
+          $ref: '#/components/schemas/SubscriptionUUID'
+        in: path
+        required: true
+      - name: version
+        description: Version of the Service Area to delete.
+        schema:
+          $ref: '#/components/schemas/Version'
+        in: query
+        required: true  
       responses:
         200:
           content:
@@ -673,13 +738,6 @@ paths:
         - dss.read.position_reporting_entities
       summary: /dss/subscriptions/{id}
       description: Delete a subscription.
-    parameters:
-    - name: id
-      description: SubscriptionUUID of the subscription of interest.
-      schema:
-        $ref: '#/components/schemas/SubscriptionUUID'
-      in: path
-      required: true
 components:
   schemas:
     Volume3D:
@@ -720,7 +778,23 @@ components:
           format: date-time
           description: End time of this volume.  RFC 3339 format, per OpenAPI specification.
           type: string
-    GetSubscriptionsResponse:
+    GetIdentificationServiceAreaResponse:
+      description: Response to DSS request for the identification service area with the given id.
+      required:
+      - identification_service_areas
+      type: object
+      properties:
+        identification_service_area:
+          $ref: '#/definitions/IdentificationServiceArea'
+    GetSubscriptionResponse:
+      description: Response to DSS request for the subscription with the given id.
+      required:
+      - subscription
+      type: object
+      properties:
+        subscription:
+          $ref: '#/definitions/Subscription'
+    SearchSubscriptionsResponse:
       description: Response to DSS query for subscriptions in a particular area.
       required:
       - subscriptions
@@ -769,7 +843,7 @@ components:
       - subscription
       type: object
       properties:
-        subscription:
+        subscription_id:
           $ref: '#/components/schemas/SubscriptionUUID'
         notification_index:
           $ref: '#/components/schemas/SubscriptionNotificationIndex'
@@ -1119,7 +1193,10 @@ components:
           anyOf:
           - $ref: '#/components/schemas/IdentificationServiceArea'
           description: Resulting service area stored in DSS.
-    GetIdentificationServiceAreasResponse:
+        version:
+          description: 'Version string required for replacing existing IdentificationServiceArea'
+          $ref: '#/definitions/Version'
+    SearchIdentificationServiceAreasResponse:
       description: Response to DSS query for Identification Service Areas in an area
         of interest.
       required:
@@ -1178,7 +1255,7 @@ components:
         Identification Service Area in the DSS.
       required:
       - extents
-      - flights_url
+      - url
       type: object
       properties:
         extents:
@@ -1188,7 +1265,7 @@ components:
             The bounding spacetime extents of this Identification Service Area.  Start and end times must be specified.
 
             These extents should not reveal any sensitive information about the flight or flights within them.  This means, for instance, that extents should not tightly-wrap a flight path, nor should they generally be centered around the takeoff point of a single flight.
-        flights_url:
+        url:
           $ref: '#/components/schemas/RIDFlightsURL'
     DeleteIdentificationServiceAreaResponse:
       description: Response for a request to delete an Identification Service Area.
@@ -1240,16 +1317,19 @@ components:
           example: myuss
         notification_index:
           $ref: '#/components/schemas/SubscriptionNotificationIndex'
-        expires:
+        time_end:
           format: date-time
           description: If set, this subscription will be automatically removed after
             this time.  RFC 3339 format, per OpenAPI specification.
           type: string
-        begins:
+        time_start:
           format: date-time
           description: If set, this Subscription will not generate any notifications
             before this time.  RFC 3339 format, per OpenAPI specification.
           type: string
+        version:
+          description: 'Version string required for replacing existing Subscription'
+          $ref: '#/definitions/Version'
     SubscriptionCallbacks:
       description: Endpoints that should be called when an applicable event occurs.  At
         least one field must be specified.
@@ -1282,6 +1362,9 @@ components:
             Note that some Entities triggering notifications may lie entirely outside the requested area.
         callbacks:
           $ref: '#/components/schemas/SubscriptionCallbacks'
+        version:
+          description: 'Version string required for replacing existing Subscription'
+          $ref: '#/definitions/Version'
     PutSubscriptionResponse:
       description: Response for a request to create or update a subscription.
       required:
@@ -1470,13 +1553,14 @@ components:
         are being provided).  The DSS reports only these declarations and clients
         must exchange flight information peer-to-peer.
       required:
-      - flights_url
+      - url
       - owner
       - time_start
       - time_end
+      - version
       type: object
       properties:
-        flights_url:
+        url:
           $ref: '#/components/schemas/RIDFlightsURL'
         owner:
           description: Assigned by the DSS based on creating client’s ID (via access
@@ -1492,6 +1576,9 @@ components:
           format: date-time
           description: End time of service.  RFC 3339 format, per OpenAPI specification.
           type: string
+        version:
+          description: 'Version string required for replacing existing IdentificationServiceArea'
+          $ref: '#/definitions/Version'
     RIDRecentAircraftPosition:
       description: ""
       required:

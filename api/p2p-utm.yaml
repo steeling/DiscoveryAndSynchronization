@@ -1,0 +1,486 @@
+---
+openapi: 3.0.2
+info:
+  title: Discovery and Synchronization Service
+  version: 0.0.2
+  description: |-
+    Interface to Discovery and Synchronization Service and service providers used by participating clients to discover and inform other service providers.
+
+    Unless otherwise specified, fields specified in a message but not declared in the API shall be ignored.
+
+    This API contains both remote ID and UTM concepts.  For audiences solely interested in remote ID, ignore:
+    * All elements marked `[UTM only]`
+    * Everything mentioning Constraint, Operation, AirspaceAwareness, Deconfliction, or Key
+paths:
+  /uss/constraints/{id}:
+    summary: '`[UTM only]` Full information of a UTM Constraint.'
+    get:
+      tags:
+      - p2p_utm
+      - dss_miniuss
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetConstraintResponse'
+          description: Full information of the Constraint was retrieved successfully.
+        400:
+          content:
+            application/json:
+              schema:
+                $ref: 'base.yaml#/components/schemas/RIDAircraftType'
+          description: One or more input parameters were missing or invalid.
+        401:
+          content:
+            application/json:
+              schema:
+                $ref: 'base.yaml#/components/schemas/RIDAircraftType'
+          description: Bearer access token was not provided in Authorization header,
+            token could not be decoded, or token was invalid.
+        403:
+          content:
+            application/json:
+              schema:
+                $ref: 'base.yaml#/components/schemas/RIDAircraftType'
+          description: The access token was decoded successfully but did not include
+            a scope appropriate to this endpoint.
+        404:
+          content:
+            application/json:
+              schema:
+                $ref: 'base.yaml#/components/schemas/RIDAircraftType'
+          description: The requested Entity could not be found.
+      security:
+      - AuthFromAuthorizationAuthority:
+        - dss.read.constraints
+      summary: /uss/constraints/{id}
+      description: '`[UTM only]` Retrieve full information of a Constraint owned by
+        the client.  The DSS, in its role as a mini-USS hosting the full information
+        for some non-private Constraints, would also host this endpoint.'
+    put:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PutConstraintNotificationParameters'
+        required: true
+      tags:
+      - p2p_utm
+      responses:
+        204:
+          description: Full information of Constraint was received successfully.
+        400:
+          content:
+            application/json:
+              schema:
+                $ref: 'base.yaml#/components/schemas/RIDAircraftType'
+          description: |-
+            * One or more parameters were missing or invalid.
+            * The Entity could not be parsed, or contains illegal data.
+        401:
+          content:
+            application/json:
+              schema:
+                $ref: 'base.yaml#/components/schemas/RIDAircraftType'
+          description: Bearer access token was not provided in Authorization header,
+            token could not be decoded, or token was invalid.
+        403:
+          content:
+            application/json:
+              schema:
+                $ref: 'base.yaml#/components/schemas/RIDAircraftType'
+          description: |-
+            * The access token was decoded successfully but did not include a scope appropriate to this endpoint.
+            * The client identified in the access token is not the owner of this Constraint according to the receiving client's records.
+        409:
+          content:
+            application/json:
+              schema:
+                $ref: 'base.yaml#/components/schemas/RIDAircraftType'
+          description: The Entity version specified in this message is lower than
+            a previously-received notification, or identical to a previously-received
+            notification and the Entity is different.
+      security:
+      - AuthFromAuthorizationAuthority:
+        - dss.write.constraints
+      summary: /uss/constraints/{id}
+      description: '`[UTM only]` Publish new information about a Constraint to the
+        host of this endpoint (usually because of instructions from the DSS triggered
+        by a subscription).'
+    delete:
+      tags:
+      - p2p_utm
+      responses:
+        204:
+          description: Notification of Constraint deletion was received successfully,
+            even if the host USS was previously unaware of the specified Constraint.
+        400:
+          content:
+            application/json:
+              schema:
+                $ref: 'base.yaml#/components/schemas/RIDAircraftType'
+          description: One or more parameters were missing or invalid.
+        401:
+          content:
+            application/json:
+              schema:
+                $ref: 'base.yaml#/components/schemas/RIDAircraftType'
+          description: Bearer access token was not provided in Authorization header,
+            token could not be decoded, or token was invalid.
+        403:
+          content:
+            application/json:
+              schema:
+                $ref: 'base.yaml#/components/schemas/RIDAircraftType'
+          description: |-
+            * The access token was decoded successfully but did not include a scope appropriate to this endpoint.
+            * The client identified in the access token is not the owner of this Constraint according to the receiving client's records.
+      security:
+      - AuthFromAuthorizationAuthority:
+        - dss.write.constraints
+      summary: /uss/constraints/{id}
+      description: '`[UTM only]` Publish a notification about the deletion of a Constraint
+        to the host of this endpoint (usually because of instructions from the DSS
+        triggered by a subscription).'
+    parameters:
+    - name: id
+      description: EntityUUID of the Constraint.
+      schema:
+        $ref: 'base.yaml#/components/schemas/EntityUUID'
+      in: path
+      required: true
+  /uss/flights/{id}:
+    summary: Basic operation details to meet remote ID requirements.
+    description: ""
+    get:
+      tags:
+      - p2p_utm
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetFlightsResponse'
+          description: Flight information was successfully retrieved.
+        400:
+          content:
+            application/json:
+              schema:
+                $ref: 'base.yaml#/components/schemas/RIDAircraftType'
+          description: One or more input parameters were missing or invalid.
+        401:
+          content:
+            application/json:
+              schema:
+                $ref: 'base.yaml#/components/schemas/RIDAircraftType'
+          description: Bearer access token was not provided in Authorization header,
+            token could not be decoded, or token was invalid.
+        403:
+          content:
+            application/json:
+              schema:
+                $ref: 'base.yaml#/components/schemas/RIDAircraftType'
+          description: The access token was decoded successfully but did not include
+            a scope appropriate to this endpoint.
+        404:
+          content:
+            application/json:
+              schema:
+                $ref: 'base.yaml#/components/schemas/RIDAircraftType'
+          description: The requested flight could not be found.
+      security:
+      - AuthFromAuthorizationAuthority:
+        - dss.read.operations
+      summary: /uss/flights/{id}
+      description: '`[UTM only]` This endpoint may be polled to maintain situational
+        awareness of an aircraft engaging in a UTM Operation, especially during off-nominal
+        events.'
+    parameters:
+    - name: id
+      description: Remote ID flight ID for this flight; may be obtained in general
+        /flights query.
+      schema:
+        $ref: 'base.yaml#/components/schemas/RIDFlightID'
+      in: path
+      required: true
+    - name: include_history
+      description: |-
+        If specified as true, include position history.  Otherwise, do not include position history.
+
+        A display provider's first poll of this endpoint for a particular view will usually request position history while follow-up polls for that same view will usually not need to request position history.
+      schema:
+        type: boolean
+      in: query
+  /uss/operations/{id}:
+    summary: '`[UTM only]` Full information of an Operation.'
+    get:
+      tags:
+      - p2p_utm
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetOperationResponse'
+          description: The full Operation information was retrieved successfully.
+        400:
+          content:
+            application/json:
+              schema:
+                $ref: 'base.yaml#/components/schemas/RIDAircraftType'
+          description: One or more input parameters were missing or invalid.
+        401:
+          content:
+            application/json:
+              schema:
+                $ref: 'base.yaml#/components/schemas/RIDAircraftType'
+          description: Bearer access token was not provided in Authorization header,
+            token could not be decoded, or token was invalid.
+        403:
+          content:
+            application/json:
+              schema:
+                $ref: 'base.yaml#/components/schemas/RIDAircraftType'
+          description: The access token was decoded successfully but did not include
+            a scope appropriate to this endpoint.
+        404:
+          content:
+            application/json:
+              schema:
+                $ref: 'base.yaml#/components/schemas/RIDAircraftType'
+          description: The requested Entity could not be found.
+      security:
+      - AuthFromAuthorizationAuthority:
+        - dss.write.operations
+      summary: /uss/operation/{id}
+      description: '`[UTM only]` Retrieve full information of an Operation owned by
+        the client.'
+    put:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PutOperationNotificationParameters'
+        required: true
+      tags:
+      - p2p_utm
+      responses:
+        204:
+          description: New or updated full Operation information received successfully.
+        400:
+          content:
+            application/json:
+              schema:
+                $ref: 'base.yaml#/components/schemas/RIDAircraftType'
+          description: |-
+            * One or more parameters were missing or invalid.
+            * The Entity could not be parsed, or contains illegal data.
+        401:
+          content:
+            application/json:
+              schema:
+                $ref: 'base.yaml#/components/schemas/RIDAircraftType'
+          description: Bearer access token was not provided in Authorization header,
+            token could not be decoded, or token was invalid.
+        403:
+          content:
+            application/json:
+              schema:
+                $ref: 'base.yaml#/components/schemas/RIDAircraftType'
+          description: |-
+            * The access token was decoded successfully but did not include a scope appropriate to this endpoint.
+            * The client identified in the access token is not the owner of this Entity according to the receiving client's records.
+        409:
+          content:
+            application/json:
+              schema:
+                $ref: 'base.yaml#/components/schemas/RIDAircraftType'
+          description: The Entity version specified in this message is lower than
+            a previously-received notification, or identical to a previously-received
+            notification and the Entity is different.
+      security:
+      - AuthFromAuthorizationAuthority:
+        - dss.write.operations
+      summary: /uss/operations{id}
+      description: '`[UTM only]` Publish new information about an Operation to the
+        host of this endpoint (usually because of instructions from the DSS triggered
+        by a subscription).'
+    delete:
+      tags:
+      - p2p_utm
+      responses:
+        204:
+          description: Notification of Entity deletion was received successfully,
+            even if the host USS was previously unaware of the specified Entity.
+        400:
+          content:
+            application/json:
+              schema:
+                $ref: 'base.yaml#/components/schemas/RIDAircraftType'
+          description: One or more parameters were missing or invalid.
+        401:
+          content:
+            application/json:
+              schema:
+                $ref: 'base.yaml#/components/schemas/RIDAircraftType'
+          description: Bearer access token was not provided in Authorization header,
+            token could not be decoded, or token was invalid.
+        403:
+          content:
+            application/json:
+              schema:
+                $ref: 'base.yaml#/components/schemas/RIDAircraftType'
+          description: |-
+            * The access token was decoded successfully but did not include a scope appropriate to this endpoint.
+            * The client identified in the access token is not the owner of this Entity according to the receiving client's records.
+      security:
+      - AuthFromAuthorizationAuthority:
+        - dss.write.position_reporting_entities
+        - dss.write.airspace_awareness
+        - dss.write.operations
+      summary: /uss/operations{id}
+      description: '`[UTM only]` Publish a notification about the deletion of an Operation
+        to the host of this endpoint (usually because of instructions from the DSS
+        triggered by a subscription).'
+    parameters:
+    - name: id
+      description: EntityUUID of the Operation.
+      schema:
+        $ref: 'base.yaml#/components/schemas/EntityUUID'
+      in: path
+      required: true
+components:
+  schemas:
+    GetConstraintResponse:
+      description: Response to remote ID provider query for constraint information
+      required:
+      - constraint
+      properties:
+        operation:
+          $ref: 'base.yaml#/components/schemas/Constraint'  
+    GetOperationResponse: 
+      description: Response to remote ID provider query for operation information
+      required:
+      - operation
+      properties:
+        operation:
+          $ref: 'base.yaml#/components/schemas/Operation'
+    GetFlightsResponse:
+      description: Response to remote ID provider query for flight information in
+        an area of interest.
+      required:
+      - timestamp
+      - flights
+      type: object
+      properties:
+        timestamp:
+          format: date-time
+          description: The remote ID service provider's timestamp for when this information
+            was current.  RFC 3339 format, per OpenAPI specification.
+          type: string
+        flights:
+          description: A list of all flights that have been within the requested area
+            within the remote ID retention period.  This includes flights that are
+            not currently within the requested area, but were within the requested
+            area within the remote ID retention period.
+          # TODO(steeling): does this need to be an array?
+          type: array
+          items:
+            $ref: 'base.yaml#/components/schemas/RIDFlight'
+    PutOperationNotificationParameters:
+      description: Parameters for a notification of a change to an Operation.
+      required:
+      - operation
+      - subscriptions
+      type: object
+      properties:
+        operation:
+          $ref: 'base.yaml#/components/schemas/Operation'
+        subscriptions:
+          description: Subscription(s) prompting this notification.
+          type: array
+          items:
+            $ref: '#/components/schemas/base.yaml#/components/schemas/SubscriptionState'
+    PutConstraintNotificationParameters:
+      description: Parameters for a notification of a change to a Constraint.
+      required:
+      - constraint
+      - subscriptions
+      type: object
+      properties:
+        constraint:
+          $ref: 'base.yaml#/components/schemas/Constraint'
+        subscriptions:
+          description: Subscription(s) prompting this notification.
+          type: array
+          items:
+            $ref: '#/components/schemas/base.yaml#/components/schemas/SubscriptionState'
+  securitySchemes:
+    AuthFromAuthorizationAuthority:
+      flows:
+        clientCredentials:
+          tokenUrl: https://example.com/oauth/token
+          scopes:
+            dss.read.identification_service_areas: Client may query, read, or create
+              subscriptions for Identification Service Areas for remote ID.  Does
+              not provide access to UTM-related Entities.  A remote ID display provider
+              shall be granted this scope upon request.
+            dss.write.identification_service_areas: Client may create, edit, and delete
+              Identification Service Areas for remote ID.  A remote ID service provider
+              shall be granted this scope upon request.
+            dss.write.airspace_awareness: '`[UTM only]` In addition to `dss.read.airspace_awareness`,
+              client may create airspace awareness Entities.  A VLOS airspace awareness
+              provider would likely use this scope.'
+            dss.write.operations: '`[UTM only]` Client may create Operation Entities.  A
+              strategic planning UTM provider would use this scope, along with dss.read.operations.'
+            dss.write.constraints: '`[UTM only]` Client may create un-deconflicted
+              constraints in the airspace.  A client acting on behalf of a governmental
+              organization would use this scope.'
+            dss.read.dar_configuration: Client may read information about the configuration
+              of this DAR participant's portion of the DAR.  Any airspace service
+              provider shall be granted this scope upon request.
+            dss.read.operations: '`[UTM only]` Client may query, read, and subscribe
+              to Operation Entities.  A strategic planning UTM provider would use
+              this scope, along with dss.write.operations.'
+            dss.read.constraints: '`[UTM only]` Client may read, query, or subscribe
+              to constraints in the airspace.'
+      type: oauth2
+      description: |-
+        Authorization from, or on behalf of, an authorization authority.  This authority shall issue access tokens that are JSON Web Tokens as defined in RFC 7519, using the `RS256` algorithm for the signature, and publish to all providers the public key for verifying that signature.
+
+        The following fields shall be included in the JWT claim for access tokens issued by this authority:
+        * `iss`, with the URL at which the token generation request was received.
+        * `aud`, with audience requested by client.
+        * `exp`, with a time no further than 1 hour in the future.
+        * `client_id`, with unique ID of the client requesting the access token.
+        * `scope`, with an array of strings indicating the scopes granted.
+
+        Multiple scopes for a single token shall be granted if requested.
+
+        Clients shall provide these access tokens in an `Authorization` header in the form `Bearer <token>` in accordance with RFC 6750.
+security:
+- AuthFromAuthorizationAuthority:
+  - dss.read.position_reporting_entities
+  - dss.write.position_reporting_entities
+  - dss.read.airspace_awareness
+  - dss.write.airspace_awareness
+  - dss.write.operations
+  - dss.write.constraints
+tags:
+- name: dss
+  description: Endpoints exposed by the DSS server.
+- name: p2p_rid
+  description: Endpoints exposed by remote ID service providers for peer-peer communication.
+- name: p2p_utm
+  description: '`[UTM only]` Endpoints exposed by DSS clients for peer-peer communication
+    of Entity details, including DSS-triggered subscription notifications.'
+- name: config
+  description: Communication necessary to coordinate interoperable system configurations.
+- name: dss_miniuss
+  description: '`[UTM only]` USS-like endpoints hosted by DSS providers.  These endpoints
+    would be used by a USS that does not want to host their own Constraint details,
+    instead having the DSS act as a mini USS to host those details in addition to
+    managing the (separate) EntityReference.'
+- name: dss_utm
+  description: Endpoints exposed by the DSS server only used for UTM.

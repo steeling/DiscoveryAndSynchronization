@@ -1,0 +1,346 @@
+---
+openapi: 3.0.2
+info:
+  title: Discovery and Synchronization Service
+  version: 0.0.2
+  description: |-
+    Interface to Discovery and Synchronization Service and service providers used by participating clients to discover and inform other service providers.
+
+    Unless otherwise specified, fields specified in a message but not declared in the API shall be ignored.
+
+    This API contains both remote ID and UTM concepts.  For audiences solely interested in remote ID, ignore:
+    * All elements marked `[UTM only]`
+    * Everything mentioning Constraint, Operation, AirspaceAwareness, Deconfliction, or Key
+paths:
+  /uss/flights:
+    summary: Basic operation details to meet remote ID requirements.
+    description: This endpoint may be polled by remote ID display providers to display
+      basic aircraft activity near a user in real time.
+    get:
+      tags:
+      - p2p_rid
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetFlightsResponse'
+          description: Flight information was successfully retrieved.
+        400:
+          content:
+            application/json:
+              schema:
+                $ref: 'base.yaml#/components/schemas/RIDAircraftType'
+          description: One or more input parameters were missing or invalid.
+        401:
+          content:
+            application/json:
+              schema:
+                $ref: 'base.yaml#/components/schemas/RIDAircraftType'
+          description: Bearer access token was not provided in Authorization header,
+            token could not be decoded, or token was invalid.
+        403:
+          content:
+            application/json:
+              schema:
+                $ref: 'base.yaml#/components/schemas/RIDAircraftType'
+          description: The access token was decoded successfully but did not include
+            a scope appropriate to this endpoint.
+        404:
+          content:
+            application/json:
+              schema:
+                $ref: 'base.yaml#/components/schemas/RIDAircraftType'
+          description: The requested view is entirely outside any remote ID service
+            provision areas (PositionReporting Entity volumes) this provider has.  A
+            display provider receiving this response should discontinue polling for
+            this endpoint for the view port requested until otherwise directed by
+            DSS interactions.
+        413:
+          content:
+            application/json:
+              schema:
+                $ref: 'base.yaml#/components/schemas/RIDAircraftType'
+          description: The requested view rectangle was too large.
+      security:
+      - AuthFromAuthorizationAuthority:
+        - dss.read.identification_service_areas
+      summary: /uss/flights
+      description: Retrieve basic flight information from a remote ID service provider
+        to meet remote ID requirements.  This endpoint will be polled by remote ID
+        display providers to display basic aircraft activity near a user in real time.  All
+        flights that have any recent position history (duration defined in standard)
+        inside the requested view must be returned.
+    parameters:
+    - name: view
+      description: 'The area of this view: latmin,lngmin,latmax,lngmax.  Size may
+        not exceed a diagonal length specified in the standard.'
+      schema:
+        pattern: ^-?\d{1,3}(?:\.\d*)?,-?\d{1,3}(?:\.\d*)?,-?\d{1,3}(?:\.\d*)?,-?\d{1,3}(?:\.\d*)?$
+        type: string
+        example: 29.97816,31.13296,29.98025,31.13535
+      in: query
+      required: true
+    - name: include_history
+      description: |-
+        If specified as true, include position history.  Otherwise, do not include position history.
+
+        A display provider's first poll of this endpoint for a particular view will usually request position history while follow-up polls for that same view will usually not need to request position history.
+      schema:
+        type: boolean
+      in: query
+  /uss/flights/{id}/details:
+    summary: A remote ID flight reported by a remote ID service provider.
+    get:
+      tags:
+      - p2p_rid
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetFlightDetailsResponse'
+          description: Flight details were successfully retrieved.
+        400:
+          content:
+            application/json:
+              schema:
+                $ref: 'base.yaml#/components/schemas/RIDAircraftType'
+          description: One or more input parameters were missing or invalid.
+        401:
+          content:
+            application/json:
+              schema:
+                $ref: 'base.yaml#/components/schemas/RIDAircraftType'
+          description: Bearer access token was not provided in Authorization header,
+            token could not be decoded, or token was invalid.
+        403:
+          content:
+            application/json:
+              schema:
+                $ref: 'base.yaml#/components/schemas/RIDAircraftType'
+          description: The access token was decoded successfully but did not include
+            a scope appropriate to this endpoint.
+        404:
+          content:
+            application/json:
+              schema:
+                $ref: 'base.yaml#/components/schemas/RIDAircraftType'
+          description: The requested flight could not be found.
+      security:
+      - AuthFromAuthorizationAuthority:
+        - dss.read.identification_service_areas
+      summary: /uss/flights/{id}/details
+      description: Retrieve details of a flight from a remote ID service provider
+        to meet remote ID requirements.
+    parameters:
+    - name: id
+      description: Remote ID flight ID for this flight; may be obtained in general
+        /flights query.
+      schema:
+        $ref: 'base.yaml#/components/schemas/RIDFlightID'
+      in: path
+      required: true
+  /uss/identification_service_areas/{id}:
+    summary: Notifications of change to Identification Service Areas.
+    put:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PutIdentificationServiceAreaNotificationParameters'
+        required: true
+      tags:
+      - p2p_rid
+      responses:
+        204:
+          description: Full information for Identification Service Area was updated
+            successfully.
+        400:
+          content:
+            application/json:
+              schema:
+                $ref: 'base.yaml#/components/schemas/RIDAircraftType'
+          description: |-
+            * One or more parameters were missing or invalid.
+            * The Identification Service Area information could not be parsed, or contains illegal data.
+        401:
+          content:
+            application/json:
+              schema:
+                $ref: 'base.yaml#/components/schemas/RIDAircraftType'
+          description: Bearer access token was not provided in Authorization header,
+            token could not be decoded, or token was invalid.
+        403:
+          content:
+            application/json:
+              schema:
+                $ref: 'base.yaml#/components/schemas/RIDAircraftType'
+          description: |-
+            * The access token was decoded successfully but did not include a scope appropriate to this endpoint.
+            * The client identified in the access token is not the owner of this Entity according to the receiving client's records.
+        409:
+          content:
+            application/json:
+              schema:
+                $ref: 'base.yaml#/components/schemas/RIDAircraftType'
+          description: The Entity version specified in this message is lower than
+            a previously-received notification, or identical to a previously-received
+            notification and the Entity is different.
+      security:
+      - AuthFromAuthorizationAuthority:
+        - dss.write.identification_service_areas
+      summary: /uss/identification_service_areas/{id}
+      description: 'Hosted by a remote ID display provider using Subscriptions: publish
+        new full information of an Identification Service Area to the host of this
+        endpoint (usually because of instructions from the DSS triggered by a subscription).'
+    delete:
+      tags:
+      - p2p_rid
+      responses:
+        204:
+          description: Notification of Identification Service Area deletion was received
+            successfully, even if the host USS was previously unaware of the specified
+            Identification Service Area.
+        400:
+          content:
+            application/json:
+              schema:
+                $ref: 'base.yaml#/components/schemas/RIDAircraftType'
+          description: One or more parameters were missing or invalid.
+        401:
+          content:
+            application/json:
+              schema:
+                $ref: 'base.yaml#/components/schemas/RIDAircraftType'
+          description: Bearer access token was not provided in Authorization header,
+            token could not be decoded, or token was invalid.
+        403:
+          content:
+            application/json:
+              schema:
+                $ref: 'base.yaml#/components/schemas/RIDAircraftType'
+          description: |-
+            * The access token was decoded successfully but did not include a scope appropriate to this endpoint.
+            * The client identified in the access token is not the owner of this Entity according to the receiving client's records.
+      security:
+      - AuthFromAuthorizationAuthority:
+        - dss.write.identification_service_areas
+      summary: /uss/identification_service_areas/{id}
+      description: 'Hosted by a remote ID display provider using Subscriptions: publish
+        a notification about the deletion of an Identification Service Area to the
+        host of this endpoint (usually because of instructions from the DSS triggered
+        by a subscription).'
+    parameters:
+    - name: id
+      description: EntityUUID of the Identification Service Area.
+      schema:
+        $ref: 'base.yaml#/components/schemas/EntityUUID'
+      in: path
+      required: true
+components:
+  schemas:
+    GetFlightsResponse:
+      description: Response to remote ID provider query for flight information in
+        an area of interest.
+      required:
+      - timestamp
+      - flights
+      type: object
+      properties:
+        timestamp:
+          format: date-time
+          description: The remote ID service provider's timestamp for when this information
+            was current.  RFC 3339 format, per OpenAPI specification.
+          type: string
+        flights:
+          description: A list of all flights that have been within the requested area
+            within the remote ID retention period.  This includes flights that are
+            not currently within the requested area, but were within the requested
+            area within the remote ID retention period.
+          type: array
+          items:
+            $ref: 'base.yaml#/components/schemas/RIDFlight'
+    GetFlightDetailsResponse:
+      description: Response to remote ID provider query for details about a specific
+        flight.
+      required:
+      - details
+      type: object
+      properties:
+        details:
+          $ref: 'base.yaml#/components/schemas/RIDFlightDetails'
+    PutIdentificationServiceAreaNotificationParameters:
+      description: Parameters of a message informing of new full information for an
+        Identification Service Area.  Pushed (by a client, not the DSS) directly to
+        clients with subscriptions when another client makes a change to airspace
+        within a cell with a subscription.
+      required:
+      - service_area
+      - subscriptions
+      type: object
+      properties:
+        service_area:
+          anyOf:
+          - $ref: 'base.yaml#/components/schemas/IdentificationServiceArea'
+          description: Identification Service Area that the notifying client changed
+            or created.
+        subscriptions:
+          description: Subscription(s) prompting this notification.
+          type: array
+          items:
+            $ref: '#/components/schemas/base.yaml#/components/schemas/SubscriptionState'
+  securitySchemes:
+    AuthFromAuthorizationAuthority:
+      flows:
+        clientCredentials:
+          tokenUrl: https://example.com/oauth/token
+          scopes:
+            dss.read.identification_service_areas: Client may query, read, or create
+              subscriptions for Identification Service Areas for remote ID.  Does
+              not provide access to UTM-related Entities.  A remote ID display provider
+              shall be granted this scope upon request.
+            dss.write.identification_service_areas: Client may create, edit, and delete
+              Identification Service Areas for remote ID.  A remote ID service provider
+              shall be granted this scope upon request.
+            dss.write.airspace_awareness: '`[UTM only]` In addition to `dss.read.airspace_awareness`,
+              client may create airspace awareness Entities.  A VLOS airspace awareness
+              provider would likely use this scope.'
+            dss.write.operations: '`[UTM only]` Client may create Operation Entities.  A
+              strategic planning UTM provider would use this scope, along with dss.read.operations.'
+            dss.write.constraints: '`[UTM only]` Client may create un-deconflicted
+              constraints in the airspace.  A client acting on behalf of a governmental
+              organization would use this scope.'
+            dss.read.dar_configuration: Client may read information about the configuration
+              of this DAR participant's portion of the DAR.  Any airspace service
+              provider shall be granted this scope upon request.
+            dss.read.operations: '`[UTM only]` Client may query, read, and subscribe
+              to Operation Entities.  A strategic planning UTM provider would use
+              this scope, along with dss.write.operations.'
+            dss.read.constraints: '`[UTM only]` Client may read, query, or subscribe
+              to constraints in the airspace.'
+      type: oauth2
+      description: |-
+        Authorization from, or on behalf of, an authorization authority.  This authority shall issue access tokens that are JSON Web Tokens as defined in RFC 7519, using the `RS256` algorithm for the signature, and publish to all providers the public key for verifying that signature.
+
+        The following fields shall be included in the JWT claim for access tokens issued by this authority:
+        * `iss`, with the URL at which the token generation request was received.
+        * `aud`, with audience requested by client.
+        * `exp`, with a time no further than 1 hour in the future.
+        * `client_id`, with unique ID of the client requesting the access token.
+        * `scope`, with an array of strings indicating the scopes granted.
+
+        Multiple scopes for a single token shall be granted if requested.
+
+        Clients shall provide these access tokens in an `Authorization` header in the form `Bearer <token>` in accordance with RFC 6750.
+security:
+- AuthFromAuthorizationAuthority:
+  - dss.read.position_reporting_entities
+  - dss.write.position_reporting_entities
+  - dss.read.airspace_awareness
+  - dss.write.airspace_awareness
+  - dss.write.operations
+  - dss.write.constraints
+tags:
+- name: p2p_rid
+  description: Endpoints exposed by remote ID service providers for peer-peer communication.

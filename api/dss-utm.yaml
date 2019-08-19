@@ -1,0 +1,798 @@
+---
+openapi: 3.0.2
+info:
+  title: Discovery and Synchronization Service
+  version: 0.0.2
+  description: |-
+    Interface to Discovery and Synchronization Service and service providers used by participating clients to discover and inform other service providers.
+
+    Unless otherwise specified, fields specified in a message but not declared in the API shall be ignored.
+
+    This API contains both remote ID and UTM concepts.  For audiences solely interested in remote ID, ignore:
+    * All elements marked `[UTM only]`
+    * Everything mentioning Constraint, Operation, AirspaceAwareness, Deconfliction, or Key
+paths:
+  /dss/constraints/{id}:
+    summary: Public Constraint Entities stored in the DSS.
+    put:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PutOperationReferenceParameters'
+        required: true
+      tags:
+      - dss_miniuss
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PutConstraintResponse'
+          description: Existing Constraint was successfully updated, and its full
+            information will be served from the DSS.
+        201:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PutConstraintResponse'
+          description: New Constraint was successfully added to the airspace.
+      security:
+      - AuthFromAuthorizationAuthority:
+        - dss.write.constraints
+      summary: /dss/constraints/{id}
+      description: '`[UTM only]` Publish a new public Constraint that will be stored
+        in the DAR and exposed by DSS instances (full information does not need to
+        be hosted by the requesting client).  The DSS will call PUT `/dss/references/constraints/{id}`
+        internally, so the client does not need to call that endpoint in addition
+        to this one.'
+    delete:
+      tags:
+      - dss_miniuss
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteConstraintResponse'
+          description: Constraint was successfully deleted from DSS.
+      security:
+      - AuthFromAuthorizationAuthority:
+        - dss.write.constraints
+      summary: /dss/constraints/{id}
+      description: '`[UTM only]` Delete a public Constraint stored in the DAR and
+        served from the DSS.  The DSS will call DELETE `/dss/references/constraints/{id}`
+        internally, so the client does not need to call that endpoint in addition
+        to this one.'
+    parameters:
+    - name: id
+      description: EntityUUID of the Constraint.
+      schema:
+        type: string
+      in: path
+      required: true
+  /dss/references/constraints/{id}:
+    summary: A reference in the DSS to a Constraint.
+    put:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PutConstraintReferenceParameters'
+        required: true
+      tags:
+      - dss_utm
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PutConstraintReferenceResponse'
+          description: An existing Constraint reference was updated successfully in
+            the DSS.
+        201:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PutConstraintReferenceResponse'
+          description: A new Constraint reference was created successfully in the
+            DSS.
+        400:
+          content:
+            application/json:
+              schema:
+                $ref: 'base.yaml#/components/schemas/RIDAircraftType'
+          description: |-
+            * One or more input parameters were missing or invalid.
+            * The request attempted to mutate the Constraint in a disallowed way.
+        401:
+          content:
+            application/json:
+              schema:
+                $ref: 'base.yaml#/components/schemas/RIDAircraftType'
+          description: Bearer access token was not provided in Authorization header,
+            token could not be decoded, or token was invalid.
+        403:
+          content:
+            application/json:
+              schema:
+                $ref: 'base.yaml#/components/schemas/RIDAircraftType'
+          description: The access token was decoded successfully but did not include
+            a scope appropriate to this endpoint.
+        409:
+          content:
+            application/json:
+              schema:
+                $ref: 'base.yaml#/components/schemas/RIDAircraftType'
+          description: |-
+            * A Constraint with the specified ID already exists and is owned by a different client.
+            * Despite repeated attempts, the DSS was unable to update the DAR because of other simultaneous changes.
+        413:
+          content:
+            application/json:
+              schema:
+                $ref: 'base.yaml#/components/schemas/RIDAircraftType'
+          description: The area of the Operation is too large.
+      security:
+      - AuthFromAuthorizationAuthority:
+        - dss.write.constraints
+      summary: /dss/references/constraints/{id}
+      description: '`[UTM only]` Create or update reference in the DSS to a Constraint.'
+    delete:
+      tags:
+      - dss_utm
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteConstraintReferenceResponse'
+          description: Reference to Constraint was successfully deleted from DSS.
+        400:
+          content:
+            application/json:
+              schema:
+                $ref: 'base.yaml#/components/schemas/RIDAircraftType'
+          description: One or more input parameters were missing or invalid.
+        401:
+          content:
+            application/json:
+              schema:
+                $ref: 'base.yaml#/components/schemas/RIDAircraftType'
+          description: Bearer access token was not provided in Authorization header,
+            token could not be decoded, or token was invalid.
+        403:
+          content:
+            application/json:
+              schema:
+                $ref: 'base.yaml#/components/schemas/RIDAircraftType'
+          description: |-
+            * The access token was decoded successfully but did not include a scope appropriate to this endpoint.
+            * The Constraint reference does not belong to the client requesting deletion.
+        404:
+          content:
+            application/json:
+              schema:
+                $ref: 'base.yaml#/components/schemas/RIDAircraftType'
+          description: Operation reference could not be deleted because it could not
+            be found.
+        409:
+          content:
+            application/json:
+              schema:
+                $ref: 'base.yaml#/components/schemas/RIDAircraftType'
+          description: Despite repeated attempts, the DSS was unable to update the
+            DAR because of other simultaneous changes.
+      security:
+      - AuthFromAuthorizationAuthority:
+        - dss.write.constraints
+      summary: /dss/references/constraints/{id}
+      description: '`[UTM only]` Delete reference to an Constraint.'
+    parameters:
+    - name: id
+      description: EntityUUID of the Constraint.
+      schema:
+        $ref: 'base.yaml#/components/schemas/EntityUUID'
+      in: path
+      required: true
+  /dss/references/constraints:
+    summary: Set of references in the DSS to Constraints defined by USS (or DSS) hosts.
+    description: ""
+    get:
+      tags:
+      - dss_utm
+      parameters:
+      - name: area
+        description: The area in which to search for Constraints.  Some Constraints
+          near this area but wholly outside it may also be returned.
+        schema:
+          $ref: 'base.yaml#/components/schemas/GeoPolygonString'
+        in: query
+        required: true
+      - name: earliest_time
+        description: If specified, indicates non-interest in any Constraints that
+          end before this time.  RFC 3339 format, per OpenAPI specification.
+        schema:
+          format: date-time
+          type: string
+        in: query
+        required: true
+      - name: latest_time
+        description: If specified, indicates non-interest in any Constraints that
+          start after this time.  RFC 3339 format, per OpenAPI specification.
+        schema:
+          format: date-time
+          type: string
+        in: query
+        required: true
+      - name: min_altitude
+        description: If specified, indicates non-interest in Constraints entirely
+          below this altitude in meters above the WGS84 ellipsoid.
+        schema:
+          type: number
+        in: query
+      - name: max_altitude
+        description: If specified, indicates non-interest in Constraints entirely
+          above this altitude in meters above the WGS84 ellipsoid.
+        schema:
+          type: number
+        in: query
+        required: true
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetConstraintReferencesResponse'
+          description: References to Constraints were successfully retrieved.
+        400:
+          content:
+            application/json:
+              schema:
+                $ref: 'base.yaml#/components/schemas/RIDAircraftType'
+          description: One or more input parameters were missing or invalid.
+        401:
+          content:
+            application/json:
+              schema:
+                $ref: 'base.yaml#/components/schemas/RIDAircraftType'
+          description: Bearer access token was not provided in Authorization header,
+            token could not be decoded, or token was invalid.
+        403:
+          content:
+            application/json:
+              schema:
+                $ref: 'base.yaml#/components/schemas/RIDAircraftType'
+          description: The access token was decoded successfully but did not include
+            a scope appropriate to this endpoint.
+        413:
+          content:
+            application/json:
+              schema:
+                $ref: 'base.yaml#/components/schemas/RIDAircraftType'
+          description: The requested area was too large.
+      security:
+      - AuthFromAuthorizationAuthority:
+        - dss.read.constraints
+      summary: /dss/references/constraints
+      description: '`[UTM only]` Retrieve references to all Constraint references
+        in the DAR for a given area during the given time.  Note that some Constraints
+        returned will lie entirely outside the requested area because an individual
+        DAR cell cannot filter by exact geography.'
+  /dss/references/operations:
+    summary: Set of references in the DSS to Operations defined by USS hosts.
+    description: ""
+    get:
+      tags:
+      - dss_utm
+      parameters:
+      - name: area
+        description: The area in which to search for Operations.  Some Operations
+          near this area but wholly outside it may also be returned.
+        schema:
+          $ref: 'base.yaml#/components/schemas/GeoPolygonString'
+        in: query
+        required: true
+      - name: earliest_time
+        description: If specified, indicates non-interest in any Operations that end
+          before this time.  RFC 3339 format, per OpenAPI specification.
+        schema:
+          format: date-time
+          type: string
+        in: query
+        required: true
+      - name: latest_time
+        description: If specified, indicates non-interest in any Operations that start
+          after this time.  RFC 3339 format, per OpenAPI specification.
+        schema:
+          format: date-time
+          type: string
+        in: query
+        required: true
+      - name: min_altitude
+        description: If specified, indicates non-interest in Operations entirely below
+          this altitude in meters above the WGS84 ellipsoid.
+        schema:
+          type: number
+        in: query
+      - name: max_altitude
+        description: If specified, indicates non-interest in Operations entirely above
+          this altitude in meters above the WGS84 ellipsoid.
+        schema:
+          type: number
+        in: query
+        required: true
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetOperationReferencesResponse'
+          description: References to Operations were successfully retrieved.
+        400:
+          content:
+            application/json:
+              schema:
+                $ref: 'base.yaml#/components/schemas/RIDAircraftType'
+          description: One or more input parameters were missing or invalid.
+        401:
+          content:
+            application/json:
+              schema:
+                $ref: 'base.yaml#/components/schemas/RIDAircraftType'
+          description: Bearer access token was not provided in Authorization header,
+            token could not be decoded, or token was invalid.
+        403:
+          content:
+            application/json:
+              schema:
+                $ref: 'base.yaml#/components/schemas/RIDAircraftType'
+          description: The access token was decoded successfully but did not include
+            a scope appropriate to this endpoint.
+        413:
+          content:
+            application/json:
+              schema:
+                $ref: 'base.yaml#/components/schemas/RIDAircraftType'
+          description: The requested area was too large.
+      security:
+      - AuthFromAuthorizationAuthority:
+        - dss.read.operations
+      summary: /dss/references/operations
+      description: '`[UTM only]` Retrieve references to all Operations in the DAR
+        for a given area during the given time.  Note that some Operations returned
+        will lie entirely outside the requested area because an individual DAR cell
+        cannot filter by exact geography.'
+  /dss/references/operations/{id}:
+    summary: A reference in the DSS to an Operation.
+    put:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PutOperationReferenceParameters'
+        required: true
+      tags:
+      - dss_utm
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PutOperationReferenceResponse'
+          description: An existing Operation reference was updated successfully in
+            the DSS.
+        201:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PutOperationReferenceResponse'
+          description: A new Operation reference was created successfully in the DSS.
+        400:
+          content:
+            application/json:
+              schema:
+                $ref: 'base.yaml#/components/schemas/RIDAircraftType'
+          description: |-
+            * One or more input parameters were missing or invalid.
+            * The request attempted to mutate the Operation in a disallowed way.
+        401:
+          content:
+            application/json:
+              schema:
+                $ref: 'base.yaml#/components/schemas/RIDAircraftType'
+          description: Bearer access token was not provided in Authorization header,
+            token could not be decoded, or token was invalid.
+        403:
+          content:
+            application/json:
+              schema:
+                $ref: 'base.yaml#/components/schemas/RIDAircraftType'
+          description: The access token was decoded successfully but did not include
+            a scope appropriate to this endpoint.
+        409:
+          content:
+            application/json:
+              schema:
+                $ref: 'base.yaml#/components/schemas/RIDAircraftType'
+          description: |-
+            * An Operation with the specified ID already exists and is owned by a different client.
+            * Despite repeated attempts, the DSS was unable to update the DAR because of other simultaneous changes.
+        413:
+          content:
+            application/json:
+              schema:
+                $ref: 'base.yaml#/components/schemas/RIDAircraftType'
+          description: The area of the Operation is too large.
+      security:
+      - AuthFromAuthorizationAuthority:
+        - dss.write.operations
+      summary: /dss/references/operations/{id}
+      description: '`[UTM only]` Create or update reference in the DSS to an Operation.'
+    delete:
+      tags:
+      - dss_utm
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteOperationReferenceResponse'
+          description: Reference to Operation was successfully deleted from DSS.
+        400:
+          content:
+            application/json:
+              schema:
+                $ref: 'base.yaml#/components/schemas/RIDAircraftType'
+          description: One or more input parameters were missing or invalid.
+        401:
+          content:
+            application/json:
+              schema:
+                $ref: 'base.yaml#/components/schemas/RIDAircraftType'
+          description: Bearer access token was not provided in Authorization header,
+            token could not be decoded, or token was invalid.
+        403:
+          content:
+            application/json:
+              schema:
+                $ref: 'base.yaml#/components/schemas/RIDAircraftType'
+          description: |-
+            * The access token was decoded successfully but did not include a scope appropriate to this endpoint.
+            * The Operation reference does not belong to the client requesting deletion.
+        404:
+          content:
+            application/json:
+              schema:
+                $ref: 'base.yaml#/components/schemas/RIDAircraftType'
+          description: Operation reference could not be deleted because it could not
+            be found.
+        409:
+          content:
+            application/json:
+              schema:
+                $ref: 'base.yaml#/components/schemas/RIDAircraftType'
+          description: Despite repeated attempts, the DSS was unable to update the
+            DAR because of other simultaneous changes.
+      security:
+      - AuthFromAuthorizationAuthority:
+        - dss.write.operations
+      summary: /dss/references/operations/{id}
+      description: '`[UTM only]` Delete reference to an Operation.'
+    parameters:
+    - name: id
+      description: EntityUUID of the Operation.
+      schema:
+        $ref: 'base.yaml#/components/schemas/EntityUUID'
+      in: path
+      required: true
+components:
+  schemas:
+    GetOperationReferencesResponse:
+      description: Response to DSS query for references to Operations in an area of
+        interest.
+      required:
+      - references
+      type: object
+      properties:
+        references:
+          description: References to Operations in the area of interest.
+          type: array
+          items:
+            $ref: 'base.yaml#/components/schemas/OperationReference'
+    DeleteOperationReferenceResponse:
+      description: Response for a request to delete an Operation reference from the
+        DSS.
+      required:
+      - reference
+      - subscribers
+      - signature
+      type: object
+      properties:
+        reference:
+          anyOf:
+          - $ref: 'base.yaml#/components/schemas/OperationReference'
+          description: Operation reference that was just deleted.
+        signature:
+          anyOf:
+          - $ref: 'base.yaml#/components/schemas/EntitySignature'
+          description: Signature for the version of the Operation reference just deleted.
+        subscribers:
+          description: DSS subscribers that this client now has the obligation to
+            notify of the Operation just deleted.  This client must call DELETE for
+            each provided URL according to the `/operations/{id}` path API.
+          type: array
+          items:
+            $ref: 'base.yaml#/components/schemas/SubscriberToNotify'
+    GetConstraintReferencesResponse:
+      description: Response to DSS query for references to Constraints in an area
+        of interest.
+      required:
+      - references
+      type: object
+      properties:
+        references:
+          description: References to Constraints in the area of interest.
+          type: array
+          items:
+            $ref: 'base.yaml#/components/schemas/ConstraintReference'
+    PutConstraintReferenceResponse:
+      description: Response to a request to create or update a reference to a Constraint
+        in the DSS.
+      required:
+      - reference
+      - subscribers
+      - signature
+      type: object
+      properties:
+        reference:
+          anyOf:
+          - $ref: 'base.yaml#/components/schemas/ConstraintReference'
+          description: Resulting reference stored in DSS.
+        signature:
+          anyOf:
+          - $ref: 'base.yaml#/components/schemas/EntitySignature'
+          description: Signature for this version of this Entity.  Must be provided
+            to peer clients so they can verify that they have retrieved the details
+            of this Entity.  This is required before they are allowed to place deconflicted
+            Entities into the airspace.
+        subscribers:
+          description: DSS subscribers that this client now has the obligation to
+            notify of the Entity changes just made.  This client must call PUT for
+            each provided URL according to the `/uss/constraints/{id}` path API.
+          type: array
+          items:
+            $ref: 'base.yaml#/components/schemas/SubscriberToNotify'
+    PutOperationReferenceParameters:
+      description: Parameters for a request to create or update a reference to an
+        Operation in the DSS.
+      required:
+      - extents
+      - details_url
+      - key
+      type: object
+      properties:
+        extents:
+          anyOf:
+          - $ref: 'base.yaml#/components/schemas/Volume4D'
+          description: The bounding spacetime extents of this Entity.  Start and end
+            times must be specified.  Spatial information is translated into DAR cells
+            internally by the DSS then discarded.
+        details_url:
+          anyOf:
+          - $ref: 'base.yaml#/components/schemas/OperationURL'
+          description: The URL at which details about this Operation may be exchanged.  See
+            the `/uss/operations/{id}` path for specification of this endpoint.  Implementation
+            of GET verb is required, but not PUT or DELETE.
+        key:
+          anyOf:
+          - $ref: 'base.yaml#/components/schemas/DeconflictionKey'
+          description: Proof that the client is aware of (and has deconflicted with)
+            all relevant Entities.  Required unless Operation is declared rogue.
+    PutOperationReferenceResponse:
+      description: Response to a request to create or update a reference to an Operation
+        in the DSS.
+      required:
+      - reference
+      - subscribers
+      - signature
+      type: object
+      properties:
+        reference:
+          anyOf:
+          - $ref: 'base.yaml#/components/schemas/OperationReference'
+          description: Resulting reference stored in DSS.
+        signature:
+          anyOf:
+          - $ref: 'base.yaml#/components/schemas/EntitySignature'
+          description: Signature for this version of this Entity.  Must be provided
+            to peer clients so they can verify that they have retrieved the details
+            of this Entity.  This is required before they are allowed to place deconflicted
+            Entities into the airspace.
+        subscribers:
+          description: DSS subscribers that this client now has the obligation to
+            notify of the Entity changes just made.  This client must call PUT for
+            each provided URL according to the `uss/operations/{id}` path API.
+          type: array
+          items:
+            $ref: 'base.yaml#/components/schemas/SubscriberToNotify'
+    PutConstraintReferenceParameters:
+      description: Parameters for a request to create or update a reference to a Constraint
+        in the DSS.
+      required:
+      - extents
+      - details_url
+      type: object
+      properties:
+        extents:
+          anyOf:
+          - $ref: 'base.yaml#/components/schemas/Volume4D'
+          description: The bounding spacetime extents of this Entity.  Start and end
+            times must be specified.  Spatial information is translated into DAR cells
+            internally by the DSS then discarded.
+        details_url:
+          anyOf:
+          - $ref: 'base.yaml#/components/schemas/ConstraintURL'
+          description: The URL at which details about this Constraint may be exchanged.  See
+            the `/uss/constraints/{id}` path for specification of this endpoint.  Implementation
+            of GET verb is required, but not PUT or DELETE.
+    PutConstraintResponse:
+      description: Response to a request to create or update full information of a
+        Constraint in the DSS.
+      required:
+      - constraint
+      - subscribers
+      type: object
+      properties:
+        constraint:
+          anyOf:
+          - $ref: 'base.yaml#/components/schemas/Constraint'
+          description: Resulting Constraint stored and hosted in DSS, after the DSS
+            automatically added a reference to that Constraint as well.
+        subscribers:
+          description: DSS subscribers that this client now has the obligation to
+            notify of the Entity changes just made.  This client must call PUT for
+            each provided URL according to the `/uss/constraints/{id}` path API.
+          type: array
+          items:
+            $ref: 'base.yaml#/components/schemas/SubscriberToNotify'
+    DeleteConstraintResponse:
+      description: Response to a request to delete full information of a Constraint
+        from the DSS.
+      required:
+      - constraint
+      - subscribers
+      type: object
+      properties:
+        constraint:
+          anyOf:
+          - $ref: 'base.yaml#/components/schemas/Constraint'
+          description: Full information of Constraint deleted from the DSS, after
+            the DSS automatically removed the reference to that Constraint as well.
+        subscribers:
+          description: DSS subscribers that this client now has the obligation to
+            notify of the Entity changes just made.  This client must call DELETE
+            for each provided URL according to the `/uss/constraints/{id}` path API.
+          type: array
+          items:
+            $ref: 'base.yaml#/components/schemas/SubscriberToNotify'
+    PutIdentificationServiceAreaParameters:
+      description: Parameters for a request to create or update a reference to an
+        Identification Service Area in the DSS.
+      required:
+      - extents
+      - flights_url
+      type: object
+      properties:
+        extents:
+          anyOf:
+          - $ref: 'base.yaml#/components/schemas/Volume4D'
+          description: |-
+            The bounding spacetime extents of this Identification Service Area.  Start and end times must be specified.
+
+            These extents should not reveal any sensitive information about the flight or flights within them.  This means, for instance, that extents should not tightly-wrap a flight path, nor should they generally be centered around the takeoff point of a single flight.
+        flights_url:
+          $ref: 'base.yaml#/components/schemas/RIDFlightsURL'
+    DeleteIdentificationServiceAreaResponse:
+      description: Response for a request to delete an Identification Service Area.
+      required:
+      - service_area
+      - subscribers
+      type: object
+      properties:
+        service_area:
+          anyOf:
+          - $ref: 'base.yaml#/components/schemas/IdentificationServiceArea'
+          description: Indentification Service Area that was just deleted.
+        subscribers:
+          description: DSS subscribers that this client now has the obligation to
+            notify of the Identification Service Area just deleted.  This client must
+            call DELETE for each provided URL according to the `/identification_service_areas`
+            path API.
+          type: array
+          items:
+            $ref: 'base.yaml#/components/schemas/SubscriberToNotify'
+    DeleteConstraintReferenceResponse:
+      description: Response for a request to delete a Constraint reference from the
+        DSS.
+      required:
+      - reference
+      - subscribers
+      - signature
+      type: object
+      properties:
+        reference:
+          anyOf:
+          - $ref: 'base.yaml#/components/schemas/OperationReference'
+          description: Constraint reference that was just deleted.
+        signature:
+          anyOf:
+          - $ref: 'base.yaml#/components/schemas/EntitySignature'
+          description: Signature for the version of the Constraint reference just
+            deleted.
+        subscribers:
+          description: DSS subscribers that this client now has the obligation to
+            notify of the Constraint just deleted.  This client must call DELETE for
+            each provided URL according to the `/constraints/{id}` path API.
+          type: array
+          items:
+            $ref: 'base.yaml#/components/schemas/SubscriberToNotify'
+  securitySchemes:
+    AuthFromAuthorizationAuthority:
+      flows:
+        clientCredentials:
+          tokenUrl: https://example.com/oauth/token
+          scopes:
+            dss.read.identification_service_areas: Client may query, read, or create
+              subscriptions for Identification Service Areas for remote ID.  Does
+              not provide access to UTM-related Entities.  A remote ID display provider
+              shall be granted this scope upon request.
+            dss.write.identification_service_areas: Client may create, edit, and delete
+              Identification Service Areas for remote ID.  A remote ID service provider
+              shall be granted this scope upon request.
+            dss.write.airspace_awareness: '`[UTM only]` In addition to `dss.read.airspace_awareness`,
+              client may create airspace awareness Entities.  A VLOS airspace awareness
+              provider would likely use this scope.'
+            dss.write.operations: '`[UTM only]` Client may create Operation Entities.  A
+              strategic planning UTM provider would use this scope, along with dss.read.operations.'
+            dss.write.constraints: '`[UTM only]` Client may create un-deconflicted
+              constraints in the airspace.  A client acting on behalf of a governmental
+              organization would use this scope.'
+            dss.read.dar_configuration: Client may read information about the configuration
+              of this DAR participant's portion of the DAR.  Any airspace service
+              provider shall be granted this scope upon request.
+            dss.read.operations: '`[UTM only]` Client may query, read, and subscribe
+              to Operation Entities.  A strategic planning UTM provider would use
+              this scope, along with dss.write.operations.'
+            dss.read.constraints: '`[UTM only]` Client may read, query, or subscribe
+              to constraints in the airspace.'
+      type: oauth2
+      description: |-
+        Authorization from, or on behalf of, an authorization authority.  This authority shall issue access tokens that are JSON Web Tokens as defined in RFC 7519, using the `RS256` algorithm for the signature, and publish to all providers the public key for verifying that signature.
+
+        The following fields shall be included in the JWT claim for access tokens issued by this authority:
+        * `iss`, with the URL at which the token generation request was received.
+        * `aud`, with audience requested by client.
+        * `exp`, with a time no further than 1 hour in the future.
+        * `client_id`, with unique ID of the client requesting the access token.
+        * `scope`, with an array of strings indicating the scopes granted.
+
+        Multiple scopes for a single token shall be granted if requested.
+
+        Clients shall provide these access tokens in an `Authorization` header in the form `Bearer <token>` in accordance with RFC 6750.
+security:
+- AuthFromAuthorizationAuthority:
+  - dss.read.position_reporting_entities
+  - dss.write.position_reporting_entities
+  - dss.read.airspace_awareness
+  - dss.write.airspace_awareness
+  - dss.write.operations
+  - dss.write.constraints
+tags:
+- name: dss_miniuss
+  description: '`[UTM only]` USS-like endpoints hosted by DSS providers.  These endpoints
+    would be used by a USS that does not want to host their own Constraint details,
+    instead having the DSS act as a mini USS to host those details in addition to
+    managing the (separate) EntityReference.'
+- name: dss_utm
+  description: Endpoints exposed by the DSS server only used for UTM.

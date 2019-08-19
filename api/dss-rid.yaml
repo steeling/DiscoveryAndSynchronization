@@ -586,6 +586,16 @@ components:
             Note that some Entities triggering notifications will lie entirely outside the requested area because an individual DAR cell cannot filter by exact geography.
         callbacks:
           $ref: 'base.yaml#/components/schemas/SubscriptionCallbacks'
+    DeleteSubscriptionResponse:
+      description: Response for a successful request to delete an Subscription.
+      required:
+      - subscription
+      type: object
+      properties:
+        subscription:
+          anyOf:
+          - $ref: '#/components/schemas/Subscription'
+          description: The Subscription which was deleted.
     PutSubscriptionResponse:
       description: Response for a request to create or update a subscription.
       required:

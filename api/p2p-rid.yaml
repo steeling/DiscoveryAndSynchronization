@@ -289,7 +289,7 @@ components:
           description: Subscription(s) prompting this notification.
           type: array
           items:
-            $ref: '#/components/schemas/base.yaml#/components/schemas/SubscriptionState'
+            $ref: 'base.yaml#/components/schemas/SubscriptionState'
   securitySchemes:
     AuthFromAuthorizationAuthority:
       flows:

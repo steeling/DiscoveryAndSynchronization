@@ -401,7 +401,7 @@ components:
           description: Subscription(s) prompting this notification.
           type: array
           items:
-            $ref: '#/components/schemas/base.yaml#/components/schemas/SubscriptionState'
+            $ref: 'base.yaml#/components/schemas/SubscriptionState'
     PutConstraintNotificationParameters:
       description: Parameters for a notification of a change to a Constraint.
       required:
@@ -415,7 +415,7 @@ components:
           description: Subscription(s) prompting this notification.
           type: array
           items:
-            $ref: '#/components/schemas/base.yaml#/components/schemas/SubscriptionState'
+            $ref: 'base.yaml#/components/schemas/SubscriptionState'
   securitySchemes:
     AuthFromAuthorizationAuthority:
       flows:

@@ -7,9 +7,8 @@ info:
     Interface to Discovery and Synchronization Service and service providers used by participating clients to discover and inform other service providers.
 
     Unless otherwise specified, fields specified in a message but not declared in the API shall be ignored.
-base_path: /v0
 paths:
-  /dss/identification_service_areas:
+  /v0beta1/dss/identification_service_areas:
     summary: Set of Identification Service Areas in the DSS.
     description: ""
     get:
@@ -80,7 +79,7 @@ paths:
       description: Retrieve all Identification Service Areas in the DAR for a given
         area during the given time.  Note that some Identification Service Areas returned
         may lie entirely outside the requested area.
-  /dss/identification_service_areas/{id}:
+  /v0beta1/dss/identification_service_areas/{id}:
     summary: An Identification Service Area in the DSS.
     get:
       tags:
@@ -98,7 +97,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/GetIdentificationServiceAreaResponse'
-          description: Full information of the Constraint was retrieved successfully.
+          description: Full information of the Identification Service Area was retrieved successfully.
         400:
           content:
             application/json:
@@ -129,7 +128,7 @@ paths:
       - AuthFromAuthorizationAuthority:
         - dss.read.position_reporting_entities
       summary: /dss/identification/{id}
-      description: 'Retrieve full information of a Service Area owned by
+      description: 'Retrieve full information of an Identification Service Area owned by
         the client.'
     put:
       requestBody:
@@ -264,7 +263,7 @@ paths:
       description: Delete an Identification Service Area.  USSs should not delete
         Identification Service Areas before the end of the last managed flight plus
         the retention period.
-  /uss/flights:
+  /v0beta1/uss/flights:
     summary: Basic operation details to meet remote ID requirements.
     description: This endpoint may be polled by remote ID display providers to display
       basic aircraft activity near a user in real time.
@@ -342,7 +341,7 @@ paths:
       schema:
         type: boolean
       in: query
-  /uss/flights/{id}/details:
+  /v0beta1/uss/flights/{id}/details:
     summary: A remote ID flight reported by a remote ID service provider.
     get:
       tags:
@@ -394,7 +393,7 @@ paths:
         $ref: '#/components/schemas/RIDFlightID'
       in: path
       required: true
-  /uss/identification_service_areas/{id}:
+  /v0beta1/uss/identification_service_areas/{id}:
     summary: Notifications of change to Identification Service Areas.
     put:
       requestBody:
@@ -491,7 +490,7 @@ paths:
         $ref: '#/components/schemas/EntityUUID'
       in: path
       required: true
-  /dss/subscriptions:
+  /v0beta1/dss/subscriptions:
     summary: Subscriptions for airspace updates to a volume of interest.
     get:
       tags:
@@ -545,7 +544,7 @@ paths:
         Retrieve subscriptions intersecting an area of interest.  Subscription notifications are only triggered by (and contain full information of) changes to, creation of, or deletion of, Entities referenced by or stored in the DSS; they do not involve any data transfer (such as remote ID telemetry updates) apart from Entity information.
 
         Only Subscriptions belonging to the caller are returned.  This endpoint would be used if a USS lost track of Subscriptions they had created and/or wanted to resolve an error indicating that they had too many existing Subscriptions in an area.
-  /dss/subscriptions/{id}:
+  /v0beta1/dss/subscriptions/{id}:
     summary: Subscription for airspace updates to a volume of interest.
     get:
       tags:
@@ -854,6 +853,9 @@ components:
       pattern: ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$
       type: string
       example: 03e5572a-f733-49af-bc14-8a18bd53ee39
+  Version:
+    description: A version string used to reference an object at a particular point in time. Any updates to an object must contain the corresponding version to maintain idempotent updates.
+    type: string
     EntityUUID:
       anyOf:
       - $ref: '#/components/schemas/UUIDv4'
@@ -1029,10 +1031,10 @@ components:
           description: 'Geodetic altitude (NOT altitude above launch, altitude above
             ground, or EGM96): aircraft distance above the WGS84 ellipsoid as measured
             along a line that passes through the aircraft and is normal to the surface
-            of the WGS84 ellipsoid.  This value is provided in meters and must have
+            of the WGS84 ellipsoid.  This value is provided in millimeters and must have
             a minimum resolution of 1 meter.'
-          type: number
-          example: 1321.2
+          type: integer
+          example: 1321200 # 1321.2 m
         accuracy_h:
           anyOf:
           - $ref: '#/components/schemas/HorizontalAccuracy'
@@ -1054,9 +1056,9 @@ components:
           format: float
           description: The uncorrected altitude (based on reference standard 29.92
             inHg, 1013.25 mb) provides a reference for algorithms that utilize "altitude
-            deltas" between aircraft.  This value is provided in meters and must have
+            deltas" between aircraft.  This value is provided in millimeters and must have
             a minimum resolution of 1 meter.
-          type: number
+          type: integer
     GeoPolygonString:
       description: |-
         Plain-string representation of a geographic polygon consisting of at least three geographic points describing a closed polygon on the earth.  Each point consists of latitude,longitude in degrees.  Points are also comma-delimited, so this parameter will look like `lat1,lng1,lat2,lng2,lat3,lng3,...`  Latitude values must fall in the range [-90, 90] and longitude values must fall in the range [-180, 180].
@@ -1072,10 +1074,9 @@ components:
       type: object
       properties:
         distance:
-          format: float
           description: Distance above reference datum.  This value is provided in
-            meters and must have a minimum resolution of 1 meter.
-          type: number
+            millimeters and must have a minimum resolution of 1 meter.
+          type: integer
         reference:
           description: The reference datum above which the height is reported.
           enum:
@@ -1083,25 +1084,23 @@ components:
           - GroundLevel
           type: string
     Latitude:
-      format: double
       description: Degrees of latitude north of the equator, with reference to the
-        WGS84 ellipsoid.
-      maximum: 90
+        WGS84 ellipsoid, represented as lat * 1e7.
+      maximum: 900000000
       exclusiveMaximum: false
-      minimum: -90
+      minimum: -900000000
       exclusiveMinimum: false
-      type: number
-      example: 34.123
+      type: integer
+      example: 341230000 # 34.123
     Longitude:
-      format: double
       description: Degrees of longitude east of the Prime Meridian, with reference
-        to the WGS84 ellipsoid.
-      maximum: -180
+        to the WGS84 ellipsoid, represented as lng * 1e7.
+      maximum: -1800000000
       exclusiveMaximum: false
-      minimum: 180
+      minimum: 1800000000
       exclusiveMinimum: false
-      type: number
-      example: -118.456
+      type: integer
+      example: -1184560000 # -118.456
     LatLngPoint:
       description: Point on the earth's surface.
       required:
@@ -1114,10 +1113,9 @@ components:
         lat:
           $ref: '#/components/schemas/Latitude'
     Altitude:
-      format: float
-      description: An altitude, in meters, above the WGS84 ellipsoid.
-      type: number
-      example: 19.5
+      description: An altitude, in millimeters, above the WGS84 ellipsoid.
+      type: integer
+      example: 20000 # 20 meters
     RIDFlight:
       description: Description of a remote ID flight.
       required:
@@ -1194,7 +1192,6 @@ components:
           - $ref: '#/components/schemas/IdentificationServiceArea'
           description: Resulting service area stored in DSS.
         version:
-          description: 'Version string required for replacing existing IdentificationServiceArea'
           $ref: '#/definitions/Version'
     SearchIdentificationServiceAreasResponse:
       description: Response to DSS query for Identification Service Areas in an area
@@ -1255,7 +1252,7 @@ components:
         Identification Service Area in the DSS.
       required:
       - extents
-      - url
+      - flights_url
       type: object
       properties:
         extents:
@@ -1265,7 +1262,7 @@ components:
             The bounding spacetime extents of this Identification Service Area.  Start and end times must be specified.
 
             These extents should not reveal any sensitive information about the flight or flights within them.  This means, for instance, that extents should not tightly-wrap a flight path, nor should they generally be centered around the takeoff point of a single flight.
-        url:
+        flights_url:
           $ref: '#/components/schemas/RIDFlightsURL'
     DeleteIdentificationServiceAreaResponse:
       description: Response for a request to delete an Identification Service Area.
@@ -1328,7 +1325,6 @@ components:
             before this time.  RFC 3339 format, per OpenAPI specification.
           type: string
         version:
-          description: 'Version string required for replacing existing Subscription'
           $ref: '#/definitions/Version'
     SubscriptionCallbacks:
       description: Endpoints that should be called when an applicable event occurs.  At
@@ -1363,7 +1359,6 @@ components:
         callbacks:
           $ref: '#/components/schemas/SubscriptionCallbacks'
         version:
-          description: 'Version string required for replacing existing Subscription'
           $ref: '#/definitions/Version'
     PutSubscriptionResponse:
       description: Response for a request to create or update a subscription.
@@ -1461,64 +1456,57 @@ components:
             3339 format, per OpenAPI specification.
           type: string
         timestamp_accuracy:
-          format: float
           description: 'Declaration of timestamp accuracy, which is the largest difference
             between Timestamp and true time of applicability for any of the following
             fields: Latitude, Longitude, Geodetic Altitude, Pressure Altitude of Position,
             Height. to determine time of applicability of the location data provided.  Expressed
-            in seconds, precise to 1/10ths of seconds. The accuracy reflects the 95%
+            in microseconds, precise to 1/10ths of seconds. The accuracy reflects the 95%
             uncertainty bound value for the timestamp.'
           minimum: 0
           exclusiveMinimum: false
-          type: number
+          type: integer
         operational_status:
           $ref: '#/components/schemas/RIDOperationalStatus'
         position:
           $ref: '#/components/schemas/RIDAircraftPosition'
         track:
-          format: float
           description: Direction of flight expressed as a "True North-based" ground
             track angle.  This value is provided in degrees East of North with a minimum
-            resolution of 1 degree.
-          maximum: 360
+            resolution of 1 degree, represented as degress * 1e7.
+          maximum: 3600000000
           exclusiveMaximum: true
           minimum: 0
           exclusiveMinimum: false
-          type: number
+          type: integer
         speed:
-          format: float
-          description: Ground speed of flight in meters per second.
+          description: Ground speed of flight in millimeters per second.
           minimum: 0
           exclusiveMinimum: false
-          type: number
-          example: 1.9
+          type: integer
+          example: 1900 # 1.9 m/s
         speed_accuracy:
           anyOf:
           - $ref: '#/components/schemas/SpeedAccuracy'
           description: Accuracy of horizontal ground speed.
         vertical_speed:
-          format: float
-          description: Speed up (vertically) WGS84-HAE, m/s.
-          type: number
-          example: 0.2
+          description: Speed up (vertically) WGS84-HAE, mm/s.
+          type: integer
+          example: 200 # 0.2 m/s
         height:
           $ref: '#/components/schemas/RIDHeight'
         group_radius:
-          format: float
           description: Farthest horizontal distance from reported group location at
-            which an aircraft in the group may be located (meters).
+            which an aircraft in the group may be located (millimeters).
           minimum: 0
           exclusiveMinimum: true
-          type: number
+          type: integer
         group_ceiling:
-          format: float
-          description: Maximum altitude (meters WGS84-HAE) of Group Operation
-          type: number
+          description: Maximum altitude (meters WGS84-HAE) of Group Operation in millimeters
+          type: integer
         group_floor:
-          format: float
-          description: Minimum altitude (meters WGS84-HAE) of Group Operation.  If
+          description: Minimum altitude (meters WGS84-HAE) of Group Operation in millimeters.  If
             not specified, ground level shall be assumed.
-          type: number
+          type: integer
         group_count:
           format: int32
           description: When operating a group (or formation or swarm), number of aircraft
@@ -1553,14 +1541,14 @@ components:
         are being provided).  The DSS reports only these declarations and clients
         must exchange flight information peer-to-peer.
       required:
-      - url
+      - flights_url
       - owner
       - time_start
       - time_end
       - version
       type: object
       properties:
-        url:
+        flights_url:
           $ref: '#/components/schemas/RIDFlightsURL'
         owner:
           description: Assigned by the DSS based on creating client’s ID (via access
@@ -1577,7 +1565,6 @@ components:
           description: End time of service.  RFC 3339 format, per OpenAPI specification.
           type: string
         version:
-          description: 'Version string required for replacing existing IdentificationServiceArea'
           $ref: '#/definitions/Version'
     RIDRecentAircraftPosition:
       description: ""

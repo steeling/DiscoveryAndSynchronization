@@ -8,7 +8,7 @@ info:
 
     Unless otherwise specified, fields specified in a message but not declared in the API shall be ignored.
 paths:
-  /v0beta1/dss/identification_service_areas:
+  /v1/dss/identification_service_areas:
     summary: Set of Identification Service Areas in the DSS.
     description: ""
     get:
@@ -79,18 +79,11 @@ paths:
       description: Retrieve all Identification Service Areas in the DAR for a given
         area during the given time.  Note that some Identification Service Areas returned
         may lie entirely outside the requested area.
-  /v0beta1/dss/identification_service_areas/{id}:
+  /v1/dss/identification_service_areas/{id}:
     summary: An Identification Service Area in the DSS.
     get:
       tags:
       - dss
-      parameters:
-      - name: id
-        description: EntityUUID of the Identification Service Area.
-        schema:
-          $ref: '#/components/schemas/EntityUUID'
-        in: path
-        required: true
       responses:
         200:
           content:
@@ -139,13 +132,6 @@ paths:
         required: true
       tags:
       - dss
-      parameters:
-      - name: id
-        description: EntityUUID of the Identification Service Area.
-        schema:
-          $ref: '#/components/schemas/EntityUUID'
-        in: path
-        required: true
       responses:
         200:
           content:
@@ -203,12 +189,6 @@ paths:
       tags:
       - dss
       parameters:
-      - name: id
-        description: EntityUUID of the Identification Service Area.
-        schema:
-          $ref: '#/components/schemas/EntityUUID'
-        in: path
-        required: true
       - name: version
         description: Version of the Service Area to delete.
         schema:
@@ -263,7 +243,14 @@ paths:
       description: Delete an Identification Service Area.  USSs should not delete
         Identification Service Areas before the end of the last managed flight plus
         the retention period.
-  /v0beta1/uss/flights:
+    parameters:
+    - name: id
+      description: EntityUUID of the Identification Service Area.
+      schema:
+        $ref: '#/components/schemas/EntityUUID'
+      in: path
+      required: true
+  /v1/uss/flights:
     summary: Basic operation details to meet remote ID requirements.
     description: This endpoint may be polled by remote ID display providers to display
       basic aircraft activity near a user in real time.
@@ -341,7 +328,7 @@ paths:
       schema:
         type: boolean
       in: query
-  /v0beta1/uss/flights/{id}/details:
+  /v1/uss/flights/{id}/details:
     summary: A remote ID flight reported by a remote ID service provider.
     get:
       tags:
@@ -393,7 +380,7 @@ paths:
         $ref: '#/components/schemas/RIDFlightID'
       in: path
       required: true
-  /v0beta1/uss/identification_service_areas/{id}:
+  /v1/uss/identification_service_areas/{id}:
     summary: Notifications of change to Identification Service Areas.
     put:
       requestBody:
@@ -490,7 +477,7 @@ paths:
         $ref: '#/components/schemas/EntityUUID'
       in: path
       required: true
-  /v0beta1/dss/subscriptions:
+  /v1/dss/subscriptions:
     summary: Subscriptions for airspace updates to a volume of interest.
     get:
       tags:
@@ -544,18 +531,11 @@ paths:
         Retrieve subscriptions intersecting an area of interest.  Subscription notifications are only triggered by (and contain full information of) changes to, creation of, or deletion of, Entities referenced by or stored in the DSS; they do not involve any data transfer (such as remote ID telemetry updates) apart from Entity information.
 
         Only Subscriptions belonging to the caller are returned.  This endpoint would be used if a USS lost track of Subscriptions they had created and/or wanted to resolve an error indicating that they had too many existing Subscriptions in an area.
-  /v0beta1/dss/subscriptions/{id}:
+  /v1/dss/subscriptions/{id}:
     summary: Subscription for airspace updates to a volume of interest.
     get:
       tags:
       - dss
-      parameters:
-      - name: id
-        description: SubscriptionUUID of the subscription of interest.
-        schema:
-          $ref: '#/components/schemas/SubscriptionUUID'
-        in: path
-        required: true
       responses:
         200:
           content:
@@ -604,16 +584,6 @@ paths:
         required: true
       tags:
       - dss
-      parameters:
-      - name: id
-        description: SubscriptionUUID of the subscription of interest.  Must be created
-          by client before `PUT` call to create AreaSubscription in DSS because the
-          client may receive a notification at that subscription before receiving
-          a response from the DSS.
-        schema:
-          $ref: '#/components/schemas/SubscriptionUUID'
-        in: path
-        required: true
       responses:
         200:
           content:
@@ -679,12 +649,6 @@ paths:
       tags:
       - dss
       parameters:
-      - name: id
-        description: SubscriptionUUID of the subscription of interest.
-        schema:
-          $ref: '#/components/schemas/SubscriptionUUID'
-        in: path
-        required: true
       - name: version
         description: Version of the Service Area to delete.
         schema:
@@ -737,6 +701,13 @@ paths:
         - dss.read.position_reporting_entities
       summary: /dss/subscriptions/{id}
       description: Delete a subscription.
+    parameters:
+    - name: id
+      description: SubscriptionUUID of the subscription of interest.
+      schema:
+        $ref: '#/components/schemas/SubscriptionUUID'
+      in: path
+      required: true
 components:
   schemas:
     Volume3D:
@@ -784,7 +755,7 @@ components:
       type: object
       properties:
         identification_service_area:
-          $ref: '#/definitions/IdentificationServiceArea'
+          $ref: '#/components/schemas/IdentificationServiceArea'
     GetSubscriptionResponse:
       description: Response to DSS request for the subscription with the given id.
       required:
@@ -792,7 +763,7 @@ components:
       type: object
       properties:
         subscription:
-          $ref: '#/definitions/Subscription'
+          $ref: '#/components/schemas/Subscription'
     SearchSubscriptionsResponse:
       description: Response to DSS query for subscriptions in a particular area.
       required:
@@ -853,9 +824,9 @@ components:
       pattern: ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$
       type: string
       example: 03e5572a-f733-49af-bc14-8a18bd53ee39
-  Version:
-    description: A version string used to reference an object at a particular point in time. Any updates to an object must contain the corresponding version to maintain idempotent updates.
-    type: string
+    Version:
+      description: A version string used to reference an object at a particular point in time. Any updates to an object must contain the corresponding version to maintain idempotent updates.
+      type: string
     EntityUUID:
       anyOf:
       - $ref: '#/components/schemas/UUIDv4'
@@ -1192,7 +1163,7 @@ components:
           - $ref: '#/components/schemas/IdentificationServiceArea'
           description: Resulting service area stored in DSS.
         version:
-          $ref: '#/definitions/Version'
+          $ref: '#/components/schemas/Version'
     SearchIdentificationServiceAreasResponse:
       description: Response to DSS query for Identification Service Areas in an area
         of interest.
@@ -1325,7 +1296,7 @@ components:
             before this time.  RFC 3339 format, per OpenAPI specification.
           type: string
         version:
-          $ref: '#/definitions/Version'
+          $ref: '#/components/schemas/Version'
     SubscriptionCallbacks:
       description: Endpoints that should be called when an applicable event occurs.  At
         least one field must be specified.
@@ -1359,7 +1330,7 @@ components:
         callbacks:
           $ref: '#/components/schemas/SubscriptionCallbacks'
         version:
-          $ref: '#/definitions/Version'
+          $ref: '#/components/schemas/Version'
     PutSubscriptionResponse:
       description: Response for a request to create or update a subscription.
       required:
@@ -1565,7 +1536,7 @@ components:
           description: End time of service.  RFC 3339 format, per OpenAPI specification.
           type: string
         version:
-          $ref: '#/definitions/Version'
+          $ref: '#/components/schemas/Version'
     RIDRecentAircraftPosition:
       description: ""
       required:

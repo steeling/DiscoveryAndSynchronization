@@ -1506,6 +1506,12 @@ components:
           type: string
         position:
           $ref: '#/components/schemas/RIDAircraftPosition'
+        gap:
+          description: If true, there is omitted or unavailable data between the most
+            recent chronologically-prior recent position and this position, so UIs
+            should not draw a connecting line between those two points.  Assumed false
+            if not specified.
+          type: boolean
   securitySchemes:
     AuthFromAuthorizationAuthority:
       flows:

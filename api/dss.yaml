@@ -193,103 +193,6 @@ paths:
         $ref: '#/components/schemas/EntityUUID'
       in: path
       required: true
-  /v1/uss/identification_service_areas/{id}:
-    summary: Notifications of change to Identification Service Areas.
-    put:
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PutIdentificationServiceAreaNotificationParameters'
-        required: true
-      tags:
-      - p2p_rid
-      responses:
-        204:
-          description: Full information for Identification Service Area was updated
-            successfully.
-        400:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: |-
-            * One or more parameters were missing or invalid.
-            * The Identification Service Area information could not be parsed, or contains illegal data.
-        401:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: Bearer access token was not provided in Authorization header,
-            token could not be decoded, or token was invalid.
-        403:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: |-
-            * The access token was decoded successfully but did not include a scope appropriate to this endpoint.
-            * The client identified in the access token is not the owner of this Entity according to the receiving client's records.
-        409:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: The Entity version specified in this message is lower than
-            a previously-received notification, or identical to a previously-received
-            notification and the Entity is different.
-      security:
-      - AuthFromAuthorizationAuthority:
-        - dss.write.identification_service_areas
-      summary: /uss/identification_service_areas/{id}
-      description: 'Hosted by a remote ID display provider using Subscriptions: publish
-        new full information of an Identification Service Area to the host of this
-        endpoint (usually because of instructions from the DSS triggered by a subscription).'
-    delete:
-      tags:
-      - p2p_rid
-      responses:
-        204:
-          description: Notification of Identification Service Area deletion was received
-            successfully, even if the host USS was previously unaware of the specified
-            Identification Service Area.
-        400:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: One or more parameters were missing or invalid.
-        401:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: Bearer access token was not provided in Authorization header,
-            token could not be decoded, or token was invalid.
-        403:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: |-
-            * The access token was decoded successfully but did not include a scope appropriate to this endpoint.
-            * The client identified in the access token is not the owner of this Entity according to the receiving client's records.
-      security:
-      - AuthFromAuthorizationAuthority:
-        - dss.write.identification_service_areas
-      summary: /uss/identification_service_areas/{id}
-      description: 'Hosted by a remote ID display provider using Subscriptions: publish
-        a notification about the deletion of an Identification Service Area to the
-        host of this endpoint (usually because of instructions from the DSS triggered
-        by a subscription).'
-    parameters:
-    - name: id
-      description: EntityUUID of the Identification Service Area.
-      schema:
-        $ref: '#/components/schemas/EntityUUID'
-      in: path
-      required: true
   /v1/dss/identification_service_areas/{id}/{version}:
     summary: A specific version of an Identification Service Area in the DSS.
     put:
@@ -802,13 +705,6 @@ paths:
     delete:
       tags:
       - dss
-      parameters:
-      - name: version
-        description: Version of the Service Area to delete.
-        schema:
-          $ref: '#/components/schemas/Version'
-        in: query
-        required: true
       responses:
         200:
           content:
@@ -869,6 +765,64 @@ paths:
         version to maintain idempotent updates.
       schema:
         type: string
+      in: path
+      required: true
+  /v1/uss/identification_service_areas/{id}:
+    summary: Notifications of change to Identification Service Areas.
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PutIdentificationServiceAreaNotificationParameters'
+        required: true
+      tags:
+      - p2p_rid
+      responses:
+        204:
+          description: Information for Identification Service Area was updated successfully.
+        400:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: |-
+            * One or more parameters were missing or invalid.
+            * The Identification Service Area information could not be parsed, or contains illegal data.
+        401:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bearer access token was not provided in Authorization header,
+            token could not be decoded, or token was invalid.
+        403:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: |-
+            * The access token was decoded successfully but did not include a scope appropriate to this endpoint.
+            * The client identified in the access token is not the owner of this Entity according to the receiving client's records.
+        409:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The Entity version specified in this message is identical to
+            a previously-received notification and the Entity is different.
+      security:
+      - AuthFromAuthorizationAuthority:
+        - dss.write.identification_service_areas
+      summary: /uss/identification_service_areas/{id}
+      description: 'Hosted by a remote ID display provider using Subscriptions: publish
+        new full information of an Identification Service Area to the host of this
+        endpoint (usually because of instructions from the DSS triggered by a subscription).'
+    parameters:
+    - name: id
+      description: EntityUUID of the Identification Service Area.
+      schema:
+        $ref: '#/components/schemas/EntityUUID'
       in: path
       required: true
 components:
@@ -1316,7 +1270,7 @@ components:
         subscribers:
           description: DSS subscribers that this client now has the obligation to
             notify of the Identification Service Area changes just made.  This client
-            must call PUT for each provided URL according to the `/uss/identification_service_areas/{id}`
+            must call POST for each provided URL according to the `/uss/identification_service_areas/{id}`
             path API.
           type: array
           items:
@@ -1325,8 +1279,6 @@ components:
           anyOf:
           - $ref: '#/components/schemas/IdentificationServiceArea'
           description: Resulting service area stored in DSS.
-        version:
-          $ref: '#/components/schemas/Version'
     SearchIdentificationServiceAreasResponse:
       description: Response to DSS query for Identification Service Areas in an area
         of interest.
@@ -1345,15 +1297,16 @@ components:
         clients with subscriptions when another client makes a change to airspace
         within a cell with a subscription.
       required:
-      - service_area
       - subscriptions
       type: object
       properties:
         service_area:
           anyOf:
           - $ref: '#/components/schemas/IdentificationServiceArea'
-          description: Identification Service Area that the notifying client changed
-            or created.
+          description: |-
+            Identification Service Area that the notifying client changed or created.
+
+            If this field is populated, the Identification Service Area was created or updated.  If this field is not populated, the Identification Service Area was deleted.
         subscriptions:
           description: Subscription(s) prompting this notification.
           type: array
@@ -1395,7 +1348,7 @@ components:
         subscribers:
           description: DSS subscribers that this client now has the obligation to
             notify of the Identification Service Area just deleted.  This client must
-            call DELETE for each provided URL according to the `/uss/identification_service_areas`
+            call POST for each provided URL according to the `/uss/identification_service_areas`
             path API.
           type: array
           items:
@@ -1408,41 +1361,6 @@ components:
         path for specification of this endpoint.
       type: string
       example: https://example.com/identification_service_areas/a4c6f8c0-ad77-4d93-9cc2-ec8601383f96
-    Subscription:
-      description: Specification of a geographic area that a client is interested
-        in on an ongoing basis (e.g., “planning area”).  Internal to the DSS.
-      required:
-      - id
-      - url
-      - notification_index
-      - owner
-      type: object
-      properties:
-        id:
-          anyOf:
-          - $ref: '#/components/schemas/SubscriptionUUID'
-          description: Unique identifier for this subscription.
-        callbacks:
-          $ref: '#/components/schemas/SubscriptionCallbacks'
-        owner:
-          description: Assigned by the DSS based on creating client’s ID (via access
-            token).  Used for restricting mutation and deletion operations to owner.
-          type: string
-          example: myuss
-        notification_index:
-          $ref: '#/components/schemas/SubscriptionNotificationIndex'
-        time_end:
-          format: date-time
-          description: If set, this subscription will be automatically removed after
-            this time.  RFC 3339 format, per OpenAPI specification.
-          type: string
-        time_start:
-          format: date-time
-          description: If set, this Subscription will not generate any notifications
-            before this time.  RFC 3339 format, per OpenAPI specification.
-          type: string
-        version:
-          $ref: '#/components/schemas/Version'
     SubscriptionCallbacks:
       description: Endpoints that should be called when an applicable event occurs.  At
         least one field must be specified.
@@ -1762,6 +1680,43 @@ components:
             Note that some Entities triggering notifications may lie entirely outside the requested area.
         callbacks:
           $ref: '#/components/schemas/SubscriptionCallbacks'
+    Subscription:
+      description: Specification of a geographic area that a client is interested
+        in on an ongoing basis (e.g., “planning area”).  Internal to the DSS.
+      required:
+      - id
+      - url
+      - notification_index
+      - owner
+      - version
+      - callbacks
+      type: object
+      properties:
+        id:
+          anyOf:
+          - $ref: '#/components/schemas/SubscriptionUUID'
+          description: Unique identifier for this subscription.
+        callbacks:
+          $ref: '#/components/schemas/SubscriptionCallbacks'
+        owner:
+          description: Assigned by the DSS based on creating client’s ID (via access
+            token).  Used for restricting mutation and deletion operations to owner.
+          type: string
+          example: myuss
+        notification_index:
+          $ref: '#/components/schemas/SubscriptionNotificationIndex'
+        time_end:
+          format: date-time
+          description: If set, this subscription will be automatically removed after
+            this time.  RFC 3339 format, per OpenAPI specification.
+          type: string
+        time_start:
+          format: date-time
+          description: If set, this Subscription will not generate any notifications
+            before this time.  RFC 3339 format, per OpenAPI specification.
+          type: string
+        version:
+          $ref: '#/components/schemas/Version'
   securitySchemes:
     AuthFromAuthorizationAuthority:
       flows:

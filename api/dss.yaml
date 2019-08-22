@@ -1002,10 +1002,10 @@ components:
           description: 'Geodetic altitude (NOT altitude above launch, altitude above
             ground, or EGM96): aircraft distance above the WGS84 ellipsoid as measured
             along a line that passes through the aircraft and is normal to the surface
-            of the WGS84 ellipsoid.  This value is provided in millimeters and must have
+            of the WGS84 ellipsoid.  This value is provided in meters and must have
             a minimum resolution of 1 meter.'
-          type: integer
-          example: 1321200 # 1321.2 m
+          type: number
+          example: 1321.2
         accuracy_h:
           anyOf:
           - $ref: '#/components/schemas/HorizontalAccuracy'
@@ -1027,9 +1027,9 @@ components:
           format: float
           description: The uncorrected altitude (based on reference standard 29.92
             inHg, 1013.25 mb) provides a reference for algorithms that utilize "altitude
-            deltas" between aircraft.  This value is provided in millimeters and must have
+            deltas" between aircraft.  This value is provided in meters and must have
             a minimum resolution of 1 meter.
-          type: integer
+          type: number
     GeoPolygonString:
       description: |-
         Plain-string representation of a geographic polygon consisting of at least three geographic points describing a closed polygon on the earth.  Each point consists of latitude,longitude in degrees.  Points are also comma-delimited, so this parameter will look like `lat1,lng1,lat2,lng2,lat3,lng3,...`  Latitude values must fall in the range [-90, 90] and longitude values must fall in the range [-180, 180].
@@ -1045,9 +1045,10 @@ components:
       type: object
       properties:
         distance:
+          format: float
           description: Distance above reference datum.  This value is provided in
-            millimeters and must have a minimum resolution of 1 meter.
-          type: integer
+            meters and must have a minimum resolution of 1 meter.
+          type: number
         reference:
           description: The reference datum above which the height is reported.
           enum:
@@ -1055,23 +1056,25 @@ components:
           - GroundLevel
           type: string
     Latitude:
+      format: double
       description: Degrees of latitude north of the equator, with reference to the
-        WGS84 ellipsoid, represented as lat * 1e7.
-      maximum: 900000000
+        WGS84 ellipsoid.
+      maximum: 90
       exclusiveMaximum: false
-      minimum: -900000000
+      minimum: -90
       exclusiveMinimum: false
-      type: integer
-      example: 341230000 # 34.123
+      type: number
+      example: 34.123
     Longitude:
+      format: double
       description: Degrees of longitude east of the Prime Meridian, with reference
-        to the WGS84 ellipsoid, represented as lng * 1e7.
-      maximum: -1800000000
+        to the WGS84 ellipsoid.
+      maximum: -180
       exclusiveMaximum: false
-      minimum: 1800000000
+      minimum: 180
       exclusiveMinimum: false
-      type: integer
-      example: -1184560000 # -118.456
+      type: number
+      example: -118.456
     LatLngPoint:
       description: Point on the earth's surface.
       required:
@@ -1084,9 +1087,10 @@ components:
         lat:
           $ref: '#/components/schemas/Latitude'
     Altitude:
-      description: An altitude, in millimeters, above the WGS84 ellipsoid.
-      type: integer
-      example: 20000 # 20 meters
+      format: float
+      description: An altitude, in meters, above the WGS84 ellipsoid.
+      type: number
+      example: 19.5
     RIDFlight:
       description: Description of a remote ID flight.
       required:
@@ -1427,57 +1431,64 @@ components:
             3339 format, per OpenAPI specification.
           type: string
         timestamp_accuracy:
+          format: float
           description: 'Declaration of timestamp accuracy, which is the largest difference
             between Timestamp and true time of applicability for any of the following
             fields: Latitude, Longitude, Geodetic Altitude, Pressure Altitude of Position,
             Height. to determine time of applicability of the location data provided.  Expressed
-            in microseconds, precise to 1/10ths of seconds. The accuracy reflects the 95%
+            in seconds, precise to 1/10ths of seconds. The accuracy reflects the 95%
             uncertainty bound value for the timestamp.'
           minimum: 0
           exclusiveMinimum: false
-          type: integer
+          type: number
         operational_status:
           $ref: '#/components/schemas/RIDOperationalStatus'
         position:
           $ref: '#/components/schemas/RIDAircraftPosition'
         track:
+          format: float
           description: Direction of flight expressed as a "True North-based" ground
             track angle.  This value is provided in degrees East of North with a minimum
-            resolution of 1 degree, represented as degress * 1e7.
+            resolution of 1 degree.
           maximum: 3600000000
           exclusiveMaximum: true
           minimum: 0
           exclusiveMinimum: false
           type: integer
         speed:
+          format: float
           description: Ground speed of flight in millimeters per second.
           minimum: 0
           exclusiveMinimum: false
-          type: integer
-          example: 1900 # 1.9 m/s
+          type: number
+          example: 1.9
         speed_accuracy:
           anyOf:
           - $ref: '#/components/schemas/SpeedAccuracy'
           description: Accuracy of horizontal ground speed.
         vertical_speed:
-          description: Speed up (vertically) WGS84-HAE, mm/s.
-          type: integer
-          example: 200 # 0.2 m/s
+          format: float
+          description: Speed up (vertically) WGS84-HAE, m/s.
+          type: number
+          example: 0.2
         height:
           $ref: '#/components/schemas/RIDHeight'
         group_radius:
+          format: float
           description: Farthest horizontal distance from reported group location at
-            which an aircraft in the group may be located (millimeters).
+            which an aircraft in the group may be located (meters).
           minimum: 0
           exclusiveMinimum: true
-          type: integer
+          type: number
         group_ceiling:
-          description: Maximum altitude (meters WGS84-HAE) of Group Operation in millimeters
-          type: integer
+          format: float
+          description: Maximum altitude (meters WGS84-HAE) of Group Operation in meters
+          type: number
         group_floor:
-          description: Minimum altitude (meters WGS84-HAE) of Group Operation in millimeters.  If
+          format: float
+          description: Minimum altitude (meters WGS84-HAE) of Group Operation in meters.  If
             not specified, ground level shall be assumed.
-          type: integer
+          type: number
         group_count:
           format: int32
           description: When operating a group (or formation or swarm), number of aircraft

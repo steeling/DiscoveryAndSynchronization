@@ -1450,14 +1450,14 @@ components:
           description: Direction of flight expressed as a "True North-based" ground
             track angle.  This value is provided in degrees East of North with a minimum
             resolution of 1 degree.
-          maximum: 3600000000
+          maximum: 360
           exclusiveMaximum: true
           minimum: 0
           exclusiveMinimum: false
-          type: integer
+          type: number
         speed:
           format: float
-          description: Ground speed of flight in millimeters per second.
+          description: Ground speed of flight in meters per second.
           minimum: 0
           exclusiveMinimum: false
           type: number
@@ -1482,11 +1482,11 @@ components:
           type: number
         group_ceiling:
           format: float
-          description: Maximum altitude (meters WGS84-HAE) of Group Operation in meters
+          description: Maximum altitude (meters WGS84-HAE) of Group Operation
           type: number
         group_floor:
           format: float
-          description: Minimum altitude (meters WGS84-HAE) of Group Operation in meters.  If
+          description: Minimum altitude (meters WGS84-HAE) of Group Operation.  If
             not specified, ground level shall be assumed.
           type: number
         group_count:

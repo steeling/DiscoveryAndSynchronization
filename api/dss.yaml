@@ -1078,7 +1078,9 @@ components:
           description: |-
             A short collection of recent aircraft movement, specified only when `include_recent_positions` is true.  If `volumes` is not specified and `include_recent_positions` is true, then this field is required.
 
-            Under no circumstances should more than [NetUasInAreaWindow] seconds of positions be included.  A full [NetUasInAreaWindow] seconds of most recent positions (excluding current position) is required, or as many positions are available if there is less than [NetUasInAreaWindow] seconds of positions.  These positions do not need to include the current position.  The entries in this list should be in descending order according to time.
+            Recent positions provided in this field must conform to requirements in the standard which generally prohibit including positions outside the requested area except transitionally when the aircraft enters or exits the requested area, and which prohibit including positions that not sufficiently recent.
+
+            Note that a UI should not draw a connective line between two consecutive position reports that both lie outside the requested area.
           type: array
           items:
             $ref: '#/components/schemas/RIDRecentAircraftPosition'
@@ -1506,12 +1508,6 @@ components:
           type: string
         position:
           $ref: '#/components/schemas/RIDAircraftPosition'
-        gap:
-          description: If true, there is omitted or unavailable data between the most
-            recent chronologically-prior recent position and this position, so UIs
-            should not draw a connecting line between those two points.  Assumed false
-            if not specified.
-          type: boolean
   securitySchemes:
     AuthFromAuthorizationAuthority:
       flows:

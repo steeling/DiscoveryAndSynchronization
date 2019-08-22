@@ -90,7 +90,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/GetIdentificationServiceAreaResponse'
-          description: Full information of the Identification Service Area was retrieved successfully.
+          description: Full information of the Identification Service Area was retrieved
+            successfully.
         400:
           content:
             application/json:
@@ -120,15 +121,15 @@ paths:
       security:
       - AuthFromAuthorizationAuthority:
         - dss.read.position_reporting_entities
-      summary: /dss/identification/{id}
-      description: 'Retrieve full information of an Identification Service Area owned by
-        the client.'
+      summary: /dss/identification_service_areas/{id}
+      description: Retrieve full information of an Identification Service Area owned
+        by the client.
     put:
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PutIdentificationServiceAreaParameters'
+              $ref: '#/components/schemas/CreateIdentificationServiceAreaParameters'
         required: true
       tags:
       - dss
@@ -138,7 +139,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PutIdentificationServiceAreaResponse'
-          description: An existing Identification Service Area was updated successfully
+          description: An existing Identification Service Area was created successfully
             in the DSS.
         400:
           content:
@@ -181,20 +182,181 @@ paths:
         - dss.write.identification_service_areas
       summary: /dss/identification_service_areas/{id}
       description: |-
-        Create or update an Identification Service Area.  The full content of any existing Identification Service Area will be replaced with the provided information.
+        Create a new Identification Service Area.  This call will fail if an Identification Service Area with the same ID already exists.
+
+        The DSS assumes the USS has already added the appropriate retention period to operation end time in `time_end` field before storing it.  Updating `time_start` is not allowed if it is before the current time.
+        PUT is a full replace, not a partial update. If the Service Area already exists, the version string *must* be provided and correspond to the current version.
+    parameters:
+    - name: id
+      description: EntityUUID of the Identification Service Area.
+      schema:
+        $ref: '#/components/schemas/EntityUUID'
+      in: path
+      required: true
+  /v1/uss/identification_service_areas/{id}:
+    summary: Notifications of change to Identification Service Areas.
+    put:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PutIdentificationServiceAreaNotificationParameters'
+        required: true
+      tags:
+      - p2p_rid
+      responses:
+        204:
+          description: Full information for Identification Service Area was updated
+            successfully.
+        400:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: |-
+            * One or more parameters were missing or invalid.
+            * The Identification Service Area information could not be parsed, or contains illegal data.
+        401:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bearer access token was not provided in Authorization header,
+            token could not be decoded, or token was invalid.
+        403:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: |-
+            * The access token was decoded successfully but did not include a scope appropriate to this endpoint.
+            * The client identified in the access token is not the owner of this Entity according to the receiving client's records.
+        409:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The Entity version specified in this message is lower than
+            a previously-received notification, or identical to a previously-received
+            notification and the Entity is different.
+      security:
+      - AuthFromAuthorizationAuthority:
+        - dss.write.identification_service_areas
+      summary: /uss/identification_service_areas/{id}
+      description: 'Hosted by a remote ID display provider using Subscriptions: publish
+        new full information of an Identification Service Area to the host of this
+        endpoint (usually because of instructions from the DSS triggered by a subscription).'
+    delete:
+      tags:
+      - p2p_rid
+      responses:
+        204:
+          description: Notification of Identification Service Area deletion was received
+            successfully, even if the host USS was previously unaware of the specified
+            Identification Service Area.
+        400:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: One or more parameters were missing or invalid.
+        401:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bearer access token was not provided in Authorization header,
+            token could not be decoded, or token was invalid.
+        403:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: |-
+            * The access token was decoded successfully but did not include a scope appropriate to this endpoint.
+            * The client identified in the access token is not the owner of this Entity according to the receiving client's records.
+      security:
+      - AuthFromAuthorizationAuthority:
+        - dss.write.identification_service_areas
+      summary: /uss/identification_service_areas/{id}
+      description: 'Hosted by a remote ID display provider using Subscriptions: publish
+        a notification about the deletion of an Identification Service Area to the
+        host of this endpoint (usually because of instructions from the DSS triggered
+        by a subscription).'
+    parameters:
+    - name: id
+      description: EntityUUID of the Identification Service Area.
+      schema:
+        $ref: '#/components/schemas/EntityUUID'
+      in: path
+      required: true
+  /v1/dss/identification_service_areas/{id}/{version}:
+    summary: A specific version of an Identification Service Area in the DSS.
+    put:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateIdentificationServiceAreaParameters'
+        required: true
+      tags:
+      - dss
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PutIdentificationServiceAreaResponse'
+          description: An existing Identification Service Area was updated successfully
+            in the DSS.
+        400:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: |-
+            * One or more input parameters were missing or invalid.
+            * The request attempted to mutate the Identification Service Area in a disallowed way.
+        401:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bearer access token was not provided in Authorization header,
+            token could not be decoded, or token was invalid.
+        403:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The access token was decoded successfully but did not include
+            a scope appropriate to this endpoint.
+        409:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: |-
+            * The specified Identification Service Area's current version does not match the provided version.
+            * Despite repeated attempts, the DSS was unable to update the DAR because of other simultaneous changes.
+        413:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The area of the Identification Service Area is too large.
+      security:
+      - AuthFromAuthorizationAuthority:
+        - dss.write.identification_service_areas
+      summary: /dss/identification_service_areas/{id}/{version}
+      description: |-
+        Update an Identification Service Area.  The full content of the existing Identification Service Area will be replaced with the provided information as only the most recent version is retained.
 
         The DSS assumes the USS has already added the appropriate retention period to operation end time in `time_end` field before storing it.  Updating `time_start` is not allowed if it is before the current time.
         PUT is a full replace, not a partial update. If the Service Area already exists, the version string *must* be provided and correspond to the current version.
     delete:
       tags:
       - dss
-      parameters:
-      - name: version
-        description: Version of the Service Area to delete.
-        schema:
-          $ref: '#/components/schemas/Version'
-        in: query
-        required: true
       responses:
         200:
           content:
@@ -234,12 +396,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-          description: Despite repeated attempts, the DSS was unable to update the
-            DAR because of other simultaneous changes.
+          description: |-
+            * The specified Identification Service Area's current version does not match the provided version.
+            * Despite repeated attempts, the DSS was unable to update the DAR because of other simultaneous changes.
       security:
       - AuthFromAuthorizationAuthority:
         - dss.write.identification_service_areas
-      summary: /dss/identification_service_areas/{id}
+      summary: /dss/identification_service_areas/{id}/{version}
       description: Delete an Identification Service Area.  USSs should not delete
         Identification Service Areas before the end of the last managed flight plus
         the retention period.
@@ -248,6 +411,14 @@ paths:
       description: EntityUUID of the Identification Service Area.
       schema:
         $ref: '#/components/schemas/EntityUUID'
+      in: path
+      required: true
+    - name: version
+      description: Version string used to reference an Identification Service Area
+        at a particular point in time. Any updates to an existing Identification Service
+        Area must contain the corresponding version to maintain idempotent updates.
+      schema:
+        type: string
       in: path
       required: true
   /v1/uss/flights:
@@ -380,103 +551,6 @@ paths:
         $ref: '#/components/schemas/RIDFlightID'
       in: path
       required: true
-  /v1/uss/identification_service_areas/{id}:
-    summary: Notifications of change to Identification Service Areas.
-    put:
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PutIdentificationServiceAreaNotificationParameters'
-        required: true
-      tags:
-      - p2p_rid
-      responses:
-        204:
-          description: Full information for Identification Service Area was updated
-            successfully.
-        400:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: |-
-            * One or more parameters were missing or invalid.
-            * The Identification Service Area information could not be parsed, or contains illegal data.
-        401:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: Bearer access token was not provided in Authorization header,
-            token could not be decoded, or token was invalid.
-        403:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: |-
-            * The access token was decoded successfully but did not include a scope appropriate to this endpoint.
-            * The client identified in the access token is not the owner of this Entity according to the receiving client's records.
-        409:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: The Entity version specified in this message is lower than
-            a previously-received notification, or identical to a previously-received
-            notification and the Entity is different.
-      security:
-      - AuthFromAuthorizationAuthority:
-        - dss.write.identification_service_areas
-      summary: /uss/identification_service_areas/{id}
-      description: 'Hosted by a remote ID display provider using Subscriptions: publish
-        new full information of an Identification Service Area to the host of this
-        endpoint (usually because of instructions from the DSS triggered by a subscription).'
-    delete:
-      tags:
-      - p2p_rid
-      responses:
-        204:
-          description: Notification of Identification Service Area deletion was received
-            successfully, even if the host USS was previously unaware of the specified
-            Identification Service Area.
-        400:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: One or more parameters were missing or invalid.
-        401:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: Bearer access token was not provided in Authorization header,
-            token could not be decoded, or token was invalid.
-        403:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: |-
-            * The access token was decoded successfully but did not include a scope appropriate to this endpoint.
-            * The client identified in the access token is not the owner of this Entity according to the receiving client's records.
-      security:
-      - AuthFromAuthorizationAuthority:
-        - dss.write.identification_service_areas
-      summary: /uss/identification_service_areas/{id}
-      description: 'Hosted by a remote ID display provider using Subscriptions: publish
-        a notification about the deletion of an Identification Service Area to the
-        host of this endpoint (usually because of instructions from the DSS triggered
-        by a subscription).'
-    parameters:
-    - name: id
-      description: EntityUUID of the Identification Service Area.
-      schema:
-        $ref: '#/components/schemas/EntityUUID'
-      in: path
-      required: true
   /v1/dss/subscriptions:
     summary: Subscriptions for airspace updates to a volume of interest.
     get:
@@ -580,7 +654,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PutSubscriptionParameters'
+              $ref: '#/components/schemas/CreateSubscriptionParameters'
         required: true
       tags:
       - dss
@@ -590,7 +664,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PutSubscriptionResponse'
-          description: An existing Subscription was updated successfully.
+          description: A new Subscription was created successfully.
         400:
           content:
             application/json:
@@ -641,7 +715,87 @@ paths:
         - dss.read.identification_service_areas
       summary: /dss/subscriptions/{id}
       description: |-
-        Create or update a subscription.  The full content of any existing Identification Service Area will be replaced with the provided information.
+        Create a subscription.  This call will fail if a Subscription with the same ID already exists.
+
+        Subscription notifications are only triggered by (and contain full information of) changes to, creation of, or deletion of, Entities referenced by or stored in the DSS; they do not involve any data transfer (such as remote ID telemetry updates) apart from Entity information.
+        PUT is a full replace, not a partial update. If the Subscription already exists, the version string *must* be provided and correspond to the current version.
+    parameters:
+    - name: id
+      description: SubscriptionUUID of the subscription of interest.
+      schema:
+        $ref: '#/components/schemas/SubscriptionUUID'
+      in: path
+      required: true
+  /v1/dss/subscriptions/{id}/{version}:
+    summary: Specific version of a Subscription for airspace updates to a volume of
+      interest.
+    put:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateSubscriptionParameters'
+        required: true
+      tags:
+      - dss
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PutSubscriptionResponse'
+          description: An existing Subscription was updated successfully.
+        400:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: |-
+            * One or more input parameters were missing or invalid.
+            * The request attempted to mutate the Subscription in a disallowed way.
+        401:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bearer access token was not provided in Authorization header,
+            token could not be decoded, or token was invalid.
+        403:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: |-
+            * The access token was decoded successfully but did not include a scope appropriate to this endpoint or the request.
+            * An EntityType was specified in `types_filter` to which the scopes included in the access token do not provide access.
+        409:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: |-
+            * The specified Subscriptions's current version does not match the provided version.
+            * Despite repeated attempts, the DSS was unable to update the DAR because of other simultaneous changes.
+        429:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Client already has too many Subscriptions in the area where
+            a new Subscription was requested.  To correct this problem, the client
+            may query GET /subscriptions to see which Subscriptions are counting against
+            their limit.  This problem should not generally be encountered because
+            the Subscription limit should be above what any consumer that reasonably
+            aggregates their Subscriptions should request.  But, a Subscription limit
+            is necessary to bound performance requirements for DSS instances and would
+            likely be hit by, e.g., a large remote ID display provider that created
+            a Subscription for each of their display client users' views.
+      security:
+      - AuthFromAuthorizationAuthority:
+        - dss.read.identification_service_areas
+      summary: /dss/subscriptions/{id}/{version}
+      description: |-
+        Update a Subscription.  The full content of the existing Subscription will be replaced with the provided information as only the most recent version is retained.
 
         Subscription notifications are only triggered by (and contain full information of) changes to, creation of, or deletion of, Entities referenced by or stored in the DSS; they do not involve any data transfer (such as remote ID telemetry updates) apart from Entity information.
         PUT is a full replace, not a partial update. If the Subscription already exists, the version string *must* be provided and correspond to the current version.
@@ -654,7 +808,7 @@ paths:
         schema:
           $ref: '#/components/schemas/Version'
         in: query
-        required: true  
+        required: true
       responses:
         200:
           content:
@@ -694,18 +848,27 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-          description: Despite repeated attempts, the DSS was unable to update the
-            DAR because of other simultaneous changes.
+          description: |-
+            * The specified Subscriptions's current version does not match the provided version.
+            * Despite repeated attempts, the DSS was unable to update the DAR because of other simultaneous changes.
       security:
       - AuthFromAuthorizationAuthority:
         - dss.read.position_reporting_entities
-      summary: /dss/subscriptions/{id}
+      summary: /dss/subscriptions/{id}/{version}
       description: Delete a subscription.
     parameters:
     - name: id
       description: SubscriptionUUID of the subscription of interest.
       schema:
         $ref: '#/components/schemas/SubscriptionUUID'
+      in: path
+      required: true
+    - name: version
+      description: Version string used to reference a Subscription at a particular
+        point in time. Any updates to an existing Subscription must contain the corresponding
+        version to maintain idempotent updates.
+      schema:
+        type: string
       in: path
       required: true
 components:
@@ -748,14 +911,6 @@ components:
           format: date-time
           description: End time of this volume.  RFC 3339 format, per OpenAPI specification.
           type: string
-    GetIdentificationServiceAreaResponse:
-      description: Response to DSS request for the identification service area with the given id.
-      required:
-      - identification_service_areas
-      type: object
-      properties:
-        identification_service_area:
-          $ref: '#/components/schemas/IdentificationServiceArea'
     GetSubscriptionResponse:
       description: Response to DSS request for the subscription with the given id.
       required:
@@ -825,7 +980,9 @@ components:
       type: string
       example: 03e5572a-f733-49af-bc14-8a18bd53ee39
     Version:
-      description: A version string used to reference an object at a particular point in time. Any updates to an object must contain the corresponding version to maintain idempotent updates.
+      description: A version string used to reference an object at a particular point
+        in time. Any updates to an object must contain the corresponding version to
+        maintain idempotent updates.
       type: string
     EntityUUID:
       anyOf:
@@ -1224,23 +1381,6 @@ components:
           description: The endpoint that the client mutating the airspace should provide
             the update to.  API depends on the DSS action taken that triggered this
             notification request.
-    PutIdentificationServiceAreaParameters:
-      description: Parameters for a request to create or update a reference to an
-        Identification Service Area in the DSS.
-      required:
-      - extents
-      - flights_url
-      type: object
-      properties:
-        extents:
-          anyOf:
-          - $ref: '#/components/schemas/Volume4D'
-          description: |-
-            The bounding spacetime extents of this Identification Service Area.  Start and end times must be specified.
-
-            These extents should not reveal any sensitive information about the flight or flights within them.  This means, for instance, that extents should not tightly-wrap a flight path, nor should they generally be centered around the takeoff point of a single flight.
-        flights_url:
-          $ref: '#/components/schemas/RIDFlightsURL'
     DeleteIdentificationServiceAreaResponse:
       description: Response for a request to delete an Identification Service Area.
       required:
@@ -1316,27 +1456,6 @@ components:
             Subscription is created, modified, or deleted.  Must implement PUT and
             DELETE according to the `/uss/identification_service_areas/{id}` path
             API.
-    PutSubscriptionParameters:
-      description: Parameters for a request to create or update a subscription in
-        the DSS.
-      required:
-      - extents
-      - callbacks
-      type: object
-      properties:
-        extents:
-          anyOf:
-          - $ref: '#/components/schemas/Volume4D'
-          description: |-
-            The spacetime extents of the volume to subscribe to.
-
-            This subscription will automatically be deleted after its end time if it has not been refreshed by then.  If end time is not specified, the value will be chosen automatically by the DSS.
-
-            Note that some Entities triggering notifications may lie entirely outside the requested area.
-        callbacks:
-          $ref: '#/components/schemas/SubscriptionCallbacks'
-        version:
-          $ref: '#/components/schemas/Version'
     PutSubscriptionResponse:
       description: Response for a request to create or update a subscription.
       required:
@@ -1564,6 +1683,85 @@ components:
           type: string
         position:
           $ref: '#/components/schemas/RIDAircraftPosition'
+    GetIdentificationServiceAreaResponse:
+      description: Response to DSS request for the identification service area with
+        the given id.
+      required:
+      - identification_service_area
+      type: object
+      properties:
+        identification_service_area:
+          $ref: '#/components/schemas/IdentificationServiceArea'
+    CreateIdentificationServiceAreaParameters:
+      description: Parameters for a request to create an Identification Service Area
+        in the DSS.
+      required:
+      - extents
+      - flights_url
+      type: object
+      properties:
+        extents:
+          anyOf:
+          - $ref: '#/components/schemas/Volume4D'
+          description: |-
+            The bounding spacetime extents of this Identification Service Area.  Start and end times must be specified.
+
+            These extents should not reveal any sensitive information about the flight or flights within them.  This means, for instance, that extents should not tightly-wrap a flight path, nor should they generally be centered around the takeoff point of a single flight.
+        flights_url:
+          $ref: '#/components/schemas/RIDFlightsURL'
+    UpdateIdentificationServiceAreaParameters:
+      description: Parameters for a request to update an Identification Service Area
+        in the DSS.
+      required:
+      - extents
+      - flights_url
+      type: object
+      properties:
+        extents:
+          anyOf:
+          - $ref: '#/components/schemas/Volume4D'
+          description: |-
+            The bounding spacetime extents of this Identification Service Area.  Start and end times must be specified.
+
+            These extents should not reveal any sensitive information about the flight or flights within them.  This means, for instance, that extents should not tightly-wrap a flight path, nor should they generally be centered around the takeoff point of a single flight.
+        flights_url:
+          $ref: '#/components/schemas/RIDFlightsURL'
+    CreateSubscriptionParameters:
+      description: Parameters for a request to create a subscription in the DSS.
+      required:
+      - extents
+      - callbacks
+      type: object
+      properties:
+        extents:
+          anyOf:
+          - $ref: '#/components/schemas/Volume4D'
+          description: |-
+            The spacetime extents of the volume to subscribe to.
+
+            This subscription will automatically be deleted after its end time if it has not been refreshed by then.  If end time is not specified, the value will be chosen automatically by the DSS.
+
+            Note that some Entities triggering notifications may lie entirely outside the requested area.
+        callbacks:
+          $ref: '#/components/schemas/SubscriptionCallbacks'
+    UpdateSubscriptionParameters:
+      description: Parameters for a request to update a subscription in the DSS.
+      required:
+      - extents
+      - callbacks
+      type: object
+      properties:
+        extents:
+          anyOf:
+          - $ref: '#/components/schemas/Volume4D'
+          description: |-
+            The spacetime extents of the volume to subscribe to.
+
+            This subscription will automatically be deleted after its end time if it has not been refreshed by then.  If end time is not specified, the value will be chosen automatically by the DSS.
+
+            Note that some Entities triggering notifications may lie entirely outside the requested area.
+        callbacks:
+          $ref: '#/components/schemas/SubscriptionCallbacks'
   securitySchemes:
     AuthFromAuthorizationAuthority:
       flows:

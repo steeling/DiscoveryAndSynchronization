@@ -185,7 +185,6 @@ paths:
         Create a new Identification Service Area.  This call will fail if an Identification Service Area with the same ID already exists.
 
         The DSS assumes the USS has already added the appropriate retention period to operation end time in `time_end` field before storing it.  Updating `time_start` is not allowed if it is before the current time.
-        PUT is a full replace, not a partial update. If the Service Area already exists, the version string *must* be provided and correspond to the current version.
     parameters:
     - name: id
       description: EntityUUID of the Identification Service Area.
@@ -256,7 +255,6 @@ paths:
         Update an Identification Service Area.  The full content of the existing Identification Service Area will be replaced with the provided information as only the most recent version is retained.
 
         The DSS assumes the USS has already added the appropriate retention period to operation end time in `time_end` field before storing it.  Updating `time_start` is not allowed if it is before the current time.
-        PUT is a full replace, not a partial update. If the Service Area already exists, the version string *must* be provided and correspond to the current version.
     delete:
       tags:
       - dss
@@ -621,7 +619,6 @@ paths:
         Create a subscription.  This call will fail if a Subscription with the same ID already exists.
 
         Subscription notifications are only triggered by (and contain full information of) changes to, creation of, or deletion of, Entities referenced by or stored in the DSS; they do not involve any data transfer (such as remote ID telemetry updates) apart from Entity information.
-        PUT is a full replace, not a partial update. If the Subscription already exists, the version string *must* be provided and correspond to the current version.
     parameters:
     - name: id
       description: SubscriptionUUID of the subscription of interest.
@@ -701,7 +698,6 @@ paths:
         Update a Subscription.  The full content of the existing Subscription will be replaced with the provided information as only the most recent version is retained.
 
         Subscription notifications are only triggered by (and contain full information of) changes to, creation of, or deletion of, Entities referenced by or stored in the DSS; they do not involve any data transfer (such as remote ID telemetry updates) apart from Entity information.
-        PUT is a full replace, not a partial update. If the Subscription already exists, the version string *must* be provided and correspond to the current version.
     delete:
       tags:
       - dss

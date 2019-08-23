@@ -1214,8 +1214,10 @@ components:
         current_state:
           anyOf:
           - $ref: '#/components/schemas/RIDAircraftState'
-          description: The most up-to-date state of the aircraft.  Required unless
-            `volumes` is specified.
+          description: |-
+            The most up-to-date state of the aircraft.  Required unless `volumes` is specified.
+
+            If current data is not being received from the UAS by the Service Provider, the lack of change in this field is sufficient to indicate that current data is not being received.
         volumes:
           description: The set of spacetime volumes the aircraft is within.  Required
             if `current_state` is not specified.  The fields `time_start` and `time_end`

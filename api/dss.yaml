@@ -770,7 +770,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PutIdentificationServiceAreaNotificationParameters'
+              $ref: '#/components/schemas/PostIdentificationServiceAreaNotificationParameters'
         required: true
       tags:
       - p2p_rid
@@ -915,7 +915,7 @@ components:
       description: State of AreaSubscription which is causing a notification to be
         sent.
       required:
-      - subscription
+      - subscription_id
       type: object
       properties:
         subscription_id:
@@ -1289,7 +1289,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/IdentificationServiceArea'
-    PutIdentificationServiceAreaNotificationParameters:
+    PostIdentificationServiceAreaNotificationParameters:
       description: Parameters of a message informing of new full information for an
         Identification Service Area.  Pushed (by a client, not the DSS) directly to
         clients with subscriptions when another client makes a change to airspace

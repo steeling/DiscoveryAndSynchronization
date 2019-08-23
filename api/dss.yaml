@@ -770,7 +770,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PostIdentificationServiceAreaNotificationParameters'
+              $ref: '#/components/schemas/PutIdentificationServiceAreaNotificationParameters'
         required: true
       tags:
       - p2p_rid
@@ -915,7 +915,7 @@ components:
       description: State of AreaSubscription which is causing a notification to be
         sent.
       required:
-      - subscription_id
+      - subscription
       type: object
       properties:
         subscription_id:
@@ -1289,7 +1289,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/IdentificationServiceArea'
-    PostIdentificationServiceAreaNotificationParameters:
+    PutIdentificationServiceAreaNotificationParameters:
       description: Parameters of a message informing of new full information for an
         Identification Service Area.  Pushed (by a client, not the DSS) directly to
         clients with subscriptions when another client makes a change to airspace
@@ -1555,36 +1555,6 @@ components:
       - GroundObstacle
       - Other
       type: string
-    IdentificationServiceArea:
-      description: An Identification Service Area (area in which remote ID services
-        are being provided).  The DSS reports only these declarations and clients
-        must exchange flight information peer-to-peer.
-      required:
-      - flights_url
-      - owner
-      - time_start
-      - time_end
-      - version
-      type: object
-      properties:
-        flights_url:
-          $ref: '#/components/schemas/RIDFlightsURL'
-        owner:
-          description: Assigned by the DSS based on creating client’s ID (via access
-            token).  Used for restricting mutation and deletion operations to owner,
-            and only requiring EntitySignatures for unowned Entities.
-          type: string
-          example: myuss
-        time_start:
-          format: date-time
-          description: Beginning time of service.  RFC 3339 format, per OpenAPI specification.
-          type: string
-        time_end:
-          format: date-time
-          description: End time of service.  RFC 3339 format, per OpenAPI specification.
-          type: string
-        version:
-          $ref: '#/components/schemas/Version'
     RIDRecentAircraftPosition:
       description: ""
       required:
@@ -1715,6 +1685,41 @@ components:
           type: string
         version:
           $ref: '#/components/schemas/Version'
+    IdentificationServiceArea:
+      description: An Identification Service Area (area in which remote ID services
+        are being provided).  The DSS reports only these declarations and clients
+        must exchange flight information peer-to-peer.
+      required:
+      - flights_url
+      - owner
+      - time_start
+      - time_end
+      - version
+      - id
+      type: object
+      properties:
+        flights_url:
+          $ref: '#/components/schemas/RIDFlightsURL'
+        owner:
+          description: Assigned by the DSS based on creating client’s ID (via access
+            token).  Used for restricting mutation and deletion operations to owner,
+            and only requiring EntitySignatures for unowned Entities.
+          type: string
+          example: myuss
+        time_start:
+          format: date-time
+          description: Beginning time of service.  RFC 3339 format, per OpenAPI specification.
+          type: string
+        time_end:
+          format: date-time
+          description: End time of service.  RFC 3339 format, per OpenAPI specification.
+          type: string
+        version:
+          $ref: '#/components/schemas/Version'
+        id:
+          anyOf:
+          - $ref: '#/components/schemas/EntityUUID'
+          description: Unique identifier for this Identification Service Area.
   securitySchemes:
     AuthFromAuthorizationAuthority:
       flows:

@@ -1592,8 +1592,7 @@ components:
           $ref: '#/components/schemas/RIDFlightsURL'
         owner:
           description: Assigned by the DSS based on creating client’s ID (via access
-            token).  Used for restricting mutation and deletion operations to owner,
-            and only requiring EntitySignatures for unowned Entities.
+            token).  Used for restricting mutation and deletion operations to owner.
           type: string
           example: myuss
         time_start:

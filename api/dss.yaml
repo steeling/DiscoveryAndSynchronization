@@ -2,7 +2,7 @@
 openapi: 3.0.2
 info:
   title: Discovery and Synchronization Service
-  version: 0.0.2
+  version: 0.0.8
   description: |-
     Interface to Discovery and Synchronization Service and service providers used by participating clients to discover and inform other service providers.
 
@@ -322,84 +322,6 @@ paths:
         type: string
       in: path
       required: true
-  /v1/uss/flights:
-    summary: Basic operation details to meet remote ID requirements.
-    description: This endpoint may be polled by remote ID display providers to display
-      basic aircraft activity near a user in real time.
-    get:
-      tags:
-      - p2p_rid
-      responses:
-        200:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/GetFlightsResponse'
-          description: Flight information was successfully retrieved.
-        400:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: One or more input parameters were missing or invalid.
-        401:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: Bearer access token was not provided in Authorization header,
-            token could not be decoded, or token was invalid.
-        403:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: The access token was decoded successfully but did not include
-            a scope appropriate to this endpoint.
-        404:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: The requested view is entirely outside any remote ID service
-            provision areas (PositionReporting Entity volumes) this provider has.  A
-            display provider receiving this response should discontinue polling for
-            this endpoint for the view port requested until otherwise directed by
-            DSS interactions.
-        413:
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-          description: The requested view rectangle was too large.
-      security:
-      - AuthFromAuthorizationAuthority:
-        - dss.read.identification_service_areas
-      summary: /uss/flights
-      description: Retrieve basic flight information from a remote ID service provider
-        to meet remote ID requirements.  This endpoint will be polled by remote ID
-        display providers to display basic aircraft activity near a user in real time.  All
-        flights that have any recent positions (past [NetUasInAreaWindow] seconds)
-        inside the requested view must be returned.
-    parameters:
-    - name: view
-      description: 'The area of this view: lat1,lng1,lat2,lng2.  Size may not exceed
-        a diagonal length specified in the standard.  The view is the smallest box
-        bounded by the provided corner points.'
-      schema:
-        pattern: ^-?\d{1,3}(?:\.\d*)?,-?\d{1,3}(?:\.\d*)?,-?\d{1,3}(?:\.\d*)?,-?\d{1,3}(?:\.\d*)?$
-        type: string
-        example: 29.97816,31.13296,29.98025,31.13535
-      in: query
-      required: true
-    - name: include_recent_positions
-      description: |-
-        If specified as true, include recent positions.  Otherwise, do not include recent positions.
-
-        A display provider's first poll of this endpoint for a particular view will usually request recent positions while follow-up polls for that same view will usually not need to request recent positions.
-      schema:
-        type: boolean
-      in: query
   /v1/uss/flights/{id}/details:
     summary: A remote ID flight reported by a remote ID service provider.
     get:
@@ -821,6 +743,83 @@ paths:
         $ref: '#/components/schemas/EntityUUID'
       in: path
       required: true
+  /v1/uss/flights:
+    summary: Basic operation details to meet remote ID requirements.
+    description: This endpoint may be polled by remote ID display providers to display
+      basic aircraft activity near a user in real time.
+    get:
+      tags:
+      - p2p_rid
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetFlightsResponse'
+          description: Flight information was successfully retrieved.
+        400:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: One or more input parameters were missing or invalid.
+        401:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bearer access token was not provided in Authorization header,
+            token could not be decoded, or token was invalid.
+        403:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The access token was decoded successfully but did not include
+            a scope appropriate to this endpoint.
+        404:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The requested view is entirely outside any remote ID service
+            provision areas (PositionReporting Entity volumes) this provider has.  A
+            display provider receiving this response should discontinue polling for
+            this endpoint for the view port requested until otherwise directed by
+            DSS interactions.
+        413:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The requested view rectangle was too large.
+      security:
+      - AuthFromAuthorizationAuthority:
+        - dss.read.identification_service_areas
+      summary: /uss/flights
+      description: Retrieve basic flight information from a remote ID service provider
+        to meet remote ID requirements.  This endpoint will be polled by remote ID
+        display providers to display basic aircraft activity near a user in real time.  All
+        flights that have any recent positions (past [NetUasInAreaWindow] seconds)
+        inside the requested view must be returned.
+    parameters:
+    - name: view
+      description: 'The area of this view: lat1,lng1,lat2,lng2.  Size may not exceed
+        a diagonal length specified in the standard.  The view is the smallest box
+        bounded by the provided corner points.'
+      schema:
+        type: string
+        example: 29.97816,31.13296,29.98025,31.13535
+      in: query
+      required: true
+    - name: include_recent_positions
+      description: |-
+        If specified as true, include recent positions.  Otherwise, do not include recent positions.
+
+        A display provider's first poll of this endpoint for a particular view will usually request recent positions while follow-up polls for that same view will usually not need to request recent positions.
+      schema:
+        type: boolean
+      in: query
 components:
   schemas:
     Volume3D:
@@ -901,11 +900,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/RIDFlight'
-    URL:
-      description: Valid http or https URL.
-      pattern: '^https?:\/\/(?:\[[0-9a-fA-F]{0,4}(?::[0-9a-fA-F]{0,4}){2,7}\]|[^\0\t\r\n
-        #%\/:?@[\\\]]{1,63}(?:\.[^\0\t\r\n #%\/:?@[\\\]]{1,63}){1,126})(?::\d{1,5})?\/?'
-      type: string
     SubscriptionNotificationIndex:
       format: int32
       description: Tracks the notifications sent for a subscription so the subscriber
@@ -922,13 +916,6 @@ components:
           $ref: '#/components/schemas/SubscriptionUUID'
         notification_index:
           $ref: '#/components/schemas/SubscriptionNotificationIndex'
-    UUIDv4:
-      description: UUID v4.
-      maxLength: 36
-      minLength: 36
-      pattern: ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$
-      type: string
-      example: 03e5572a-f733-49af-bc14-8a18bd53ee39
     Version:
       description: A version string used to reference an object at a particular point
         in time. Any updates to an object must contain the corresponding version to
@@ -944,15 +931,6 @@ components:
       - $ref: '#/components/schemas/UUIDv4'
       description: Universally-unique identifier for a Subscription communicated through
         the DSS.  Formatted as UUIDv4.
-    RIDFlightID:
-      description: ID, unique to a remote ID service provider, which identifies a
-        particular flight for which the remote ID service provider is providing remote
-        ID services.
-      maxLength: 255
-      minLength: 1
-      pattern: ^[^\0\t\r\n#%\/:?@[\\\]]+$
-      type: string
-      example: uss1.JA6kHYCcByQ-6AfU
     RIDAuthData:
       description: Additional authentication data.
       required:
@@ -1137,13 +1115,6 @@ components:
             deltas" between aircraft.  This value is provided in meters and must have
             a minimum resolution of 1 meter.
           type: number
-    GeoPolygonString:
-      description: |-
-        Plain-string representation of a geographic polygon consisting of at least three geographic points describing a closed polygon on the earth.  Each point consists of latitude,longitude in degrees.  Points are also comma-delimited, so this parameter will look like `lat1,lng1,lat2,lng2,lat3,lng3,...`  Latitude values must fall in the range [-90, 90] and longitude values must fall in the range [-180, 180].
-
-        All of the requirements and clarifications for GeoPolygon apply to GeoPolygonString as well.
-      pattern: ^(?:-?\d{1,3}(?:\.\d*)?,){5}-?\d{1,3}(?:\.\d*)?(?:(?:,-?\d{1,3}(?:\.\d*)?){2})*$
-      type: string
     RIDHeight:
       description: A relative altitude for the purposes of remote ID.
       required:
@@ -1215,7 +1186,7 @@ components:
           anyOf:
           - $ref: '#/components/schemas/RIDAircraftState'
           description: |-
-            The most up-to-date state of the aircraft.  Required unless `volumes` is specified.
+            The most up-to-date state of the aircraft.  Required when the aircraft is currently in the requested area unless `volumes` is specified.
 
             If current data is not being received from the UAS by the Service Provider, the lack of change in this field is sufficient to indicate that current data is not being received.
         volumes:
@@ -1310,6 +1281,12 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/SubscriptionState'
+        extents:
+          $ref: '#/components/schemas/Volume4D'
+          description: |-
+            The new or updated extents of the Identification Service Area.
+
+            Omitted if Identification Service Area was deleted.
     SubscriberToNotify:
       description: Subscriber to notify of a creation/change/deletion of a change
         in the airspace.  This is provided by the DSS to a client changing the airspace,
@@ -1389,15 +1366,6 @@ components:
           anyOf:
           - $ref: '#/components/schemas/Subscription'
           description: Result of the operation on the subscription.
-    RIDFlightsURL:
-      anyOf:
-      - $ref: '#/components/schemas/URL'
-      description: |-
-        The URL at which the remote ID flights and their details may be retrieved.  See `/flights` and `/flights/{id}/details` paths for specification of this endpoint.
-        This URL is the base flights resource.  If this URL is specified as https://example.com/flights then the flight details for a particular {id} may be obtained at the URL https://example.com/flights/{id}/details.  This URL may not have a trailing / character.
-      pattern: '[^\/]$'
-      type: string
-      example: https://example.com/flights
     RIDOperationalStatus:
       description: Indicates operational status of associated aircraft.
       enum:
@@ -1739,6 +1707,38 @@ components:
       - GroundObstacle
       - Other
       type: string
+    URL:
+      description: Valid http or https URL.
+      type: string
+    UUIDv4:
+      description: UUID v4.
+      maxLength: 36
+      minLength: 36
+      type: string
+      example: 03e5572a-f733-49af-bc14-8a18bd53ee39
+    RIDFlightsURL:
+      anyOf:
+      - $ref: '#/components/schemas/URL'
+      description: |-
+        The URL at which the remote ID flights and their details may be retrieved.  See `/flights` and `/flights/{id}/details` paths for specification of this endpoint.
+        This URL is the base flights resource.  If this URL is specified as https://example.com/flights then the flight details for a particular {id} may be obtained at the URL https://example.com/flights/{id}/details.  This URL may not have a trailing / character.
+      type: string
+      example: https://example.com/flights
+    GeoPolygonString:
+      description: |-
+        Plain-string representation of a geographic polygon consisting of at least three geographic points describing a closed polygon on the earth.  Each point consists of latitude,longitude in degrees.  Points are also comma-delimited, so this parameter will look like `lat1,lng1,lat2,lng2,lat3,lng3,...`  Latitude values must fall in the range [-90, 90] and longitude values must fall in the range [-180, 180].
+
+        All of the requirements and clarifications for GeoPolygon apply to GeoPolygonString as well.
+      type: string
+    RIDFlightID:
+      description: |-
+        ID, unique to a remote ID service provider, which identifies a particular flight for which the remote ID service provider is providing remote ID services.
+
+        The following characters are not allowed: \0 \t \r \n # % / : ? @ [ \ ]
+      maxLength: 255
+      minLength: 1
+      type: string
+      example: uss1.JA6kHYCcByQ-6AfU
   securitySchemes:
     AuthFromAuthorizationAuthority:
       flows:

@@ -1688,6 +1688,66 @@ paths:
           $ref: '#/components/schemas/UUIDv4'
         in: path
         required: true
+  /v1/uss/negotiations/{id}:
+    summary: Negotiations with a USS to alter their Entities to deconflict with a proposed OperationalIntent.
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NegotiationParameters'
+        required: true
+      tags:
+        - p2p_utm
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NegotiationResponse'
+          description: All requested Entities have been deconflicted with the proposed OperationalIntent.
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: |-
+            * One or more parameters were missing or invalid.
+            * The request could not be parsed, or contains illegal data.
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bearer access token was not provided in Authorization header,
+            token could not be decoded, or token was invalid.
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: |-
+            * The access token was decoded successfully but did not include a scope appropriate to this endpoint.
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: |-
+            * USS was unable to deconflict all requested Entities with the proposed OperationalIntent.
+            * A different negotiation with the same ID has already been conducted.
+      security:
+        - AuthFromAuthorizationAuthority:
+            - utm.write.operational_intents
+      summary: /uss/negotiations/{id}
+      description: Request that a USS alter their Entities to deconflict with a proposed OperationalIntent.
+    parameters:
+      - name: id
+        description: ID of the negotiation request (for idempotence).
+        schema:
+          $ref: '#/components/schemas/UUIDv4'
+        in: path
+        required: true
 components:
   schemas:
     Hash:
@@ -2724,6 +2784,8 @@ components:
           description: Unique identifier for this OperationalIntentReference.
         details_url:
           $ref: '#/components/schemas/OperationalIntentDetailsURL'
+        negotiations_url:
+          $ref: '#/components/schemas/NegotiationsURL'
         error_reports_url:
           $ref: '#/components/schemas/ErrorReportsURL'
         owner:
@@ -2803,6 +2865,8 @@ components:
             time.
         details_url:
           $ref: '#/components/schemas/OperationalIntentDetailsURL'
+        negotiations_url:
+          $ref: '#/components/schemas/NegotiationsURL'
         error_reports_url:
           $ref: '#/components/schemas/ErrorReportsURL'
         priority:
@@ -2933,6 +2997,8 @@ components:
             time.
         details_url:
           $ref: '#/components/schemas/ConstraintDetailsURL'
+        negotiations_url:
+          $ref: '#/components/schemas/NegotiationsURL'
         error_reports_url:
           $ref: '#/components/schemas/ErrorReportsURL'
     GetConstraintReferenceResponse:
@@ -2963,6 +3029,8 @@ components:
           description: Unique identifier for this ConstraintReference.
         details_url:
           $ref: '#/components/schemas/ConstraintDetailsURL'
+        negotiations_url:
+          $ref: '#/components/schemas/NegotiationsURL'
         error_reports_url:
           $ref: '#/components/schemas/ErrorReportsURL'
         owner:
@@ -3103,6 +3171,8 @@ components:
             time.
         details_url:
           $ref: '#/components/schemas/ConstraintDetailsURL'
+        negotiations_url:
+          $ref: '#/components/schemas/NegotiationsURL'
         error_reports_url:
           $ref: '#/components/schemas/ErrorReportsURL'
     EntityReference:
@@ -3223,6 +3293,47 @@ components:
         - Accepted
         - Activated
       type: string
+    NegotiationsURL:
+      anyOf:
+        - $ref: '#/components/schemas/URL'
+      description: |-
+        The URL at which negotiations may be requested.  See `/uss/negotiations/{id}` path for specification of this endpoint.
+        This URL is the base negotiations resource.  If this URL is specified as https://example.com/negotiations then a negotiation with {id} may be requested at the URL https://example.com/negotiations/{id}.  This URL may not have a trailing / character.
+      example: https://example.com/negotiations
+    NegotiationParameters:
+      description: Parameters of a negotiation request for a set of OperationalIntents and/or Constraints to be deconflicted with a proposed OperationalIntent.
+      required:
+        - proposed_operational_intent
+      type: object
+      properties:
+        proposed_operational_intent:
+          anyOf:
+            - $ref: '#/components/schemas/OperationalIntent'
+          description: Full information of proposed OperationalIntent from which the conflicting_entities should be deconflicted.
+        conflicting_operational_intents:
+          type: array
+          items:
+            $ref: '#/components/schemas/EntityUUID'
+          description: OperationalIntents that the initiating USS is requesting be deconflicted from the proposed_operational_intent.
+        conflicting_constraints:
+          type: array
+          items:
+            $ref: '#/components/schemas/EntityUUID'
+          description: Constraints that the initiating DSS is requesting be deconflicted from (or an exemption added for) the proposed_operational_intent.
+    NegotiationResponse:
+      description: Response to a successful negotiation request to deconflict a set of OperationalIntents and/or Constraints from a proposed OperationalIntent.
+      type: object
+      properties:
+        operational_intents:
+          type: array
+          items:
+            $ref: '#/components/schemas/OperationalIntent'
+          description: Full information for updated OperationalIntents deconflicted in response to this negotiation request.
+        constraints:
+          type: array
+          items:
+            $ref: '#/components/schemas/Constraint'
+          description: Full information for updated Constraints deconflicted in response to this negotiation request.
   securitySchemes:
     AuthFromAuthorizationAuthority:
       flows:

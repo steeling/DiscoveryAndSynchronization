@@ -1629,6 +1629,65 @@ paths:
         $ref: '#/components/schemas/EntityUUID'
       in: path
       required: true
+  /v1/uss/error_reports/{id}:
+    summary: Means by which other USSs may report errors that would otherwise go unnoticed by this USS.
+    put:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PutErrorReportParameters'
+        required: true
+      tags:
+        - p2p_utm
+      responses:
+        "204":
+          description: Error report received successfully.
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: |-
+            * One or more parameters were missing or invalid.
+            * The error report could not be parsed, or contains illegal data.
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bearer access token was not provided in Authorization header,
+            token could not be decoded, or token was invalid.
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: |-
+            * The access token was decoded successfully but did not include a scope appropriate to this endpoint.
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The Entity version specified in this message is lower than
+            a previously-received notification, or identical to a previously-received
+            notification and the Entity is different.
+      security:
+        - AuthFromAuthorizationAuthority:
+            - utm.read.operational_intents
+            - utm.write.operational_intents
+            - utm.read.constraints
+            - utm.write.constraints
+      summary: /uss/error_reports/{id}
+      description: Publish a report for an error encountered with this USS that would otherwise go unnoticed by this USS.
+    parameters:
+      - name: id
+        description: ID of the error report.
+        schema:
+          $ref: '#/components/schemas/UUIDv4'
+        in: path
+        required: true
 components:
   schemas:
     Hash:
@@ -2665,6 +2724,8 @@ components:
           description: Unique identifier for this OperationalIntentReference.
         details_url:
           $ref: '#/components/schemas/OperationalIntentDetailsURL'
+        error_reports_url:
+          $ref: '#/components/schemas/ErrorReportsURL'
         owner:
           description: Assigned by the DSS based on creating client’s ID (via access
             token).  Used for restricting mutation and deletion operations to owner.
@@ -2714,6 +2775,8 @@ components:
             time.
         details_url:
           $ref: '#/components/schemas/OperationalIntentDetailsURL'
+        error_reports_url:
+          $ref: '#/components/schemas/ErrorReportsURL'
         priority:
           $ref: '#/components/schemas/OperationalIntentPriority'
         key:
@@ -2740,6 +2803,8 @@ components:
             time.
         details_url:
           $ref: '#/components/schemas/OperationalIntentDetailsURL'
+        error_reports_url:
+          $ref: '#/components/schemas/ErrorReportsURL'
         priority:
           $ref: '#/components/schemas/OperationalIntentPriority'
         key:
@@ -2800,7 +2865,6 @@ components:
         OperationalIntent.  Pushed (by a client, not the DSS) directly to clients with subscriptions
         when another client makes a change to airspace within a cell with a subscription.
       required:
-      - id
       - subscriptions
       type: object
       properties:
@@ -2816,6 +2880,41 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/SubscriptionState'
+    PutErrorReportParameters:
+      description: Parameters of a message informing a USS of an error that the USS would otherwise not notice.
+      required:
+        - endpoint_url
+        - response_code
+        - problem
+        - timestamp
+      type: object
+      properties:
+        endpoint_url:
+          type: string
+          description: URL for request that resulted in an error.
+        headers:
+          description: Set of headers included in request that resulted in an error.
+          type: array
+          items:
+            type: string
+        body:
+          description: Base64-encoded body content sent in request that resulted in an error.
+          type: string
+        response_code:
+          type: integer
+          format: int32
+          description: HTTP response code encountered in error response.
+        response_body:
+          type: string
+          description: Base64-encoded body content received in response that was in error.
+        problem:
+          type: string
+          description: Human-readable description of the problem with the response.
+        timestamp:
+          format: date-time
+          description: When the error was observed.  RFC 3339 format, per OpenAPI
+            specification.
+          type: string
     CreateConstraintReferenceParameters:
       description: Parameters for a request to create a ConstraintReference in the
         DSS.
@@ -2834,6 +2933,8 @@ components:
             time.
         details_url:
           $ref: '#/components/schemas/ConstraintDetailsURL'
+        error_reports_url:
+          $ref: '#/components/schemas/ErrorReportsURL'
     GetConstraintReferenceResponse:
       description: Response to DSS request for the ConstraintReference with the given
         ID.
@@ -2862,6 +2963,8 @@ components:
           description: Unique identifier for this ConstraintReference.
         details_url:
           $ref: '#/components/schemas/ConstraintDetailsURL'
+        error_reports_url:
+          $ref: '#/components/schemas/ErrorReportsURL'
         owner:
           description: Assigned by the DSS based on creating client’s ID (via access
             token).  Used for restricting mutation and deletion operations to owner.
@@ -3000,6 +3103,8 @@ components:
             time.
         details_url:
           $ref: '#/components/schemas/ConstraintDetailsURL'
+        error_reports_url:
+          $ref: '#/components/schemas/ErrorReportsURL'
     EntityReference:
       description: Reference to a generic Entity known to the DSS.
       type: object
@@ -3093,6 +3198,13 @@ components:
         The URL at which the details of a Constraint may be retrieved.  See `/uss/constraints/{id}` path for specification of this endpoint.
         This URL is the base Constraints resource.  If this URL is specified as https://example.com/constraints then the details for a particular {id} may be obtained at the URL https://example.com/constraints/{id}.  This URL may not have a trailing / character.
       example: https://example.com/constraints
+    ErrorReportsURL:
+      anyOf:
+        - $ref: '#/components/schemas/URL'
+      description: |-
+        The URL at which an error report may be submitted.  See `/uss/error_reports/{id}` path for specification of this endpoint.
+        This URL is the base ErrorReports resource.  If this URL is specified as https://example.com/error_reports then an error report with {id} may be submitted at the URL https://example.com/error_reports/{id}.  This URL may not have a trailing / character.
+      example: https://example.com/error_reports
     OperationalIntentPriority:
       format: int32
       description: Ordinal priority of this OperationalIntent.  Determined by client USS via a function of the details of the OperationalIntent according to relevant regulations.  The simplest (non-prioritized) of these functions would be one that returns 0 priority for any OperationalIntents.

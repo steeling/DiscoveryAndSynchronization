@@ -8,12 +8,12 @@ info:
 
     Unless otherwise specified, fields specified in a message but not declared in the API shall be ignored.
 paths:
-  /v1/dss/identification_service_areas:
+  /v1/dss/isas:
     summary: Set of Identification Service Areas in the DSS.
     description: ""
     get:
       tags:
-      - dss
+      - dss_isas
       parameters:
       - name: area
         description: The area in which to search for Identification Service Areas.  Some
@@ -75,15 +75,15 @@ paths:
       security:
       - AuthFromAuthorizationAuthority:
         - dss.read.identification_service_areas
-      summary: /dss/identification_service_areas
+      summary: /dss/isas
       description: Retrieve all Identification Service Areas in the DAR for a given
         area during the given time.  Note that some Identification Service Areas returned
         may lie entirely outside the requested area.
-  /v1/dss/identification_service_areas/{id}:
+  /v1/dss/isas/{id}:
     summary: An Identification Service Area in the DSS.
     get:
       tags:
-      - dss
+      - dss_isas
       responses:
         "200":
           content:
@@ -120,8 +120,8 @@ paths:
           description: The requested Entity could not be found.
       security:
       - AuthFromAuthorizationAuthority:
-        - dss.read.position_reporting_entities
-      summary: /dss/identification_service_areas/{id}
+        - dss.read.identification_service_areas
+      summary: /dss/isas/{id}
       description: Retrieve full information of an Identification Service Area owned
         by the client.
     put:
@@ -132,7 +132,7 @@ paths:
               $ref: '#/components/schemas/CreateIdentificationServiceAreaParameters'
         required: true
       tags:
-      - dss
+      - dss_isas
       responses:
         "200":
           content:
@@ -180,7 +180,7 @@ paths:
       security:
       - AuthFromAuthorizationAuthority:
         - dss.write.identification_service_areas
-      summary: /dss/identification_service_areas/{id}
+      summary: /dss/isas/{id}
       description: |-
         Create a new Identification Service Area.  This call will fail if an Identification Service Area with the same ID already exists.
 
@@ -192,7 +192,7 @@ paths:
         $ref: '#/components/schemas/EntityUUID'
       in: path
       required: true
-  /v1/dss/identification_service_areas/{id}/{version}:
+  /v1/dss/isas/{id}/{version}:
     summary: A specific version of an Identification Service Area in the DSS.
     put:
       requestBody:
@@ -202,7 +202,7 @@ paths:
               $ref: '#/components/schemas/UpdateIdentificationServiceAreaParameters'
         required: true
       tags:
-      - dss
+      - dss_isas
       responses:
         "200":
           content:
@@ -250,14 +250,14 @@ paths:
       security:
       - AuthFromAuthorizationAuthority:
         - dss.write.identification_service_areas
-      summary: /dss/identification_service_areas/{id}/{version}
+      summary: /dss/isas/{id}/{version}
       description: |-
         Update an Identification Service Area.  The full content of the existing Identification Service Area will be replaced with the provided information as only the most recent version is retained.
 
         The DSS assumes the USS has already added the appropriate retention period to operation end time in `time_end` field before storing it.  Updating `time_start` is not allowed if it is before the current time.
     delete:
       tags:
-      - dss
+      - dss_isas
       responses:
         "200":
           content:
@@ -303,7 +303,7 @@ paths:
       security:
       - AuthFromAuthorizationAuthority:
         - dss.write.identification_service_areas
-      summary: /dss/identification_service_areas/{id}/{version}
+      summary: /dss/isas/{id}/{version}
       description: Delete an Identification Service Area.  USSs should not delete
         Identification Service Areas before the end of the last managed flight plus
         the retention period.
@@ -322,22 +322,21 @@ paths:
         type: string
       in: path
       required: true
-  /v1/dss/operation_references:
-    summary: Set of OperationReferences in the DSS.
+  /v1/dss/op_refs:
+    summary: Set of OperationalIntentReferences in the DSS.
     description: ""
     get:
       tags:
-      - dss
+      - dss_ops
       parameters:
       - name: area
-        description: The area in which to search for OperationReferences.  Some OperationReferences
-          near this area but wholly outside it may also be returned.
+        description: The area in which to search for OperationalIntentReferences.  References for some OperationalIntents near this area but wholly outside it may also be returned.
         schema:
           $ref: '#/components/schemas/GeoPolygonString'
         in: query
         required: true
       - name: earliest_time
-        description: If specified, indicates non-interest in any Operations that end
+        description: If specified, indicates non-interest in any OperationalIntents that end
           before this time.  RFC 3339 format, per OpenAPI specification.
         schema:
           format: date-time
@@ -345,7 +344,7 @@ paths:
         in: query
         required: true
       - name: latest_time
-        description: If specified, indicates non-interest in any Operations that start
+        description: If specified, indicates non-interest in any OperationalIntents that start
           after this time.  RFC 3339 format, per OpenAPI specification.
         schema:
           format: date-time
@@ -357,8 +356,8 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SearchOperationReferencesResponse'
-          description: Operations were successfully retrieved.
+                $ref: '#/components/schemas/SearchOperationalIntentReferencesResponse'
+          description: OperationalIntentReferences were successfully retrieved.
         "400":
           content:
             application/json:
@@ -387,23 +386,23 @@ paths:
           description: The requested area was too large.
       security:
       - AuthFromAuthorizationAuthority:
-        - dss.read.operations
-      summary: /dss/operation_references
-      description: Retrieve all OperationReferences in the DAR for a given area during
-        the given time.  Note that some OperationReferences returned may lie entirely
-        outside the requested area.
-  /v1/dss/operation_references/{id}:
-    summary: An OperationReference in the DSS.
+        - utm.read.operational_intents
+      summary: /dss/op_refs
+      description: Retrieve all OperationalIntentReferences in the DAR for a given area during
+        the given time.  Note that references to some OperationalIntents lying entirely
+        outside the requested area may be returned as well.
+  /v1/dss/op_refs/{id}:
+    summary: An OperationalIntentReference in the DSS.
     get:
       tags:
-      - dss
+      - dss_ops
       responses:
         "200":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GetOperationReferenceResponse'
-          description: OperationReference was retrieved successfully.
+                $ref: '#/components/schemas/GetOperationalIntentReferenceResponse'
+          description: OperationalIntentReference was retrieved successfully.
         "400":
           content:
             application/json:
@@ -432,25 +431,25 @@ paths:
           description: The requested Entity could not be found.
       security:
       - AuthFromAuthorizationAuthority:
-        - dss.read.operations
-      summary: /dss/operation_references/{id}
-      description: Retrieve OperationReference information from the DSS.
+        - utm.read.operational_intents
+      summary: /dss/op_refs/{id}
+      description: Retrieve OperationalIntentReference information from the DSS.
     put:
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateOperationReferenceParameters'
+              $ref: '#/components/schemas/CreateOperationalIntentReferenceParameters'
         required: true
       tags:
-      - dss
+      - dss_ops
       responses:
         "200":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PutOperationReferenceResponse'
-          description: An OperationReference was created successfully in the DSS.
+                $ref: '#/components/schemas/ChangeOperationalIntentReferenceResponse'
+          description: An OperationalIntentReference was created successfully in the DSS.
         "400":
           content:
             application/json:
@@ -480,45 +479,45 @@ paths:
                 $ref: '#/components/schemas/AirspaceConflictResponse'
           description: |-
             * The provided key did not prove knowledge of all current and relevant airspace Entities
-            * An OperationReference with the specified ID already exists.
+            * An OperationalIntentReference with the specified ID already exists.
             * Despite repeated attempts, the DSS was unable to update the DAR because of other simultaneous changes.
         "413":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-          description: The area of the OperationReference is too large.
+          description: The area of the OperationalIntentReference is too large.
       security:
       - AuthFromAuthorizationAuthority:
-        - dss.write.operations
-      summary: /dss/operation_references/{id}
-      description: Create a new OperationReference.  This call will fail if an OperationReference
+        - utm.write.operational_intents
+      summary: /dss/op_refs/{id}
+      description: Create a new OperationalIntentReference.  This call will fail if an OperationalIntentReference
         with the same ID already exists.
     parameters:
     - name: id
-      description: EntityUUID of the OperationReference.
+      description: EntityUUID of the OperationalIntentReference.
       schema:
         $ref: '#/components/schemas/EntityUUID'
       in: path
       required: true
-  /v1/dss/operation_references/{id}/{version}:
-    summary: A specific version of an OperationReference in the DSS.
+  /v1/dss/op_refs/{id}/{version}:
+    summary: A specific version of an OperationalIntentReference in the DSS.
     put:
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateOperationReferenceParameters'
+              $ref: '#/components/schemas/UpdateOperationalIntentReferenceParameters'
         required: true
       tags:
-      - dss
+      - dss_ops
       responses:
         "200":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PutOperationReferenceResponse'
-          description: An existing OperationReference was updated successfully in
+                $ref: '#/components/schemas/ChangeOperationalIntentReferenceResponse'
+          description: An existing OperationalIntentReference was updated successfully in
             the DSS.
         "400":
           content:
@@ -527,7 +526,7 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
           description: |-
             * One or more input parameters were missing or invalid.
-            * The request attempted to mutate the OperationReference in a disallowed way.
+            * The request attempted to mutate the OperationalIntentReference in a disallowed way.
         "401":
           content:
             application/json:
@@ -549,31 +548,31 @@ paths:
                 $ref: '#/components/schemas/AirspaceConflictResponse'
           description: |-
             * The provided key did not prove knowledge of all current and relevant airspace Entities
-            * The specified OperationReference's current version does not match the provided version.
+            * The specified OperationalIntentReference's current version does not match the provided version.
             * Despite repeated attempts, the DSS was unable to update the DAR because of other simultaneous changes.
         "413":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-          description: The area of the OperationReference is too large.
+          description: The area of the OperationalIntentReference is too large.
       security:
       - AuthFromAuthorizationAuthority:
-        - dss.write.operations
-      summary: /dss/operation_references/{id}/{version}
-      description: Update an OperationReference.  The full content of the existing
-        OperationReference will be replaced with the provided information as only
+        - utm.write.operational_intents
+      summary: /dss/op_refs/{id}/{version}
+      description: Update an OperationalIntentReference.  The full content of the existing
+        OperationalIntentReference will be replaced with the provided information as only
         the most recent version is retained.
     delete:
       tags:
-      - dss
+      - dss_ops
       responses:
         "200":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DeleteOperationReferenceResponse'
-          description: OperationReference was successfully deleted from DSS.
+                $ref: '#/components/schemas/ChangeOperationalIntentReferenceResponse'
+          description: OperationalIntentReference was successfully deleted from DSS.
         "400":
           content:
             application/json:
@@ -594,7 +593,7 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
           description: |-
             * The access token was decoded successfully but did not include a scope appropriate to this endpoint.
-            * The OperationReference does not belong to the client requesting deletion.
+            * The OperationalIntentReference does not belong to the client requesting deletion.
         "404":
           content:
             application/json:
@@ -607,37 +606,37 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
           description: |-
-            * The specified OperationReference's current version does not match the provided version.
+            * The specified OperationalIntentReference's current version does not match the provided version.
             * Despite repeated attempts, the DSS was unable to update the DAR because of other simultaneous changes.
       security:
       - AuthFromAuthorizationAuthority:
-        - dss.write.operations
-      summary: /dss/operation_references/{id}/{version}
-      description: Delete an OperationReference.
+        - utm.write.operational_intents
+      summary: /dss/op_refs/{id}/{version}
+      description: Delete an OperationalIntentReference.
     parameters:
     - name: id
-      description: EntityUUID of the OperationReference.
+      description: EntityUUID of the OperationalIntentReference.
       schema:
         $ref: '#/components/schemas/EntityUUID'
       in: path
       required: true
     - name: version
-      description: Version string used to reference an OperationReference at a particular
-        point in time. Any updates to an existing OperationReference must contain
+      description: Version string used to reference an OperationalIntentReference at a particular
+        point in time.  Matches the `token` field in the OVN of the OperationalIntentReference.  Any updates to an existing OperationalIntentReference must contain
         the corresponding version to maintain idempotent updates.
       schema:
         type: string
       in: path
       required: true
-  /v1/dss/constraint_references:
+  /v1/dss/constraint_refs:
     summary: Set of ConstraintReferences in the DSS.
     description: ""
     get:
       tags:
-      - dss
+      - dss_constraints
       parameters:
       - name: area
-        description: The area in which to search for ConstraintReferences.  Some ConstraintReferences
+        description: The area in which to search for ConstraintReferences.  References to some Constraints
           near this area but wholly outside it may also be returned.
         schema:
           $ref: '#/components/schemas/GeoPolygonString'
@@ -665,7 +664,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SearchConstraintReferencesResponse'
-          description: Operations were successfully retrieved.
+          description: ConstraintReferences were successfully retrieved.
         "400":
           content:
             application/json:
@@ -694,16 +693,16 @@ paths:
           description: The requested area was too large.
       security:
       - AuthFromAuthorizationAuthority:
-        - dss.read.constraints
-      summary: /dss/constraint_references
+        - utm.read.constraints
+      summary: /dss/constraint_refs
       description: Retrieve all ConstraintReferences in the DAR for a given area during
-        the given time.  Note that some ConstraintReferences returned may lie entirely
-        outside the requested area.
-  /v1/dss/constraint_references/{id}:
+        the given time.  Note that references to some Constraints lying entirely
+        outside the requested area may be returned as well.
+  /v1/dss/constraint_refs/{id}:
     summary: A ConstraintReference in the DSS.
     get:
       tags:
-      - dss
+      - dss_constraints
       responses:
         "200":
           content:
@@ -739,8 +738,8 @@ paths:
           description: The requested Entity could not be found.
       security:
       - AuthFromAuthorizationAuthority:
-        - dss.read.constraints
-      summary: /dss/constraint_references/{id}
+        - utm.read.constraints
+      summary: /dss/constraint_refs/{id}
       description: Retrieve ConstraintReference information from the DSS.
     put:
       requestBody:
@@ -750,13 +749,13 @@ paths:
               $ref: '#/components/schemas/CreateConstraintReferenceParameters'
         required: true
       tags:
-      - dss
+      - dss_constraints
       responses:
         "200":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PutConstraintReferenceResponse'
+                $ref: '#/components/schemas/ChangeConstraintReferenceResponse'
           description: A ConstraintReference was created successfully in the DSS.
         "400":
           content:
@@ -793,11 +792,11 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-          description: The area of the OperationReference is too large.
+          description: The area of the OperationalIntentReference is too large.
       security:
       - AuthFromAuthorizationAuthority:
-        - dss.write.constraints
-      summary: /dss/constraint_references/{id}
+        - utm.write.constraints
+      summary: /dss/constraint_refs/{id}
       description: Create a new ConstraintReference.  This call will fail if a ConstraintReference
         with the same ID already exists.
     parameters:
@@ -807,7 +806,7 @@ paths:
         $ref: '#/components/schemas/EntityUUID'
       in: path
       required: true
-  /v1/dss/constraint_references/{id}/{version}:
+  /v1/dss/constraint_refs/{id}/{version}:
     summary: A specific version of a ConstraintReference in the DSS.
     put:
       requestBody:
@@ -817,13 +816,13 @@ paths:
               $ref: '#/components/schemas/UpdateConstraintReferenceParameters'
         required: true
       tags:
-      - dss
+      - dss_constraints
       responses:
         "200":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PutConstraintReferenceResponse'
+                $ref: '#/components/schemas/ChangeConstraintReferenceResponse'
           description: An existing ConstraintReference was updated successfully in
             the DSS.
         "400":
@@ -864,20 +863,20 @@ paths:
           description: The area of the ConstraintReference is too large.
       security:
       - AuthFromAuthorizationAuthority:
-        - dss.write.constraints
-      summary: /dss/constraint_references/{id}/{version}
+        - utm.write.constraints
+      summary: /dss/constraint_refs/{id}/{version}
       description: Update a ConstraintReference.  The full content of the existing
         ConstraintReference will be replaced with the provided information as only
         the most recent version is retained.
     delete:
       tags:
-      - dss
+      - dss_constraints
       responses:
         "200":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DeleteConstraintReferenceResponse'
+                $ref: '#/components/schemas/ChangeConstraintReferenceResponse'
           description: ConstraintReference was successfully deleted from DSS.
         "400":
           content:
@@ -916,8 +915,8 @@ paths:
             * Despite repeated attempts, the DSS was unable to update the DAR because of other simultaneous changes.
       security:
       - AuthFromAuthorizationAuthority:
-        - dss.write.constraints
-      summary: /dss/constraint_references/{id}/{version}
+        - utm.write.constraints
+      summary: /dss/constraint_refs/{id}/{version}
       description: Delete a ConstraintReference.
     parameters:
     - name: id
@@ -928,7 +927,7 @@ paths:
       required: true
     - name: version
       description: Version string used to reference a ConstraintReference at a particular
-        point in time. Any updates to an existing ConstraintReference must contain
+        point in time.  Matches the `token` field in the OVN of the ConstraintReference.  Any updates to an existing ConstraintReference must contain
         the corresponding version to maintain idempotent updates.
       schema:
         type: string
@@ -1067,7 +1066,7 @@ paths:
     summary: Subscriptions for airspace updates to a volume of interest.
     get:
       tags:
-      - dss
+      - dss_subscriptions
       parameters:
       - name: area
         description: The area in which to search for Subscriptions.  Some Subscriptions
@@ -1121,7 +1120,7 @@ paths:
     summary: Subscription for airspace updates to a volume of interest.
     get:
       tags:
-      - dss
+      - dss_subscriptions
       responses:
         "200":
           content:
@@ -1157,8 +1156,8 @@ paths:
           description: A Subscription with the specified ID was not found.
       security:
       - AuthFromAuthorizationAuthority:
-        - dss.read.position_reporting_entities
-        - dss.write.position_reporting_entities
+        - dss.read.identification_service_areas
+        - dss.write.identification_service_areas
       summary: /dss/subscriptions/{id}
       description: Verify the existence/valdity and state of a particular subscription.
     put:
@@ -1169,7 +1168,7 @@ paths:
               $ref: '#/components/schemas/CreateSubscriptionParameters'
         required: true
       tags:
-      - dss
+      - dss_subscriptions
       responses:
         "200":
           content:
@@ -1248,7 +1247,7 @@ paths:
               $ref: '#/components/schemas/UpdateSubscriptionParameters'
         required: true
       tags:
-      - dss
+      - dss_subscriptions
       responses:
         "200":
           content:
@@ -1311,7 +1310,7 @@ paths:
         Subscription notifications are only triggered by (and contain full information of) changes to, creation of, or deletion of, Entities referenced by or stored in the DSS; they do not involve any data transfer (such as remote ID telemetry updates) apart from Entity information.
     delete:
       tags:
-      - dss
+      - dss_subscriptions
       responses:
         "200":
           content:
@@ -1356,7 +1355,7 @@ paths:
             * Despite repeated attempts, the DSS was unable to update the DAR because of other simultaneous changes.
       security:
       - AuthFromAuthorizationAuthority:
-        - dss.read.position_reporting_entities
+        - dss.read.identification_service_areas
       summary: /dss/subscriptions/{id}/{version}
       description: Delete a subscription.
     parameters:
@@ -1374,7 +1373,7 @@ paths:
         type: string
       in: path
       required: true
-  /v1/uss/identification_service_areas/{id}:
+  /v1/uss/isas/{id}:
     summary: Notifications of change to Identification Service Areas.
     post:
       requestBody:
@@ -1421,7 +1420,7 @@ paths:
       security:
       - AuthFromAuthorizationAuthority:
         - dss.write.identification_service_areas
-      summary: /uss/identification_service_areas/{id}
+      summary: /uss/isas/{id}
       description: 'Hosted by a remote ID display provider using Subscriptions: publish
         new full information of an Identification Service Area to the host of this
         endpoint (usually because of instructions from the DSS triggered by a subscription).'
@@ -1432,8 +1431,8 @@ paths:
         $ref: '#/components/schemas/EntityUUID'
       in: path
       required: true
-  /v1/uss/operations/{id}:
-    summary: Full information of an Operation.
+  /v1/uss/ops/{id}:
+    summary: Full information of an OperationalIntent.
     get:
       tags:
       - p2p_utm
@@ -1442,8 +1441,8 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GetOperationResponse'
-          description: The full Operation information was retrieved successfully.
+                $ref: '#/components/schemas/GetOperationalIntentResponse'
+          description: The full OperationalIntent information was retrieved successfully.
         "400":
           content:
             application/json:
@@ -1472,21 +1471,21 @@ paths:
           description: The requested Entity could not be found.
       security:
       - AuthFromAuthorizationAuthority:
-        - dss.read.operations
-      summary: /uss/operations/{id}
-      description: Retrieve full information of an Operation owned by the client.
+        - utm.read.operational_intents
+      summary: /uss/ops/{id}
+      description: Retrieve full information of an OperationalIntent owned by the client.
     post:
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PostOperationNotificationParameters'
+              $ref: '#/components/schemas/PostOperationalIntentNotificationParameters'
         required: true
       tags:
       - p2p_utm
       responses:
         "204":
-          description: New or updated full Operation information received successfully.
+          description: New or updated full OperationalIntent information received successfully.
         "400":
           content:
             application/json:
@@ -1520,13 +1519,13 @@ paths:
             notification and the Entity is different.
       security:
       - AuthFromAuthorizationAuthority:
-        - dss.write.operations
-      summary: /uss/operations/{id}
-      description: Publish new information about an Operation to the host of this
+        - utm.write.operational_intents
+      summary: /uss/ops/{id}
+      description: Publish new information about an OperationalIntent to the host of this
         endpoint (usually because of instructions from the DSS triggered by a subscription).
     parameters:
     - name: id
-      description: EntityUUID of the Operation.
+      description: EntityUUID for this OperationalIntent (matches OperationalIntentReference identifier).
       schema:
         $ref: '#/components/schemas/EntityUUID'
       in: path
@@ -1571,7 +1570,7 @@ paths:
           description: The requested Entity could not be found.
       security:
       - AuthFromAuthorizationAuthority:
-        - dss.read.constraints
+        - utm.read.constraints
       summary: /uss/constraints/{id}
       description: Retrieve full information of a Constraint owned by the client.
     post:
@@ -1619,7 +1618,7 @@ paths:
             notification and the Entity is different.
       security:
       - AuthFromAuthorizationAuthority:
-        - dss.write.constraints
+        - utm.write.constraints
       summary: /uss/constraints/{id}
       description: Publish new information about a Constraint to the host of this
         endpoint (usually because of instructions from the DSS triggered by a subscription).
@@ -1647,23 +1646,23 @@ components:
       example: d8NoNy0cPAd7D3b8Qb0DSzcrBVJElwBfmqVcytIoWsk=
     DeconflictionKey:
       description: |
-        Proof that a client has obtained the latest airspace content, used to ensure that write operations to the DSS occur only when the latest content is known (i.e. has been read). The client is required to pass a current DeconflictionKey-constructed from information obtained with a previous read operation and subsequent requests for full information, and optionally, subscription updates—for deconflicted write operations to the DSS.  The contents of this data structure are generated by the client.
+        Proof that a client has obtained the latest airspace content, used to ensure that write operations to the DSS occur only when the latest content is known (i.e. has been read). The client is required to pass a current DeconflictionKey constructed from information obtained with previous read operations and subsequent requests for full information, and optionally, subscription updates for deconflicted write operations to the DSS.  The contents of this data structure are generated by the client.
       type: object
       properties:
-        signatures:
+        ovns:
           anyOf:
-          - $ref: '#/components/schemas/SignatureDictionary'
+          - $ref: '#/components/schemas/OVNDictionary'
           description: For each of a subset of Entities declared by the DSS in the
-            area of interest, the signature of the current version of the full information
-            of that Entity.  This EntitySignature is provided by the client who defined
+            area of interest, the OVN of the current version of the full information
+            of that Entity.  This EntityOVN is provided by the client who defined
             the Entity, accompanying the full Entity definition data when that data
             is received.
         hashes:
           anyOf:
           - $ref: '#/components/schemas/DeconflictionKeyHash'
           description: Optional (optimization).  May be provided for a set of Entities
-            so that each of the included EntitySignatures does not need to be included
-            in the `signatures` property.
+            so that each of the included EntityOVNs does not need to be included
+            in the `ovns` property.
         subscription:
           anyOf:
           - $ref: '#/components/schemas/SubscriptionUUID'
@@ -1673,10 +1672,10 @@ components:
             be removed.
     DeconflictionKeyHash:
       description: A shortcut (optimization) data structure that may be provided instead
-        of a large set of individually-listed EntitySignatures.
+        of a large set of individually-listed EntityOVNs.
       required:
       - entity_ids
-      - entity_signatures
+      - entity_ovns
       type: object
       properties:
         entity_ids:
@@ -1684,12 +1683,12 @@ components:
           - $ref: '#/components/schemas/Hash'
           description: Hash of an ordered list of other clients’ EntityUUIDs in the
             airspace (obtained from DSS via GET /v1/dss/<entity type>s) excluding
-            the EntityUUIDs explicitly specified in DeconflictionKey's `signatures`
+            the EntityUUIDs explicitly specified in DeconflictionKey's `ovns`
             property.
-        entity_signatures:
+        entity_ovns:
           anyOf:
           - $ref: '#/components/schemas/Hash'
-          description: Hash of an ordered list of EntitySignatures that correspond
+          description: Hash of an ordered list of EntityOVNs that correspond
             with the list of EntityUUIDs used to generate the `entity_ids` property
             value.
     Token:
@@ -1697,13 +1696,13 @@ components:
       - $ref: '#/components/schemas/UUIDv4'
       description: Universally-unique identifier associated with a specific set of
         data.
-    EntitySignature:
-      title: EntitySignature
+    EntityOVN:
+      title: EntityOVN
       description: A token associated with a particular UTM Entity+version created
         by the DSS upon creation or modification of an Entity reference and provided
-        to the client creating or modifying the Entity reference.  The EntitySignature
+        to the client creating or modifying the Entity reference.  The EntityOVN
         is stored privately by the DSS and then compared against entries in a Key
-        provided to mutate the airspace.  The EntitySignature is also provided by
+        provided to mutate the airspace.  The EntityOVN is also provided by
         the client whenever that client transmits the full information of the Entity
         (either via GET, or via a subscription notification).
       required:
@@ -1714,8 +1713,8 @@ components:
         version:
           format: int32
           description: This version increases each time an Entity is modified.  If
-            a client ever receives a subscription update with an EntitySignature for
-            a particular EntityUUID that is smaller than the cached EntitySignature
+            a client ever receives a subscription update with an EntityOVN for
+            a particular EntityUUID that is smaller than the cached EntityOVN
             for that EntityUUID, that subscription update should be ignored.
           type: integer
         token:
@@ -1724,8 +1723,8 @@ components:
           description: Unique value associated with a specific version of a specific
             Entity.  Token value may not be reused for any other Entity versions;
             it must change each time the Entity changes.
-    SignatureEntry:
-      description: Mapping between an EntityUUID and an EntitySignature.
+    OVNEntry:
+      description: Mapping between an EntityUUID and an EntityOVN.
       required:
       - id
       - sig
@@ -1735,13 +1734,13 @@ components:
           $ref: '#/components/schemas/EntityUUID'
           description: ""
         sig:
-          $ref: '#/components/schemas/EntitySignature'
+          $ref: '#/components/schemas/EntityOVN'
           description: ""
-    SignatureDictionary:
-      description: Collection of mappings between EntityUUID and EntitySignature.
+    OVNDictionary:
+      description: Collection of mappings between EntityUUID and EntityOVN.
       type: array
       items:
-        $ref: '#/components/schemas/SignatureEntry'
+        $ref: '#/components/schemas/OVNEntry'
     Volume3D:
       description: A three-dimensional geographic volume consisting of a vertically-extruded
         polygon.
@@ -2183,7 +2182,7 @@ components:
         subscribers:
           description: DSS subscribers that this client now has the obligation to
             notify of the Identification Service Area changes just made.  This client
-            must call POST for each provided URL according to the `/uss/identification_service_areas/{id}`
+            must call POST for each provided URL according to the `/uss/isas/{id}`
             path API.
           type: array
           items:
@@ -2267,7 +2266,7 @@ components:
         subscribers:
           description: DSS subscribers that this client now has the obligation to
             notify of the Identification Service Area just deleted.  This client must
-            call POST for each provided URL according to the `/uss/identification_service_areas`
+            call POST for each provided URL according to the `/uss/isas`
             path API.
           type: array
           items:
@@ -2276,10 +2275,10 @@ components:
       anyOf:
       - $ref: '#/components/schemas/URL'
       description: The URL at which notifications regarding Identification Service
-        Areas may be delivered.  See the `/uss/identification_service_areas/{id}`
+        Areas may be delivered.  See the `/uss/isas/{id}`
         path for specification of this endpoint.
       type: string
-      example: https://example.com/identification_service_areas/a4c6f8c0-ad77-4d93-9cc2-ec8601383f96
+      example: https://example.com/isas/a4c6f8c0-ad77-4d93-9cc2-ec8601383f96
     PutSubscriptionResponse:
       description: Response for a request to create or update a subscription.
       required:
@@ -2646,8 +2645,8 @@ components:
         This URL is the base flights resource.  If this URL is specified as https://example.com/flights then the flight details for a particular {id} may be obtained at the URL https://example.com/flights/{id}/details.  This URL may not have a trailing / character.
       type: string
       example: https://example.com/flights
-    OperationReference:
-      description: An OperationReference (area in which an Operation is being conducted,
+    OperationalIntentReference:
+      description: An OperationalIntentReference (area in which an Operation is being conducted,
         along with other high-level information, but no details).  The DSS reports
         only these references and clients must exchange details and additional information
         peer-to-peer.
@@ -2656,12 +2655,16 @@ components:
       - owner
       - time_start
       - time_end
-      - version
       - id
+      - priority
       type: object
       properties:
+        id:
+          anyOf:
+            - $ref: '#/components/schemas/EntityUUID'
+          description: Unique identifier for this OperationalIntentReference.
         details_url:
-          $ref: '#/components/schemas/OperationDetailsURL'
+          $ref: '#/components/schemas/OperationalIntentDetailsURL'
         owner:
           description: Assigned by the DSS based on creating client’s ID (via access
             token).  Used for restricting mutation and deletion operations to owner.
@@ -2676,80 +2679,90 @@ components:
           format: date-time
           description: End time of Operation.  RFC 3339 format, per OpenAPI specification.
           type: string
-        version:
-          $ref: '#/components/schemas/Version'
-        id:
+        ovn:
           anyOf:
-          - $ref: '#/components/schemas/EntityUUID'
-          description: Unique identifier for this OperationReference.
-    GetOperationReferenceResponse:
-      description: Response to DSS request for the OperationReference with the given
+          - $ref: '#/components/schemas/EntityOVN'
+          description: Opaque version number of this OperationalIntentReference, used for updating or deleting the OperationalIntentReference.  Only populated by the DSS for OperationalIntentReferences owned by the requesting client.  Must be populated by a USS when notifying a subscriber of an altered OperationalIntent or providing full OperationalIntent information.
+        priority:
+          $ref: '#/components/schemas/OperationalIntentPriority'
+    GetOperationalIntentReferenceResponse:
+      description: Response to DSS request for the OperationalIntentReference with the given
         ID.
       required:
-      - operation_reference
+      - operational_intent_reference
       type: object
       properties:
-        operation_reference:
-          $ref: '#/components/schemas/OperationReference'
-    UpdateOperationReferenceParameters:
-      description: Parameters for a request to update an OperationReference in the
+        operational_intent_reference:
+          $ref: '#/components/schemas/OperationalIntentReference'
+    UpdateOperationalIntentReferenceParameters:
+      description: Parameters for a request to update an OperationalIntentReference in the
         DSS.
       required:
       - extents
       - details_url
+      - priority
+      - key
       type: object
       properties:
         extents:
           anyOf:
           - $ref: '#/components/schemas/Volume4D'
-          description: The bounding spacetime extents of this OperationReference.  End
+          description: The bounding spacetime extents of this OperationalIntentReference.  End
             time must be specified.  If start time is not specified, it will be set
             to the current time.  Start times in the past should be rejected by the
             DSS, except that it may adjust very recent start times to the current
             time.
         details_url:
-          $ref: '#/components/schemas/OperationDetailsURL'
+          $ref: '#/components/schemas/OperationalIntentDetailsURL'
+        priority:
+          $ref: '#/components/schemas/OperationalIntentPriority'
         key:
           anyOf:
           - $ref: '#/components/schemas/DeconflictionKey'
-          description: Proof that the client is aware of (and has deconflicted with)
-            all relevant Entities.  Required unless Operation is declared rogue.
-    CreateOperationReferenceParameters:
-      description: Parameters for a request to create an OperationReference in the
+          description: Proof that the client is aware of all relevant Entities with the requirement that the client has deconflicted with all these Entities.  Relevant Entities for OperationalIntents consist of all Constraints, and OperationalIntents with equal or higher priority.
+    CreateOperationalIntentReferenceParameters:
+      description: Parameters for a request to create an OperationalIntentReference in the
         DSS.
       required:
       - extents
       - details_url
+      - priority
+      - key
       type: object
       properties:
         extents:
           anyOf:
           - $ref: '#/components/schemas/Volume4D'
-          description: The bounding spacetime extents of this OperationReference.  End
+          description: The bounding spacetime extents of this OperationalIntentReference.  End
             time must be specified.  If start time is not specified, it will be set
             to the current time.  Start times in the past should be rejected by the
             DSS, except that it may adjust very recent start times to the current
             time.
         details_url:
-          $ref: '#/components/schemas/OperationDetailsURL'
+          $ref: '#/components/schemas/OperationalIntentDetailsURL'
+        priority:
+          $ref: '#/components/schemas/OperationalIntentPriority'
         key:
           anyOf:
           - $ref: '#/components/schemas/DeconflictionKey'
-          description: Proof that the client is aware of (and has deconflicted with)
-            all relevant Entities.  Required unless Operation is declared rogue.
-    Operation:
-      description: Full specification of a UTM Operation. Note that this data is not
-        stored in the DSS; only with the clients.
+          description: Proof that the client is aware of all relevant Entities with the requirement that the client has deconflicted with all these Entities.  Relevant Entities for OperationalIntents consist of all Constraints, and OperationalIntents with equal or higher priority.
+    OperationalIntent:
+      description: Full description of a UTM OperationalIntent.
       required:
-      - id
+      - reference
+      - details
+      type: object
+      properties:
+        reference:
+          $ref: '#/components/schemas/OperationalIntentReference'
+        details:
+          $ref: '#/components/schemas/OperationalIntentDetails'
+    OperationalIntentDetails:
+      description: Details of a UTM OperationalIntent. Note that this data is not stored in the DSS; only with the clients.
+      required:
       - volumes
-      - signature
       type: object
       properties:
-        id:
-          anyOf:
-          - $ref: '#/components/schemas/EntityUUID'
-          description: Unique identifier for this Operation.  Created by client.
         volumes:
           description: Volumes that wholly contain the Operation while being as small
             as practical.
@@ -2757,17 +2770,8 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Volume4D'
-        rogue_flight:
-          oneOf:
-          - $ref: '#/components/schemas/RogueFlight'
-          description: If this Operation is rogue, this field contains the details
-            for tracking that flight.
-        signature:
-          anyOf:
-          - $ref: '#/components/schemas/EntitySignature'
-          description: Signature for this version of this Operation.  Includes information
-            about the version of this Operation.  Obtained from the DSS upon creation
-            or modification of a reference.
+        state:
+          $ref: '#/components/schemas/OperationalIntentState'
     RogueFlight:
       description: Details about a rogue flight inside a Constraint.
       type: object
@@ -2780,32 +2784,33 @@ components:
             ID interface.
           allOf:
           - $ref: '#/components/schemas/RIDFlightID'
-    SearchOperationReferencesResponse:
-      description: Response to DSS query for OperationReferences in an area of interest.
+    SearchOperationalIntentReferencesResponse:
+      description: Response to DSS query for OperationalIntentReferences in an area of interest.
       required:
-      - operation_references
+      - operational_intent_references
       type: object
       properties:
-        operation_references:
-          description: OperationReferences in the area of interest.
+        operational_intent_references:
+          description: OperationalIntentReferences in the area of interest.
           type: array
           items:
-            $ref: '#/components/schemas/OperationReference'
-    PostOperationNotificationParameters:
+            $ref: '#/components/schemas/OperationalIntentReference'
+    PostOperationalIntentNotificationParameters:
       description: Parameters of a message informing of new full information for an
-        Operation.  Pushed (by a client, not the DSS) directly to clients with subscriptions
+        OperationalIntent.  Pushed (by a client, not the DSS) directly to clients with subscriptions
         when another client makes a change to airspace within a cell with a subscription.
       required:
+      - id
       - subscriptions
       type: object
       properties:
-        operation:
+        operational_intent:
           anyOf:
-          - $ref: '#/components/schemas/Operation'
+          - $ref: '#/components/schemas/OperationalIntent'
           description: |-
-            Operation that the notifying client changed or created.
+            Full information for OperationalIntent that the notifying client changed or created.
 
-            If this field is populated, the Operation was created or updated.  If this field is not populated, the Operation was deleted.
+            If this field is populated, the OperationalIntent was created or updated.  If this field is not populated, the OperationalIntent was deleted.
         subscriptions:
           description: Subscription(s) prompting this notification.
           type: array
@@ -2836,7 +2841,7 @@ components:
       - constraint_reference
       type: object
       properties:
-        operation_reference:
+        constraint_reference:
           $ref: '#/components/schemas/ConstraintReference'
     ConstraintReference:
       description: A ConstraintReference (area in which a Constraint is present, along
@@ -2844,14 +2849,17 @@ components:
         these references and clients must exchange details and additional information
         peer-to-peer.
       required:
+      - id
       - details_url
       - owner
       - time_start
       - time_end
-      - version
-      - id
       type: object
       properties:
+        id:
+          anyOf:
+            - $ref: '#/components/schemas/EntityUUID'
+          description: Unique identifier for this ConstraintReference.
         details_url:
           $ref: '#/components/schemas/ConstraintDetailsURL'
         owner:
@@ -2868,12 +2876,10 @@ components:
           format: date-time
           description: End time of Operation.  RFC 3339 format, per OpenAPI specification.
           type: string
-        version:
-          $ref: '#/components/schemas/Version'
-        id:
+        ovn:
           anyOf:
-          - $ref: '#/components/schemas/EntityUUID'
-          description: Unique identifier for this ConstraintReference.
+            - $ref: '#/components/schemas/EntityOVN'
+          description: Opaque version number of this ConstraintReference, used for updating or deleting the ConstraintReference.  Only populated by the DSS for ConstraintReferences owned by the requesting client.  Must be populated by a USS when notifying a subscriber of an altered Constraint or providing full Constraint information.
     PostConstraintNotificationParameters:
       description: Parameters of a message informing of new full information for a
         Constraint.  Pushed (by a client, not the DSS) directly to clients with subscriptions
@@ -2895,18 +2901,23 @@ components:
           items:
             $ref: '#/components/schemas/SubscriptionState'
     Constraint:
-      description: Full specification of a UTM Constraint. Note that this data is
-        not stored in the DSS; only with the clients.
+      description: Full specification of a UTM Constraint.
       required:
-      - id
-      - volumes
-      - signature
+      - reference
+      - details
       type: object
       properties:
-        id:
-          anyOf:
-          - $ref: '#/components/schemas/EntityUUID'
-          description: Unique identifier for this Constraint.  Created by client.
+        reference:
+          $ref: '#/components/schemas/ConstraintReference'
+        details:
+          $ref: '#/components/schemas/ConstraintDetails'
+    ConstraintDetails:
+      description: Details of a UTM Constraint. Note that this data is
+        not stored in the DSS; only with the clients.
+      required:
+      - volumes
+      type: object
+      properties:
         volumes:
           description: Volumes that wholly contain the Constraint while being as small
             as practical.
@@ -2914,17 +2925,20 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Volume4D'
-        signature:
-          anyOf:
-          - $ref: '#/components/schemas/EntitySignature'
-          description: Signature for this version of this Constraint.  Includes information
-            about the version of this Constraint.  Obtained from the DSS upon creation
-            or modification of a reference.
-    PutConstraintReferenceResponse:
-      description: Response to a request to create or update a ConstraintReference
+        rogue_flight:
+          oneOf:
+            - $ref: '#/components/schemas/RogueFlight'
+          description: If this Constraint is an alert for a rogue flight, this field contains the details
+            for tracking that flight.
+        exempt_operational_intents:
+          description: List of OperationalIntents exempt from this Constraint, if applicable.
+          type: array
+          items:
+            $ref: '#/components/schemas/EntityUUID'
+    ChangeConstraintReferenceResponse:
+      description: Response to a request to create, update, or delete a ConstraintReference.
         in the DSS.
       required:
-      - constraint_reference
       - subscribers
       type: object
       properties:
@@ -2938,36 +2952,25 @@ components:
         constraint_reference:
           anyOf:
           - $ref: '#/components/schemas/ConstraintReference'
-          description: Resulting ConstraintReference stored in DSS.
-        signature:
-          anyOf:
-          - $ref: '#/components/schemas/EntitySignature'
-          description: Signature for this version of the referenced Operation.  Includes
-            information about the version of the referenced Constraint.
-    PutOperationReferenceResponse:
-      description: Response to a request to create or update an OperationReference
+          description: Resulting ConstraintReference stored in DSS.  Omitted if and only if ConstraintReference was deleted.
+    ChangeOperationalIntentReferenceResponse:
+      description: Response to a request to create, update, or delete an OperationalIntentReference
         in the DSS.
       required:
-      - operation_reference
       - subscribers
       type: object
       properties:
         subscribers:
           description: DSS subscribers that this client now has the obligation to
             notify of the Operation changes just made.  This client must call POST
-            for each provided URL according to the `/uss/operations/{id}` path API.
+            for each provided URL according to the `/uss/ops/{id}` path API.
           type: array
           items:
             $ref: '#/components/schemas/SubscriberToNotify'
-        operation_reference:
+        operational_intent_reference:
           anyOf:
-          - $ref: '#/components/schemas/OperationReference'
-          description: Resulting OperationReference stored in DSS.
-        signature:
-          anyOf:
-          - $ref: '#/components/schemas/EntitySignature'
-          description: Signature for this version of the referenced Operation.  Includes
-            information about the version of the referenced Operation.
+          - $ref: '#/components/schemas/OperationalIntentReference'
+          description: Resulting OperationalIntentReference stored in DSS.  Omitted if and only if OperationalIntentReference was deleted.
     SearchConstraintReferencesResponse:
       description: Response to DSS query for ConstraintReferences in an area of interest.
       required:
@@ -2997,50 +3000,12 @@ components:
             time.
         details_url:
           $ref: '#/components/schemas/ConstraintDetailsURL'
-    DeleteConstraintReferenceResponse:
-      description: Response for a request to delete a ConstraintReference.
-      required:
-      - constraint_reference
-      - subscribers
-      type: object
-      properties:
-        constraint_reference:
-          anyOf:
-          - $ref: '#/components/schemas/ConstraintReference'
-          description: ConstraintReference that was just deleted.
-        subscribers:
-          description: DSS subscribers that this client now has the obligation to
-            notify of the ConstraintReference just deleted.  This client must call
-            POST for each provided URL according to the `/uss/constraints/{id}` path
-            API.
-          type: array
-          items:
-            $ref: '#/components/schemas/SubscriberToNotify'
-    DeleteOperationReferenceResponse:
-      description: Response for a request to delete an OperationReference.
-      required:
-      - operation_reference
-      - subscribers
-      type: object
-      properties:
-        operation_reference:
-          anyOf:
-          - $ref: '#/components/schemas/OperationReference'
-          description: OperationReference that was just deleted.
-        subscribers:
-          description: DSS subscribers that this client now has the obligation to
-            notify of the OperationReference just deleted.  This client must call
-            POST for each provided URL according to the `/uss/operations/{id}` path
-            API.
-          type: array
-          items:
-            $ref: '#/components/schemas/SubscriberToNotify'
     EntityReference:
-      description: Reference to a generic Entity known to the DSS
+      description: Reference to a generic Entity known to the DSS.
       type: object
       properties:
-        operation_reference:
-          $ref: '#/components/schemas/OperationReference'
+        operational_intent_reference:
+          $ref: '#/components/schemas/OperationalIntentReference'
           description: ""
         constraint_reference:
           $ref: '#/components/schemas/ConstraintReference'
@@ -3054,15 +3019,14 @@ components:
       properties:
         constraint:
           $ref: '#/components/schemas/Constraint'
-    GetOperationResponse:
-      description: Response to peer request for the details of Operation with the
-        given ID.
+    GetOperationalIntentResponse:
+      description: Response to peer request for the details of OperationalIntent with the given ID.
       required:
-      - operation_reference
+      - operational_intent
       type: object
       properties:
-        operation:
-          $ref: '#/components/schemas/Operation'
+        operational_intent:
+          $ref: '#/components/schemas/OperationalIntent'
     SubscriptionCallbacks:
       description: Endpoints that should be called when an applicable event occurs.  At
         least one field must be specified.
@@ -3074,14 +3038,14 @@ components:
           description: If specified, other clients will be instructed by the DSS to
             call this endpoint when an Identification Service Area relevant to this
             Subscription is created, modified, or deleted.  Must implement PUT and
-            DELETE according to the `/uss/identification_service_areas/{id}` path
+            DELETE according to the `/uss/isas/{id}` path
             API.
         operation_url:
           anyOf:
-          - $ref: '#/components/schemas/OperationDetailsURL'
+          - $ref: '#/components/schemas/OperationalIntentDetailsURL'
           description: If specified, other clients will be instructed by the DSS to
             call this endpoint when an Operation relevant to this Subscription is
-            created, modified, or deleted.  Must implement POST according to the `/uss/operations/{id}`
+            created, modified, or deleted.  Must implement POST according to the `/uss/ops/{id}`
             path API.
         constraint_url:
           anyOf:
@@ -3102,36 +3066,51 @@ components:
           description: List of Entity references for which current proof of knowledge
             was not provided.  If this field is present and contains elements, the
             calling USS should query the details URLs for these Entities to obtain
-            their details and correct signatures.  The signatures can be used to update
+            their details and correct OVNs.  The OVNs can be used to update
             the key, at which point the USS may retry this call.
           type: array
           items:
             $ref: '#/components/schemas/EntityReference'
         hash_conflicts:
           description: List of `entity_ids` Hashes (one per DeconflictionKeyHash)
-            for which the corresponding entity_signatures did not match the current
+            for which the corresponding entity_ovns did not match the current
             versions of all listed Entities.  If this field is present and contains
             elements, the calling USS should re-query the details of the relevant
-            Entities to obtain updated signatures.
+            Entities to obtain updated OVNs.
           type: array
           items:
             $ref: '#/components/schemas/Hash'
-    OperationDetailsURL:
+    OperationalIntentDetailsURL:
       anyOf:
       - $ref: '#/components/schemas/URL'
       description: |-
-        The URL at which the details of an Operation may be retrieved.  See `/uss/operations/{id}` path for specification of this endpoint.
-        This URL is the base Operations resource.  If this URL is specified as https://example.com/operations then the flight details for a particular {id} may be obtained at the URL https://example.com/operations/{id}.  This URL may not have a trailing / character.
-      type: string
-      example: https://example.com/operations
+        The URL at which the details of an OperationalIntent may be retrieved.  See `/uss/ops/{id}` path for specification of this endpoint.  This URL is the base OperationalIntents resource.  If this URL is specified as https://example.com/ops then the details for a particular {id} may be obtained at the URL https://example.com/ops/{id}.  This URL may not have a trailing / character.
+      example: https://example.com/ops
     ConstraintDetailsURL:
       anyOf:
       - $ref: '#/components/schemas/URL'
       description: |-
         The URL at which the details of a Constraint may be retrieved.  See `/uss/constraints/{id}` path for specification of this endpoint.
         This URL is the base Constraints resource.  If this URL is specified as https://example.com/constraints then the details for a particular {id} may be obtained at the URL https://example.com/constraints/{id}.  This URL may not have a trailing / character.
-      type: string
       example: https://example.com/constraints
+    OperationalIntentPriority:
+      format: int32
+      description: Ordinal priority of this OperationalIntent.  Determined by client USS via a function of the details of the OperationalIntent according to relevant regulations.  The simplest (non-prioritized) of these functions would be one that returns 0 priority for any OperationalIntents.
+      type: integer
+    OperationalIntentState:
+      description: |-
+        State of an OperationalIntent.
+
+        `Proposed`: This OperationalIntent has not yet been fully deconflicted with other Entities, but the owning USS is pursuing negotiations to complete deconfliction.
+
+        `Accepted`: This OperationalIntent was fully deconflicted from other Entities at the time it changed to this state, but no aircraft associated with it are active yet.
+
+        `Activated`: One or more aircraft associated with this OperationalIntent are, or will imminently be, in flight.
+      enum:
+        - Proposed
+        - Accepted
+        - Activated
+      type: string
   securitySchemes:
     AuthFromAuthorizationAuthority:
       flows:
@@ -3144,13 +3123,13 @@ components:
             dss.write.identification_service_areas: Client may create, edit, and delete
               Identification Service Areas for remote ID.  A remote ID service provider
               shall be granted this scope upon request.
-            dss.read.operations: Client may query, read, or create subscriptions for
-              Operations for UTM.
-            dss.write.operations: Client may create, edit, and delete Operations for
+            utm.read.operational_intents: Client may query, read, or create subscriptions for
+              OperationalIntents for UTM.
+            utm.write.operational_intents: Client may create, edit, and delete OperationalIntents for
               UTM.
-            dss.read.constraints: Client may query, read, or create subscriptions
+            utm.read.constraints: Client may query, read, or create subscriptions
               for Constraints for UTM.
-            dss.write.constraints: Client may create, edit, and delete Constraints
+            utm.write.constraints: Client may create, edit, and delete Constraints
               for UTM.
       type: oauth2
       description: |-
@@ -3169,13 +3148,19 @@ security:
 - AuthFromAuthorizationAuthority:
   - dss.read.identification_service_areas
   - dss.write.identification_service_areas
-  - dss.read.operations
-  - dss.write.operations
-  - dss.read.constraints
-  - dss.write.constraints
+  - utm.read.operational_intents
+  - utm.write.operational_intents
+  - utm.read.constraints
+  - utm.write.constraints
 tags:
-- name: dss
-  description: Endpoints exposed by the DSS server.
+- name: dss_isas
+  description: Endpoints exposed by the DSS server for Identification Service Area Entities.
+- name: dss_ops
+  description: Endpoints exposed by the DSS server for OperationalIntentReference Entities.
+- name: dss_constraints
+  description: Endpoints exposed by the DSS server for ConstraintReference Entities.
+- name: dss_subscriptions
+  description: Endpoints exposed by the DSS server for Subscriptions.
 - name: p2p_rid
   description: Endpoints exposed by remote ID service providers for peer-peer communication.
 - name: p2p_utm

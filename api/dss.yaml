@@ -1373,6 +1373,116 @@ paths:
         type: string
       in: path
       required: true
+  /v1/dss/hostnames/{hostname}:
+    summary: Hostnames whose status (operative, non-operative) may be tracked in the DSS.
+    get:
+      tags:
+        - dss_hostnames
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetHostNamesResponse'
+          description: Information about the status of the specified hostname was retrieved successfully.
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: One or more input parameters were missing or invalid.
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bearer access token was not provided in Authorization header,
+            token could not be decoded, or token was invalid.
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The access token was decoded successfully but did not include
+            a scope appropriate to this endpoint.
+      security:
+        - AuthFromAuthorizationAuthority:
+            - utm.write.operational_intents
+            - utm.write.constraints
+      summary: /dss/hostnames/{hostname}
+      description: Retrieve status of a hostname that may be tracked in the DSS.
+    parameters:
+      - name: hostname
+        description: Hostname of server that may be down.
+        schema:
+          $ref: '#/components/schemas/HostName'
+        in: path
+        required: true
+  /v1/dss/hostnames/{hostname}/{version}/down:
+    summary: Whether a DSS considers a particular hostname to be down.
+    put:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateHostNameDownParameters'
+        required: true
+      tags:
+        - dss_hostnames
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetHostNamesResponse'
+          description: The status of the specified hostname was updated successfully in the DSS.
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: |-
+            * One or more input parameters were missing or invalid.
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bearer access token was not provided in Authorization header,
+            token could not be decoded, or token was invalid.
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The access token was decoded successfully but did not include
+            a scope appropriate to this endpoint.
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: |-
+            * The specified hostname's current status version does not match the provided version.
+            * Despite repeated attempts, the DSS was unable to update the DAR because of other simultaneous changes.
+      security:
+        - AuthFromAuthorizationAuthority:
+            - dss.write.hostnames
+      summary: /dss/hostnames/{hostname}/{version}/down
+      description: Update the status of a hostname in the DSS (mark it "up" or "down").
+    parameters:
+      - name: hostname
+        description: Hostname of server that may be down.
+        schema:
+          $ref: '#/components/schemas/HostName'
+        in: path
+        required: true
+      - name: version
+        description: Version string used to resolve race conditions updating a hostname status.
+        schema:
+          type: string
+        in: path
+        required: true
   /v1/uss/isas/{id}:
     summary: Notifications of change to Identification Service Areas.
     post:
@@ -1940,6 +2050,9 @@ components:
             $ref: '#/components/schemas/RIDFlight'
     URL:
       description: Valid http or https URL.
+      type: string
+    HostName:
+      description: Valid hostname (no protocol or path allowed).
       type: string
     SubscriptionNotificationIndex:
       format: int32
@@ -2808,6 +2921,12 @@ components:
           description: Opaque version number of this OperationalIntentReference, used for updating or deleting the OperationalIntentReference.  Only populated by the DSS for OperationalIntentReferences owned by the requesting client.  Must be populated by a USS when notifying a subscriber of an altered OperationalIntent or providing full OperationalIntent information.
         priority:
           $ref: '#/components/schemas/OperationalIntentPriority'
+        uss_may_be_down:
+          type: boolean
+          description: If specified as true by the DSS, the details for this OperationalIntent may not be accessible.  The OVN for this OperationalIntentReference may be omitted when deconflicting an OperationalIntent, at which point this OperationalIntent will be disabled.
+        disabled:
+          type: boolean
+          description: If specified as true by the DSS, this OperationalIntent has been disabled and will not be permitted to transition to Activated.  This means aircraft for this OperationalIntent will not be permitted to fly pursuant to this OperationalIntent, so this OperationalIntent may be ignored when planning and its OVN does not need to be provided to prove relevant airspace knowledge.
     GetOperationalIntentReferenceResponse:
       description: Response to DSS request for the OperationalIntentReference with the given
         ID.
@@ -3215,14 +3334,14 @@ components:
             Subscription is created, modified, or deleted.  Must implement PUT and
             DELETE according to the `/uss/isas/{id}` path
             API.
-        operation_url:
+        operational_intents_url:
           anyOf:
           - $ref: '#/components/schemas/OperationalIntentDetailsURL'
           description: If specified, other clients will be instructed by the DSS to
             call this endpoint when an Operation relevant to this Subscription is
             created, modified, or deleted.  Must implement POST according to the `/uss/ops/{id}`
             path API.
-        constraint_url:
+        constraints_url:
           anyOf:
           - $ref: '#/components/schemas/ConstraintDetailsURL'
           description: If specified, other clients will be instructed by the DSS to
@@ -3334,6 +3453,37 @@ components:
           items:
             $ref: '#/components/schemas/Constraint'
           description: Full information for updated Constraints deconflicted in response to this negotiation request.
+    GetHostNamesResponse:
+      description: Response to a request for information tracked by the DSS regarding the status of a particular hostname.
+      required:
+        - status
+        - version
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/HostNameStatus'
+        version:
+          anyOf:
+            - $ref: '#/components/schemas/UUIDv4'
+          description: Current version of hostname status.  Must be provided to the DSS when changing the hostname's status.
+    HostNameStatus:
+      description: Status of a hostname as tracked by the DSS.
+      required:
+        - down
+      type: object
+      properties:
+        down:
+          type: boolean
+          description: If true, the DSS believes this hostname is down.  Future OperationalIntents whose details are hosted by this hostname may be disabled by the DSS if another USS wishes to plan in the area.
+    UpdateHostNameDownParameters:
+      description: Parameters of a request to change the status of a hostname's "down" status in the DSS.
+      required:
+        - down
+      type: object
+      properties:
+        down:
+          type: boolean
+          description: If true, the DSS should consider this hostname to be down.  Future OperationalIntents whose details are hosted by this hostname may be disabled by the DSS if another USS wishes to plan in the area.
   securitySchemes:
     AuthFromAuthorizationAuthority:
       flows:
@@ -3354,6 +3504,7 @@ components:
               for Constraints for UTM.
             utm.write.constraints: Client may create, edit, and delete Constraints
               for UTM.
+            dss.write.hostnames: Client may update the status of hostnames in the DSS.
       type: oauth2
       description: |-
         Authorization from, or on behalf of, an authorization authority.  This authority shall issue access tokens that are JSON Web Tokens as defined in RFC 7519, using the `RS256` algorithm for the signature, and publish to all providers the public key for verifying that signature.
@@ -3375,6 +3526,7 @@ security:
   - utm.write.operational_intents
   - utm.read.constraints
   - utm.write.constraints
+  - dss.write.hostnames
 tags:
 - name: dss_isas
   description: Endpoints exposed by the DSS server for Identification Service Area Entities.
@@ -3384,6 +3536,8 @@ tags:
   description: Endpoints exposed by the DSS server for ConstraintReference Entities.
 - name: dss_subscriptions
   description: Endpoints exposed by the DSS server for Subscriptions.
+- name: dss_hostnames
+  description: Endpoints exposed by the DSS server for tracking hostname statuses.
 - name: p2p_rid
   description: Endpoints exposed by remote ID service providers for peer-peer communication.
 - name: p2p_utm

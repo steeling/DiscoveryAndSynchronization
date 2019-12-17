@@ -2897,8 +2897,6 @@ components:
           description: Unique identifier for this OperationalIntentReference.
         details_url:
           $ref: '#/components/schemas/OperationalIntentDetailsURL'
-        negotiations_url:
-          $ref: '#/components/schemas/NegotiationsURL'
         error_reports_url:
           $ref: '#/components/schemas/ErrorReportsURL'
         owner:
@@ -2984,8 +2982,6 @@ components:
             time.
         details_url:
           $ref: '#/components/schemas/OperationalIntentDetailsURL'
-        negotiations_url:
-          $ref: '#/components/schemas/NegotiationsURL'
         error_reports_url:
           $ref: '#/components/schemas/ErrorReportsURL'
         priority:
@@ -3018,6 +3014,8 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Volume4D'
+        negotiations_url:
+          $ref: '#/components/schemas/NegotiationsURL'
         state:
           $ref: '#/components/schemas/OperationalIntentState'
     RogueFlight:
@@ -3116,8 +3114,6 @@ components:
             time.
         details_url:
           $ref: '#/components/schemas/ConstraintDetailsURL'
-        negotiations_url:
-          $ref: '#/components/schemas/NegotiationsURL'
         error_reports_url:
           $ref: '#/components/schemas/ErrorReportsURL'
     GetConstraintReferenceResponse:
@@ -3148,8 +3144,6 @@ components:
           description: Unique identifier for this ConstraintReference.
         details_url:
           $ref: '#/components/schemas/ConstraintDetailsURL'
-        negotiations_url:
-          $ref: '#/components/schemas/NegotiationsURL'
         error_reports_url:
           $ref: '#/components/schemas/ErrorReportsURL'
         owner:
@@ -3215,6 +3209,8 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Volume4D'
+        negotiations_url:
+          $ref: '#/components/schemas/NegotiationsURL'
         rogue_flight:
           oneOf:
             - $ref: '#/components/schemas/RogueFlight'
@@ -3290,8 +3286,6 @@ components:
             time.
         details_url:
           $ref: '#/components/schemas/ConstraintDetailsURL'
-        negotiations_url:
-          $ref: '#/components/schemas/NegotiationsURL'
         error_reports_url:
           $ref: '#/components/schemas/ErrorReportsURL'
     EntityReference:

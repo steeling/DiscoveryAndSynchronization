@@ -2517,13 +2517,27 @@ components:
       - subscription
       type: object
       properties:
-        service_areas:
+        identification_service_areas:
           description: Identification Service Areas in or near the subscription area
             at the time of creation/update, if `identification_service_area_url` callback
             was specified.
           type: array
           items:
             $ref: '#/components/schemas/IdentificationServiceArea'
+        operational_intents:
+          description: OperationalIntents in or near the subscription area
+            at the time of creation/update, if `operational_intent_url` callback
+            was specified.
+          type: array
+          items:
+            $ref: '#/components/schemas/OperationalIntent'
+        constraints:
+          description: Constraints in or near the subscription area
+            at the time of creation/update, if `constraint_url` callback
+            was specified.
+          type: array
+          items:
+            $ref: '#/components/schemas/Constraint'
         subscription:
           anyOf:
           - $ref: '#/components/schemas/Subscription'

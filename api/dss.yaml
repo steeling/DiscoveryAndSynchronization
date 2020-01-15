@@ -11,6 +11,7 @@ paths:
   /v1/dss/metadata/cockroach/certs/active:
     summary: Get the CockroachDB certificates in the Active state
     get:
+      summary: dss/metadata/cockroach/certs/active
       tags:
       - dss_metadata
       responses:
@@ -52,6 +53,7 @@ paths:
       in: path
       required: true
     get:
+      summary: dss/metadata/cockroach/certs/{id}
       tags:
       - dss_metadata
       responses:
@@ -85,6 +87,7 @@ paths:
       - AuthFromAuthorizationAuthority:
         - dss.read.operational_metadata
     put:
+      summary: dss/metadata/cockroach/certs/{id}
       tags:
       - dss_metadata
       requestBody:
@@ -140,6 +143,9 @@ paths:
       in: path
       required: true
     put:
+      summary: dss/metadata/cockroach/certs/{id}/{version}/state
+      tags:
+      - dss_metadata
       requestBody:
         content:
           application/json:
@@ -193,6 +199,9 @@ paths:
       in: path
       required: true
     put:
+      summary: dss/metadata/cockroach/certs/{id}/{version}/state/ack
+      tags:
+      - dss_metadata
       requestBody:
         content:
           application/json:
@@ -232,6 +241,7 @@ paths:
   /v1/dss/metadata/cockroach/flags/active:
     summary: Get the CockroachDB flags in the Active state
     get:
+      summary: dss/metadata/cockroach/flags/active
       tags:
       - dss_metadata
       responses:
@@ -273,6 +283,7 @@ paths:
       in: path
       required: true
     get:
+      summary: dss/metadata/cockroach/flags/{id}
       tags:
       - dss_metadata
       responses:
@@ -306,6 +317,7 @@ paths:
       - AuthFromAuthorizationAuthority:
         - dss.read.operational_metadata
     put:
+      summary: dss/metadata/cockroach/flags/{id}
       tags:
       - dss_metadata
       requestBody:
@@ -361,6 +373,9 @@ paths:
       in: path
       required: true
     put:
+      summary: dss/metadata/cockroach/flags/{id}/{version}/state
+      tags:
+      - dss_metadata
       requestBody:
         content:
           application/json:
@@ -414,6 +429,9 @@ paths:
       in: path
       required: true
     put:
+      summary: dss/metadata/cockroach/flags/{id}/{version}/state/ack
+      tags:
+      - dss_metadata
       requestBody:
         content:
           application/json:
@@ -453,6 +471,7 @@ paths:
   /v1/dss/metadata/cockroach/versions/active:
     summary: Get the CockroachDB versions in the Active state
     get:
+      summary: dss/metadata/cockroach/versions/active
       tags:
       - dss_metadata
       responses:
@@ -494,6 +513,7 @@ paths:
       in: path
       required: true
     get:
+      summary: dss/metadata/cockroach/versions/{id}
       tags:
       - dss_metadata
       responses:
@@ -527,6 +547,7 @@ paths:
       - AuthFromAuthorizationAuthority:
         - dss.read.operational_metadata
     put:
+      summary: dss/metadata/cockroach/versions/{id}
       tags:
       - dss_metadata
       requestBody:
@@ -582,6 +603,9 @@ paths:
       in: path
       required: true
     put:
+      summary: dss/metadata/cockroach/versions/{id}/{version}/state
+      tags:
+      - dss_metadata
       requestBody:
         content:
           application/json:
@@ -635,6 +659,9 @@ paths:
       in: path
       required: true
     put:
+      summary: dss/metadata/cockroach/versions/{id}/{version}/state/ack
+      tags:
+      - dss_metadata
       requestBody:
         content:
           application/json:
@@ -674,6 +701,7 @@ paths:
   /v1/dss/metadata/operators/active:
     summary: Get the operators in the Active state
     get:
+      summary: dss/metadata/operators/active
       tags:
       - dss_metadata
       responses:
@@ -715,6 +743,7 @@ paths:
       in: path
       required: true
     get:
+      summary: dss/metadata/operators/{id}
       tags:
       - dss_metadata
       responses:
@@ -748,6 +777,7 @@ paths:
       - AuthFromAuthorizationAuthority:
         - dss.read.operational_metadata
     put:
+      summary: dss/metadata/operators/{id}
       tags:
       - dss_metadata
       requestBody:
@@ -803,6 +833,9 @@ paths:
       in: path
       required: true
     put:
+      summary: dss/metadata/operators/{id}/{version}/state
+      tags:
+      - dss_metadata
       requestBody:
         content:
           application/json:
@@ -856,6 +889,9 @@ paths:
       in: path
       required: true
     put:
+      summary: dss/metadata/operators/{id}/{version}/state/ack
+      tags:
+      - dss_metadata
       requestBody:
         content:
           application/json:

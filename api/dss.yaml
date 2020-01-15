@@ -11,7 +11,8 @@ paths:
   /v1/dss/metadata/cockroach/certs/active:
     summary: Get the CockroachDB certificates in the Active state
     get:
-      tags: dss_metadata
+      tags:
+      - dss_metadata
       responses:
         "200":
           content:
@@ -43,8 +44,16 @@ paths:
       - AuthFromAuthorizationAuthority:
         - dss.read.operational_metadata
   /v1/dss/metadata/cockroach/certs/{id}:
+    parameters:
+    - name: id
+      description: EntityUUID of the Identification Service Area.
+      schema:
+        $ref: '#/components/schemas/EntityUUID'
+      in: path
+      required: true
     get:
-      tags: dss_metadata
+      tags:
+      - dss_metadata
       responses:
         "200":
           content:
@@ -76,7 +85,8 @@ paths:
       - AuthFromAuthorizationAuthority:
         - dss.read.operational_metadata
     put:
-      tags: dss_metadata
+      tags:
+      - dss_metadata
       requestBody:
         content:
           application/json:
@@ -114,6 +124,21 @@ paths:
       - AuthFromAuthorizationAuthority:
         - dss.write.operational_metadata
   /v1/dss/metadata/cockroach/certs/{id}/{version}/state:
+    parameters:
+    - name: id
+      description: EntityUUID of the Identification Service Area.
+      schema:
+        $ref: '#/components/schemas/EntityUUID'
+      in: path
+      required: true
+    - name: version
+      description: Version string used to reference a to the object at a
+        particular point in time. Any updates to the object must contain the
+        corresponding version to maintain idempotent updates.
+      schema:
+        type: string
+      in: path
+      required: true
     put:
       requestBody:
         content:
@@ -152,6 +177,21 @@ paths:
       - AuthFromAuthorizationAuthority:
         - dss.write.operational_metadata
   /v1/dss/metadata/cockroach/certs/{id}/{version}/state/ack:
+    parameters:
+    - name: id
+      description: EntityUUID of the object.
+      schema:
+        $ref: '#/components/schemas/EntityUUID'
+      in: path
+      required: true
+    - name: version
+      description: Version string used to reference a to the object at a
+        particular point in time. Any updates to the object must contain the
+        corresponding version to maintain idempotent updates.
+      schema:
+        type: string
+      in: path
+      required: true
     put:
       requestBody:
         content:
@@ -192,7 +232,8 @@ paths:
   /v1/dss/metadata/cockroach/flags/active:
     summary: Get the CockroachDB flags in the Active state
     get:
-      tags: dss_metadata
+      tags:
+      - dss_metadata
       responses:
         "200":
           content:
@@ -224,8 +265,16 @@ paths:
       - AuthFromAuthorizationAuthority:
         - dss.read.operational_metadata
   /v1/dss/metadata/cockroach/flags/{id}:
+    parameters:
+    - name: id
+      description: EntityUUID of the object.
+      schema:
+        $ref: '#/components/schemas/EntityUUID'
+      in: path
+      required: true
     get:
-      tags: dss_metadata
+      tags:
+      - dss_metadata
       responses:
         "200":
           content:
@@ -257,7 +306,8 @@ paths:
       - AuthFromAuthorizationAuthority:
         - dss.read.operational_metadata
     put:
-      tags: dss_metadata
+      tags:
+      - dss_metadata
       requestBody:
         content:
           application/json:
@@ -295,6 +345,21 @@ paths:
       - AuthFromAuthorizationAuthority:
         - dss.write.operational_metadata
   /v1/dss/metadata/cockroach/flags/{id}/{version}/state:
+    parameters:
+    - name: id
+      description: EntityUUID of the object.
+      schema:
+        $ref: '#/components/schemas/EntityUUID'
+      in: path
+      required: true
+    - name: version
+      description: Version string used to reference a to the object at a
+        particular point in time. Any updates to the object must contain the
+        corresponding version to maintain idempotent updates.
+      schema:
+        type: string
+      in: path
+      required: true
     put:
       requestBody:
         content:
@@ -333,6 +398,21 @@ paths:
       - AuthFromAuthorizationAuthority:
         - dss.write.operational_metadata
   /v1/dss/metadata/cockroach/flags/{id}/{version}/state/ack:
+    parameters:
+    - name: id
+      description: EntityUUID of the object.
+      schema:
+        $ref: '#/components/schemas/EntityUUID'
+      in: path
+      required: true
+    - name: version
+      description: Version string used to reference a to the object at a
+        particular point in time. Any updates to the object must contain the
+        corresponding version to maintain idempotent updates.
+      schema:
+        type: string
+      in: path
+      required: true
     put:
       requestBody:
         content:
@@ -373,7 +453,8 @@ paths:
   /v1/dss/metadata/cockroach/versions/active:
     summary: Get the CockroachDB versions in the Active state
     get:
-      tags: dss_metadata
+      tags:
+      - dss_metadata
       responses:
         "200":
           content:
@@ -405,8 +486,16 @@ paths:
       - AuthFromAuthorizationAuthority:
         - dss.read.operational_metadata
   /v1/dss/metadata/cockroach/versions/{id}:
+    parameters:
+    - name: id
+      description: EntityUUID of the object.
+      schema:
+        $ref: '#/components/schemas/EntityUUID'
+      in: path
+      required: true
     get:
-      tags: dss_metadata
+      tags:
+      - dss_metadata
       responses:
         "200":
           content:
@@ -438,7 +527,8 @@ paths:
       - AuthFromAuthorizationAuthority:
         - dss.read.operational_metadata
     put:
-      tags: dss_metadata
+      tags:
+      - dss_metadata
       requestBody:
         content:
           application/json:
@@ -476,6 +566,21 @@ paths:
       - AuthFromAuthorizationAuthority:
         - dss.write.operational_metadata
   /v1/dss/metadata/cockroach/versions/{id}/{version}/state:
+    parameters:
+    - name: id
+      description: EntityUUID of the object.
+      schema:
+        $ref: '#/components/schemas/EntityUUID'
+      in: path
+      required: true
+    - name: version
+      description: Version string used to reference a to the object at a
+        particular point in time. Any updates to the object must contain the
+        corresponding version to maintain idempotent updates.
+      schema:
+        type: string
+      in: path
+      required: true
     put:
       requestBody:
         content:
@@ -514,6 +619,21 @@ paths:
       - AuthFromAuthorizationAuthority:
         - dss.write.operational_metadata
   /v1/dss/metadata/cockroach/versions/{id}/{version}/state/ack:
+    parameters:
+    - name: id
+      description: EntityUUID of the object.
+      schema:
+        $ref: '#/components/schemas/EntityUUID'
+      in: path
+      required: true
+    - name: version
+      description: Version string used to reference a to the object at a
+        particular point in time. Any updates to the object must contain the
+        corresponding version to maintain idempotent updates.
+      schema:
+        type: string
+      in: path
+      required: true
     put:
       requestBody:
         content:
@@ -554,7 +674,8 @@ paths:
   /v1/dss/metadata/operators/active:
     summary: Get the operators in the Active state
     get:
-      tags: dss_metadata
+      tags:
+      - dss_metadata
       responses:
         "200":
           content:
@@ -586,8 +707,16 @@ paths:
       - AuthFromAuthorizationAuthority:
         - dss.read.operational_metadata
   /v1/dss/metadata/operators/{id}:
+    parameters:
+    - name: id
+      description: EntityUUID of the object.
+      schema:
+        $ref: '#/components/schemas/EntityUUID'
+      in: path
+      required: true
     get:
-      tags: dss_metadata
+      tags:
+      - dss_metadata
       responses:
         "200":
           content:
@@ -619,7 +748,8 @@ paths:
       - AuthFromAuthorizationAuthority:
         - dss.read.operational_metadata
     put:
-      tags: dss_metadata
+      tags:
+      - dss_metadata
       requestBody:
         content:
           application/json:
@@ -657,6 +787,21 @@ paths:
       - AuthFromAuthorizationAuthority:
         - dss.write.operational_metadata
   /v1/dss/metadata/operators/{id}/{version}/state:
+    parameters:
+    - name: id
+      description: EntityUUID of the object.
+      schema:
+        $ref: '#/components/schemas/EntityUUID'
+      in: path
+      required: true
+    - name: version
+      description: Version string used to reference a to the object at a
+        particular point in time. Any updates to the object must contain the
+        corresponding version to maintain idempotent updates.
+      schema:
+        type: string
+      in: path
+      required: true
     put:
       requestBody:
         content:
@@ -695,6 +840,21 @@ paths:
       - AuthFromAuthorizationAuthority:
         - dss.write.operational_metadata
   /v1/dss/metadata/operators/{id}/{version}/state/ack:
+    parameters:
+    - name: id
+      description: EntityUUID of the object.
+      schema:
+        $ref: '#/components/schemas/EntityUUID'
+      in: path
+      required: true
+    - name: version
+      description: Version string used to reference a to the object at a
+        particular point in time. Any updates to the object must contain the
+        corresponding version to maintain idempotent updates.
+      schema:
+        type: string
+      in: path
+      required: true
     put:
       requestBody:
         content:
@@ -4336,6 +4496,7 @@ components:
         id:
           $ref: '#/components/schemas/UUIDv4'
         version:
+          $ref: '#/components/schemas/Version'
         acktion:
           $ref: '#/components/schemas/Acktion'
         notes:
@@ -4451,6 +4612,7 @@ components:
         id:
           $ref: '#/components/schemas/UUIDv4'
         version:
+          $ref: '#/components/schemas/Version'
         acktion:
           $ref: '#/components/schemas/Acktion'
         notes:
@@ -4570,6 +4732,7 @@ components:
         id:
           $ref: '#/components/schemas/UUIDv4'
         version:
+          $ref: '#/components/schemas/Version'
         acktion:
           $ref: '#/components/schemas/Acktion'
         notes:
@@ -4657,6 +4820,7 @@ components:
         id:
           $ref: '#/components/schemas/UUIDv4'
         version:
+          $ref: '#/components/schemas/Version'
         acktion:
           $ref: '#/components/schemas/Acktion'
         notes:

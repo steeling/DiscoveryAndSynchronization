@@ -8,6 +8,730 @@ info:
 
     Unless otherwise specified, fields specified in a message but not declared in the API shall be ignored.
 paths:
+  /v1/dss/metadata/cockroach/certs/active:
+    summary: Get the CockroachDB certificates in the Active state
+    get:
+      tags: dss_metadata
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActiveCockroachCertsResponse'
+          description: Identification Service Areas were successfully retrieved.
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: One or more input parameters were missing or invalid.
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bearer access token was not provided in Authorization header,
+            token could not be decoded, or token was invalid.
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The access token was decoded successfully but did not include
+            a scope appropriate to this endpoint.
+      security:
+      - AuthFromAuthorizationAuthority:
+        - dss.read.operational_metadata
+  /v1/dss/metadata/cockroach/certs/{id}:
+    get:
+      tags: dss_metadata
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetCockroachCertResponse'
+          description: Identification Service Areas were successfully retrieved.
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: One or more input parameters were missing or invalid.
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bearer access token was not provided in Authorization header,
+            token could not be decoded, or token was invalid.
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The access token was decoded successfully but did not include
+            a scope appropriate to this endpoint.
+      security:
+      - AuthFromAuthorizationAuthority:
+        - dss.read.operational_metadata
+    put:
+      tags: dss_metadata
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCockroachCertParameters'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateCockroachCertResponse'
+          description: Cockroach Cert was succesfully inserted.
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: One or more input parameters were missing or invalid.
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bearer access token was not provided in Authorization header,
+            token could not be decoded, or token was invalid.
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The access token was decoded successfully but did not include
+            a scope appropriate to this endpoint.
+      security:
+      - AuthFromAuthorizationAuthority:
+        - dss.write.operational_metadata
+  /v1/dss/metadata/cockroach/certs/{id}/{version}/state:
+    put:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCockroachCertStateParameters'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateCockroachCertResponse'
+          description: Cockroach Cert was succesfully inserted.
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: One or more input parameters were missing or invalid.
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bearer access token was not provided in Authorization header,
+            token could not be decoded, or token was invalid.
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The access token was decoded successfully but did not include
+            a scope appropriate to this endpoint.
+      security:
+      - AuthFromAuthorizationAuthority:
+        - dss.write.operational_metadata
+  /v1/dss/metadata/cockroach/certs/{id}/{version}/state/ack:
+    put:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CockroachCertAcknowledgeParameters'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CockroachCertAcknowledgeResponse'
+          description: Cockroach Cert was succesfully inserted.
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: One or more input parameters were missing or invalid.
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bearer access token was not provided in Authorization header,
+            token could not be decoded, or token was invalid.
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The access token was decoded successfully but did not include
+            a scope appropriate to this endpoint.
+      security:
+      - AuthFromAuthorizationAuthority:
+        - dss.write.operational_metadata
+  /v1/dss/metadata/cockroach/flags/active:
+    summary: Get the CockroachDB flags in the Active state
+    get:
+      tags: dss_metadata
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActiveCockroachFlagsResponse'
+          description: Identification Service Areas were successfully retrieved.
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: One or more input parameters were missing or invalid.
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bearer access token was not provided in Authorization header,
+            token could not be decoded, or token was invalid.
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The access token was decoded successfully but did not include
+            a scope appropriate to this endpoint.
+      security:
+      - AuthFromAuthorizationAuthority:
+        - dss.read.operational_metadata
+  /v1/dss/metadata/cockroach/flags/{id}:
+    get:
+      tags: dss_metadata
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetCockroachFlagResponse'
+          description: Identification Service Areas were successfully retrieved.
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: One or more input parameters were missing or invalid.
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bearer access token was not provided in Authorization header,
+            token could not be decoded, or token was invalid.
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The access token was decoded successfully but did not include
+            a scope appropriate to this endpoint.
+      security:
+      - AuthFromAuthorizationAuthority:
+        - dss.read.operational_metadata
+    put:
+      tags: dss_metadata
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCockroachFlagParameters'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateCockroachFlagResponse'
+          description: Cockroach Flags were succesfully inserted.
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: One or more input parameters were missing or invalid.
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bearer access token was not provided in Authorization header,
+            token could not be decoded, or token was invalid.
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The access token was decoded successfully but did not include
+            a scope appropriate to this endpoint.
+      security:
+      - AuthFromAuthorizationAuthority:
+        - dss.write.operational_metadata
+  /v1/dss/metadata/cockroach/flags/{id}/{version}/state:
+    put:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCockroachFlagStateParameters'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateCockroachFlagResponse'
+          description: Cockroach Flag state change was succesfully recorded.
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: One or more input parameters were missing or invalid.
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bearer access token was not provided in Authorization header,
+            token could not be decoded, or token was invalid.
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The access token was decoded successfully but did not include
+            a scope appropriate to this endpoint.
+      security:
+      - AuthFromAuthorizationAuthority:
+        - dss.write.operational_metadata
+  /v1/dss/metadata/cockroach/flags/{id}/{version}/state/ack:
+    put:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CockroachFlagAcknowledgeParameters'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CockroachFlagAcknowledgeResponse'
+          description: Cockroach Flag state change was succesfully acked.
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: One or more input parameters were missing or invalid.
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bearer access token was not provided in Authorization header,
+            token could not be decoded, or token was invalid.
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The access token was decoded successfully but did not include
+            a scope appropriate to this endpoint.
+      security:
+      - AuthFromAuthorizationAuthority:
+        - dss.write.operational_metadata
+  /v1/dss/metadata/cockroach/versions/active:
+    summary: Get the CockroachDB versions in the Active state
+    get:
+      tags: dss_metadata
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActiveCockroachVersionsResponse'
+          description: Identification Service Areas were successfully retrieved.
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: One or more input parameters were missing or invalid.
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bearer access token was not provided in Authorization header,
+            token could not be decoded, or token was invalid.
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The access token was decoded successfully but did not include
+            a scope appropriate to this endpoint.
+      security:
+      - AuthFromAuthorizationAuthority:
+        - dss.read.operational_metadata
+  /v1/dss/metadata/cockroach/versions/{id}:
+    get:
+      tags: dss_metadata
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetCockroachVersionResponse'
+          description: Identification Service Areas were successfully retrieved.
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: One or more input parameters were missing or invalid.
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bearer access token was not provided in Authorization header,
+            token could not be decoded, or token was invalid.
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The access token was decoded successfully but did not include
+            a scope appropriate to this endpoint.
+      security:
+      - AuthFromAuthorizationAuthority:
+        - dss.read.operational_metadata
+    put:
+      tags: dss_metadata
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCockroachVersionParameters'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateCockroachVersionResponse'
+          description: Cockroach Versions were succesfully inserted.
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: One or more input parameters were missing or invalid.
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bearer access token was not provided in Authorization header,
+            token could not be decoded, or token was invalid.
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The access token was decoded successfully but did not include
+            a scope appropriate to this endpoint.
+      security:
+      - AuthFromAuthorizationAuthority:
+        - dss.write.operational_metadata
+  /v1/dss/metadata/cockroach/versions/{id}/{version}/state:
+    put:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCockroachVersionStateParameters'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateCockroachVersionResponse'
+          description: Cockroach Version state change was succesfully recorded.
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: One or more input parameters were missing or invalid.
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bearer access token was not provided in Authorization header,
+            token could not be decoded, or token was invalid.
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The access token was decoded successfully but did not include
+            a scope appropriate to this endpoint.
+      security:
+      - AuthFromAuthorizationAuthority:
+        - dss.write.operational_metadata
+  /v1/dss/metadata/cockroach/versions/{id}/{version}/state/ack:
+    put:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CockroachVersionAcknowledgeParameters'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CockroachVersionAcknowledgeResponse'
+          description: Cockroach Version state change was succesfully acked.
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: One or more input parameters were missing or invalid.
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bearer access token was not provided in Authorization header,
+            token could not be decoded, or token was invalid.
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The access token was decoded successfully but did not include
+            a scope appropriate to this endpoint.
+      security:
+      - AuthFromAuthorizationAuthority:
+        - dss.write.operational_metadata
+  /v1/dss/metadata/operators/active:
+    summary: Get the operators in the Active state
+    get:
+      tags: dss_metadata
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActiveDSSOperatorsResponse'
+          description: Identification Service Areas were successfully retrieved.
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: One or more input parameters were missing or invalid.
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bearer access token was not provided in Authorization header,
+            token could not be decoded, or token was invalid.
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The access token was decoded successfully but did not include
+            a scope appropriate to this endpoint.
+      security:
+      - AuthFromAuthorizationAuthority:
+        - dss.read.operational_metadata
+  /v1/dss/metadata/operators/{id}:
+    get:
+      tags: dss_metadata
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetDSSOperatorResponse'
+          description: Identification Service Areas were successfully retrieved.
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: One or more input parameters were missing or invalid.
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bearer access token was not provided in Authorization header,
+            token could not be decoded, or token was invalid.
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The access token was decoded successfully but did not include
+            a scope appropriate to this endpoint.
+      security:
+      - AuthFromAuthorizationAuthority:
+        - dss.read.operational_metadata
+    put:
+      tags: dss_metadata
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDSSOperatorParameters'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateDSSOperatorResponse'
+          description: DSSOperator were succesfully inserted.
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: One or more input parameters were missing or invalid.
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bearer access token was not provided in Authorization header,
+            token could not be decoded, or token was invalid.
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The access token was decoded successfully but did not include
+            a scope appropriate to this endpoint.
+      security:
+      - AuthFromAuthorizationAuthority:
+        - dss.write.operational_metadata
+  /v1/dss/metadata/operators/{id}/{version}/state:
+    put:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateDSSOperatorStateParameters'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateDSSOperatorResponse'
+          description: DSSOperator state change was succesfully recorded.
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: One or more input parameters were missing or invalid.
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bearer access token was not provided in Authorization header,
+            token could not be decoded, or token was invalid.
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The access token was decoded successfully but did not include
+            a scope appropriate to this endpoint.
+      security:
+      - AuthFromAuthorizationAuthority:
+        - dss.write.operational_metadata
+  /v1/dss/metadata/operators/{id}/{version}/state/ack:
+    put:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DSSOperatorAcknowledgeParameters'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DSSOperatorAcknowledgeResponse'
+          description: DSSOperator state change was succesfully acked.
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: One or more input parameters were missing or invalid.
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: Bearer access token was not provided in Authorization header,
+            token could not be decoded, or token was invalid.
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+          description: The access token was decoded successfully but did not include
+            a scope appropriate to this endpoint.
+      security:
+      - AuthFromAuthorizationAuthority:
+        - dss.write.operational_metadata
   /v1/dss/isas:
     summary: Set of Identification Service Areas in the DSS.
     description: ""
@@ -3492,6 +4216,488 @@ components:
         down:
           type: boolean
           description: If true, the DSS should consider this hostname to be down.  Future OperationalIntents whose details are hosted by this hostname may be disabled by the DSS if another USS wishes to plan in the area.
+    Acktion:
+      description: Ack responses
+      type: string
+      enum:
+      - UNKNOWN
+      - ACKNOWLEDGED
+      - REJECTED
+      - ACCEPTED
+    MetadataState:
+      description: Metadata state
+      type: string
+      enum:
+      - UNKNOWN
+      - PLANNED
+      - ACKNOWLEDGED
+      - PENDING
+      - TURNING_UP
+      - TURNING_DOWN
+      - PROPOSED
+      - DISCARDED
+      - ACCEPTED
+      - ACTIVE
+      - INACTIVE
+    DSSOperator:
+      description: A DSS Operator.
+      type: object
+      required:
+      - id
+      - name
+      - owner
+      - version # can this change?
+      - state # only joining, leaving, down, healthy... ?
+      # Should we add other properties like, this is how you can alert me..., contact emails, etc.
+      properties:
+        id:
+          $ref: '#/components/schemas/UUIDv4'
+        name:
+          description: Human readable name for this DSS operator.
+          type: string
+          example: dss-operator-1
+        owner:
+          description: Identifier corresponding to the oauth user
+          type: string
+        state:
+          $ref: '#/components/schemas/MetadataState'
+        version:
+          $ref: '#/components/schemas/Version'
+    ActiveCockroachCertsResponse:
+      description: The set of active CockroachDB public certificates.
+      type: object
+      properties:
+        cockroach_certs:
+          type: array
+          items:
+            $ref: '#/components/schemas/CockroachCert'
+    GetCockroachCertResponse:
+      description: Get CockroachCert response
+      type: object
+      required:
+      - cockroach_cert
+      properties:
+        cockroach_cert:  
+          $ref: '#/components/schemas/CockroachCert' 
+    CreateCockroachCertParameters:
+      description: Create CockroachCert params
+      type: object
+      required:
+      - owner
+      - state
+      - data
+      properties:
+        owner:
+          description: Unique identifier for this DSS operator.
+          type: string
+          example: dss-operator-1
+        state:
+          $ref: '#/components/schemas/MetadataState'
+        data:
+          type: string
+          format: byte
+    CreateCockroachCertResponse:
+      description: Create CockroachCert response
+      type: object
+      required:
+      - cockroach_cert
+      properties:
+        cockroach_cert:  
+          $ref: '#/components/schemas/CockroachCert'
+    UpdateCockroachCertStateParameters:
+      description: Update CockroachCert State params
+      type: object
+      required:
+      - state
+      properties:
+        state:
+          $ref: '#/components/schemas/MetadataState'
+        notes:
+          type: string
+          description: Notes on udpate, may include rollback instructions.
+    UpdateCockroachCertResponse:
+      description: Update CockroachCert State response
+      type: object
+      required:
+      - cockroach_cert
+      properties:
+        cockroach_cert:  
+          $ref: '#/components/schemas/CockroachCert'
+    CockroachCertAcknowledgeParameters:
+      description: Acknoweledge CockroachCert state change
+      type: object
+      required:
+      - id
+      - version
+      - acktion
+      properties:
+        # AckStateRequests do not have a version as they are immutable.
+        # They reference an id/version pair via the URL params
+        id:
+          $ref: '#/components/schemas/UUIDv4'
+        version:
+        acktion:
+          $ref: '#/components/schemas/Acktion'
+        notes:
+          type: string
+          description: Notes on udpate, may include rollback instructions.
+    CockroachCertAcknowledgeResponse:
+      description: Acknoweledge CockroachCert state change response
+      type: object
+      required:
+      - id
+      - acktion
+      - cockroach_cert
+      properties:
+        id:
+          $ref: '#/components/schemas/UUIDv4'
+        acktion:
+          $ref: '#/components/schemas/Acktion'
+        cockroach_cert: 
+          $ref: '#/components/schemas/CockroachCert'
+    CockroachCert:
+      description: A CockroachDB public certificate used to authenticate and validate incoming requests.
+      type: object
+      required:
+      - id
+      - owner
+      - version
+      - state
+      - data
+      properties:
+        id:
+          $ref: '#/components/schemas/UUIDv4'
+        owner:
+          description: Unique identifier for this DSS operator.
+          type: string
+          example: dss-operator-1
+        state:
+          $ref: '#/components/schemas/MetadataState'
+        version:
+          $ref: '#/components/schemas/Version'
+        data:
+          type: string
+          format: byte
+    ActiveCockroachFlagsResponse:
+      description: The set of active CockroachDB public flags.
+      type: object
+      properties:
+        cockroach_flags:
+          type: array
+          items:
+            $ref: '#/components/schemas/CockroachFlag'
+    GetCockroachFlagResponse:
+      description: Get CockroachFlag response
+      type: object
+      required:
+      - cockroach_flag
+      properties:
+        cockroach_flag:  
+          $ref: '#/components/schemas/CockroachFlag' 
+    CreateCockroachFlagParameters:
+      description: Create CockroachFlag params
+      type: object
+      required:
+      - owner
+      - state
+      - data
+      properties:
+        owner:
+          description: Unique identifier for this DSS operator.
+          type: string
+          example: dss-operator-1
+        state:
+          $ref: '#/components/schemas/MetadataState'
+        data:
+          type: string
+          format: byte
+    CreateCockroachFlagResponse:
+      description: Create CockroachFlag response
+      type: object
+      required:
+      - cockroach_flag
+      properties:
+        cockroach_flag:  
+          $ref: '#/components/schemas/CockroachFlag'
+    UpdateCockroachFlagStateParameters:
+      description: Update CockroachFlag State params
+      type: object
+      required:
+      - state
+      properties:
+        state:
+          $ref: '#/components/schemas/MetadataState'
+        notes:
+          type: string
+          description: Notes on udpate, may include rollback instructions.
+    UpdateCockroachFlagResponse:
+      description: Update CockroachFlag State response
+      type: object
+      required:
+      - cockroach_flag
+      properties:
+        cockroach_flag:  
+          $ref: '#/components/schemas/CockroachFlag'
+    CockroachFlagAcknowledgeParameters:
+      description: Acknoweledge CockroachFlag state change
+      type: object
+      required:
+      - id
+      - version
+      - acktion
+      properties:
+        # AckStateRequests do not have a version as they are immutable.
+        # They reference an id/version pair via the URL params
+        id:
+          $ref: '#/components/schemas/UUIDv4'
+        version:
+        acktion:
+          $ref: '#/components/schemas/Acktion'
+        notes:
+          type: string
+          description: Notes on udpate, may include rollback instructions.
+    CockroachFlagAcknowledgeResponse:
+      description: Acknoweledge CockroachFlag state change response
+      type: object
+      required:
+      - id
+      - acktion
+      - cockroach_flag
+      properties:
+        id:
+          $ref: '#/components/schemas/UUIDv4'
+        acktion:
+          $ref: '#/components/schemas/Acktion'
+        cockroach_flag: 
+          $ref: '#/components/schemas/CockroachFlag'
+    CockroachFlag:
+      description: Flags supplied to the DSS useful/required for operations.
+      type: object
+      required:
+      - id
+      - owner
+      - version
+      - state
+      - name
+      - value
+      properties:
+        id:
+          $ref: '#/components/schemas/UUIDv4'
+        owner:
+          description: Unique identifier for this DSS operator.
+          type: string
+          example: dss-operator-1
+        state:
+          $ref: '#/components/schemas/MetadataState'
+        version:
+          $ref: '#/components/schemas/Version'
+        name:
+          type: string
+        value:
+          type: string
+    ActiveCockroachVersionsResponse:
+      description: The set of active CockroachDB public versions.
+      type: object
+      properties:
+        cockroach_versions:
+          type: array
+          items:
+            $ref: '#/components/schemas/CockroachVersion'
+    GetCockroachVersionResponse:
+      description: Get CockroachVersion response
+      type: object
+      required:
+      - cockroach_version
+      properties:
+        cockroach_version:  
+          $ref: '#/components/schemas/CockroachVersion' 
+    CreateCockroachVersionParameters:
+      description: Create CockroachVersion params
+      type: object
+      required:
+      - owner
+      - state
+      - name
+      - value
+      properties:
+        owner:
+          description: Unique identifier for this DSS operator.
+          type: string
+          example: dss-operator-1
+        state:
+          $ref: '#/components/schemas/MetadataState'
+        name:
+          type: string
+        value:
+          type: string
+    CreateCockroachVersionResponse:
+      description: Create CockroachVersion response
+      type: object
+      required:
+      - cockroach_version
+      properties:
+        cockroach_version:  
+          $ref: '#/components/schemas/CockroachVersion'
+    UpdateCockroachVersionStateParameters:
+      description: Update CockroachVersion State params
+      type: object
+      required:
+      - state
+      properties:
+        state:
+          $ref: '#/components/schemas/MetadataState'
+        notes:
+          type: string
+          description: Notes on udpate, may include rollback instructions.
+    UpdateCockroachVersionResponse:
+      description: Update CockroachVersion State response
+      type: object
+      required:
+      - cockroach_version
+      properties:
+        cockroach_version:  
+          $ref: '#/components/schemas/CockroachVersion'
+    CockroachVersionAcknowledgeParameters:
+      description: Acknoweledge CockroachVersion state change
+      type: object
+      required:
+      - id
+      - version
+      - acktion
+      properties:
+        # AckStateRequests do not have a version as they are immutable.
+        # They reference an id/version pair via the URL params
+        id:
+          $ref: '#/components/schemas/UUIDv4'
+        version:
+        acktion:
+          $ref: '#/components/schemas/Acktion'
+        notes:
+          type: string
+          description: Notes on udpate, may include rollback instructions.
+    CockroachVersionAcknowledgeResponse:
+      description: Acknoweledge CockroachVersion state change response
+      type: object
+      required:
+      - id
+      - acktion
+      - cockroach_version
+      properties:
+        id:
+          $ref: '#/components/schemas/UUIDv4'
+        acktion:
+          $ref: '#/components/schemas/Acktion'
+        cockroach_version: 
+          $ref: '#/components/schemas/CockroachVersion'
+    ActiveDSSOperatorsResponse:
+      description: The set of active DSSOperators.
+      type: object
+      properties:
+        operators:
+          type: array
+          items:
+            $ref: '#/components/schemas/DSSOperator'
+    GetDSSOperatorResponse:
+      description: Get DSSOperator response
+      type: object
+      required:
+      - operator
+      properties:
+        operator:  
+          $ref: '#/components/schemas/DSSOperator' 
+    CreateDSSOperatorParameters:
+      description: Create DSSOperator params
+      type: object
+      required:
+      - owner
+      - state
+      - name
+      properties:
+        state:
+          $ref: '#/components/schemas/MetadataState'
+        name:
+          type: string
+    CreateDSSOperatorResponse:
+      description: Create DSSOperator response
+      type: object
+      required:
+      - operator
+      properties:
+        operator:  
+          $ref: '#/components/schemas/DSSOperator'
+    UpdateDSSOperatorStateParameters:
+      description: Update DSSOperator State params
+      type: object
+      required:
+      - state
+      properties:
+        state:
+          $ref: '#/components/schemas/MetadataState'
+        notes:
+          type: string
+          description: Notes on udpate, may include rollback instructions.
+    UpdateDSSOperatorResponse:
+      description: Update DSSOperator State response
+      type: object
+      required:
+      - operator
+      properties:
+        operator:  
+          $ref: '#/components/schemas/DSSOperator'
+    DSSOperatorAcknowledgeParameters:
+      description: Acknoweledge DSSOperator state change
+      type: object
+      required:
+      - id
+      - version
+      - acktion
+      properties:
+        # AckStateRequests do not have a version as they are immutable.
+        # They reference an id/version pair via the URL params
+        id:
+          $ref: '#/components/schemas/UUIDv4'
+        version:
+        acktion:
+          $ref: '#/components/schemas/Acktion'
+        notes:
+          type: string
+          description: Notes on udpate, may include rollback instructions.
+    DSSOperatorAcknowledgeResponse:
+      description: Acknoweledge DSSOperator state change response
+      type: object
+      required:
+      - id
+      - acktion
+      - operator
+      properties:
+        id:
+          $ref: '#/components/schemas/UUIDv4'
+        acktion:
+          $ref: '#/components/schemas/Acktion'
+        operator: 
+          $ref: '#/components/schemas/DSSOperator'
+    CockroachVersion:
+      description: Which version of CockroachDB we are using.
+      type: object
+      required:
+      - id
+      - owner
+      - version
+      - state
+      - value
+      properties:
+        id:
+          $ref: '#/components/schemas/UUIDv4'
+        owner:
+          description: Unique identifier for this DSS operator.
+          type: string
+          example: dss-operator-1
+        state:
+          $ref: '#/components/schemas/MetadataState'
+        version:
+          $ref: '#/components/schemas/Version'
+        value:
+          type: string
   securitySchemes:
     AuthFromAuthorizationAuthority:
       flows:
@@ -3536,6 +4742,8 @@ security:
   - utm.write.constraints
   - dss.write.hostnames
 tags:
+- name: dss_metadata
+  description: Metadata required or useful for DSS operations.
 - name: dss_isas
   description: Endpoints exposed by the DSS server for Identification Service Area Entities.
 - name: dss_ops

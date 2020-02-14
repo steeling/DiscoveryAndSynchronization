@@ -14,6 +14,7 @@ paths:
     get:
       tags:
       - dss_isas
+      operationId: searchIdentificationServiceAreas
       parameters:
       - name: area
         description: The area in which to search for Identification Service Areas.  Some
@@ -84,6 +85,7 @@ paths:
     get:
       tags:
       - dss_isas
+      operationId: getIdentificationServiceArea
       responses:
         "200":
           content:
@@ -133,6 +135,7 @@ paths:
         required: true
       tags:
       - dss_isas
+      operationId: createIdentificationServiceArea
       responses:
         "200":
           content:
@@ -203,6 +206,7 @@ paths:
         required: true
       tags:
       - dss_isas
+      operationId: updateIdentificationServiceArea
       responses:
         "200":
           content:
@@ -258,6 +262,7 @@ paths:
     delete:
       tags:
       - dss_isas
+      operationId: deleteIdentificationServiceArea
       responses:
         "200":
           content:
@@ -328,6 +333,7 @@ paths:
     get:
       tags:
       - dss_ops
+      operationId: searchOperationalIntentReferences
       parameters:
       - name: area
         description: The area in which to search for OperationalIntentReferences.  References for some OperationalIntents near this area but wholly outside it may also be returned.
@@ -396,6 +402,7 @@ paths:
     get:
       tags:
       - dss_ops
+      operationId: getOperationalIntentReference
       responses:
         "200":
           content:
@@ -443,6 +450,7 @@ paths:
         required: true
       tags:
       - dss_ops
+      operationId: createOperationalIntentReference
       responses:
         "200":
           content:
@@ -511,6 +519,7 @@ paths:
         required: true
       tags:
       - dss_ops
+      operationId: updateOperationalIntentReference
       responses:
         "200":
           content:
@@ -566,6 +575,7 @@ paths:
     delete:
       tags:
       - dss_ops
+      operationId: deleteOperationalIntentReference
       responses:
         "200":
           content:
@@ -634,6 +644,7 @@ paths:
     get:
       tags:
       - dss_constraints
+      operationId: searchConstraintReferences
       parameters:
       - name: area
         description: The area in which to search for ConstraintReferences.  References to some Constraints
@@ -703,6 +714,7 @@ paths:
     get:
       tags:
       - dss_constraints
+      operationId: getConstraintReference
       responses:
         "200":
           content:
@@ -750,6 +762,7 @@ paths:
         required: true
       tags:
       - dss_constraints
+      operationId: createConstraintReference
       responses:
         "200":
           content:
@@ -817,6 +830,7 @@ paths:
         required: true
       tags:
       - dss_constraints
+      operationId: updateConstraintReference
       responses:
         "200":
           content:
@@ -871,6 +885,7 @@ paths:
     delete:
       tags:
       - dss_constraints
+      operationId: deleteConstraintReference
       responses:
         "200":
           content:
@@ -940,6 +955,7 @@ paths:
     get:
       tags:
       - p2p_rid
+      operationId: searchFlights
       responses:
         "200":
           content:
@@ -1015,6 +1031,7 @@ paths:
     get:
       tags:
       - p2p_rid
+      operationId: getFlightDetails
       responses:
         "200":
           content:
@@ -1067,6 +1084,7 @@ paths:
     get:
       tags:
       - dss_subscriptions
+      operationId: searchSubscriptions
       parameters:
       - name: area
         description: The area in which to search for Subscriptions.  Some Subscriptions
@@ -1121,6 +1139,7 @@ paths:
     get:
       tags:
       - dss_subscriptions
+      operationId: getSubscription
       responses:
         "200":
           content:
@@ -1169,6 +1188,7 @@ paths:
         required: true
       tags:
       - dss_subscriptions
+      operationId: createSubscription
       responses:
         "200":
           content:
@@ -1248,6 +1268,7 @@ paths:
         required: true
       tags:
       - dss_subscriptions
+      operationId: updateSubscription
       responses:
         "200":
           content:
@@ -1311,6 +1332,7 @@ paths:
     delete:
       tags:
       - dss_subscriptions
+      operationId: deleteSubscription
       responses:
         "200":
           content:
@@ -1378,6 +1400,7 @@ paths:
     get:
       tags:
         - dss_hostnames
+      operationId: getHostnameStatus
       responses:
         "200":
           content:
@@ -1429,6 +1452,7 @@ paths:
         required: true
       tags:
         - dss_hostnames
+      operationId: updateHostnameStatus
       responses:
         "200":
           content:
@@ -1494,6 +1518,7 @@ paths:
         required: true
       tags:
       - p2p_rid
+      operationId: publishIdentificationServiceAreaInformation
       responses:
         "204":
           description: Information for Identification Service Area was updated successfully.
@@ -1546,6 +1571,7 @@ paths:
     get:
       tags:
       - p2p_utm
+      operationId: getOperationalIntent
       responses:
         "200":
           content:
@@ -1593,6 +1619,7 @@ paths:
         required: true
       tags:
       - p2p_utm
+      operationId: publishOperationalIntent
       responses:
         "204":
           description: New or updated full OperationalIntent information received successfully.
@@ -1645,6 +1672,7 @@ paths:
     get:
       tags:
       - p2p_utm
+      operationId: getConstraintInformation
       responses:
         "200":
           content:
@@ -1692,6 +1720,7 @@ paths:
         required: true
       tags:
       - p2p_utm
+      operationId: publishConstraintInformation
       responses:
         "204":
           description: New or updated full Constraint information received successfully.
@@ -1750,6 +1779,7 @@ paths:
         required: true
       tags:
         - p2p_utm
+      operationId: publishErrorReport
       responses:
         "204":
           description: Error report received successfully.
@@ -1809,6 +1839,7 @@ paths:
         required: true
       tags:
         - p2p_utm
+      operationId: createOperationalIntentNegotiation
       responses:
         "200":
           content:

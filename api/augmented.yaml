@@ -1,0 +1,4049 @@
+{
+  "info": {
+    "title": "Discovery and Synchronization Service",
+    "version": "0.0.0",
+    "description": "Interface to Discovery and Synchronization Service and service providers used by participating clients to discover and inform other service providers.\n\nUnless otherwise specified, fields specified in a message but not declared in the API shall be ignored."
+  },
+  "paths": {
+    "/v1/dss/isas": {
+      "summary": "Set of Identification Service Areas in the DSS.",
+      "description": "",
+      "get": {
+        "tags": [
+          "dss_isas"
+        ],
+        "operationId": "searchIdentificationServiceAreas",
+        "parameters": [
+        {
+          "name": "area",
+          "description": "The area in which to search for Identification Service Areas.  Some Identification Service Areas near this area but wholly outside it may also be returned.",
+          "in": "query",
+          "required": true
+        },
+        {
+          "name": "earliest_time",
+          "description": "If specified, indicates non-interest in any Identification Service Areas that end before this time.  RFC 3339 format, per OpenAPI specification.",
+          "in": "query",
+          "required": true,
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "name": "latest_time",
+          "description": "If specified, indicates non-interest in any Identification Service Areas that start after this time.  RFC 3339 format, per OpenAPI specification.",
+          "in": "query",
+          "required": true,
+          "format": "date-time",
+          "type": "string"
+        }
+        ],
+        "responses": {
+          "200": {
+            "description": "Identification Service Areas were successfully retrieved.",
+            "schema": {
+              "$ref": "#/definitions/SearchIdentificationServiceAreasResponse"
+            }
+          },
+          "400": {
+            "description": "One or more input parameters were missing or invalid.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "401": {
+            "description": "Bearer access token was not provided in Authorization header, token could not be decoded, or token was invalid.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "403": {
+            "description": "The access token was decoded successfully but did not include a scope appropriate to this endpoint.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "413": {
+            "description": "The requested area was too large.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        },
+        "security": [
+        {
+          "AuthFromAuthorizationAuthority": [
+            "dss.read.identification_service_areas"
+          ]
+        }
+        ],
+        "summary": "/dss/isas",
+        "description": "Retrieve all Identification Service Areas in the DAR for a given area during the given time.  Note that some Identification Service Areas returned may lie entirely outside the requested area."
+      }
+    },
+    "/v1/dss/isas/{id}": {
+      "summary": "An Identification Service Area in the DSS.",
+      "get": {
+        "tags": [
+          "dss_isas"
+        ],
+        "operationId": "getIdentificationServiceArea",
+        "responses": {
+          "200": {
+            "description": "Full information of the Identification Service Area was retrieved successfully.",
+            "schema": {
+              "$ref": "#/definitions/GetIdentificationServiceAreaResponse"
+            }
+          },
+          "400": {
+            "description": "One or more input parameters were missing or invalid.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "401": {
+            "description": "Bearer access token was not provided in Authorization header, token could not be decoded, or token was invalid.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "403": {
+            "description": "The access token was decoded successfully but did not include a scope appropriate to this endpoint.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "404": {
+            "description": "The requested Entity could not be found.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        },
+        "security": [
+        {
+          "AuthFromAuthorizationAuthority": [
+            "dss.read.identification_service_areas"
+          ]
+        }
+        ],
+        "summary": "/dss/isas/{id}",
+        "description": "Retrieve full information of an Identification Service Area owned by the client.",
+        "parameters": []
+      },
+      "put": {
+        "tags": [
+          "dss_isas"
+        ],
+        "operationId": "createIdentificationServiceArea",
+        "responses": {
+          "200": {
+            "description": "An existing Identification Service Area was created successfully in the DSS.",
+            "schema": {
+              "$ref": "#/definitions/PutIdentificationServiceAreaResponse"
+            }
+          },
+          "400": {
+            "description": "* One or more input parameters were missing or invalid.\n* The request attempted to mutate the Identification Service Area in a disallowed way.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "401": {
+            "description": "Bearer access token was not provided in Authorization header, token could not be decoded, or token was invalid.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "403": {
+            "description": "The access token was decoded successfully but did not include a scope appropriate to this endpoint.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "409": {
+            "description": "* An Identification Service Area with the specified ID already exists and is owned by a different client.\n* Despite repeated attempts, the DSS was unable to update the DAR because of other simultaneous changes.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "413": {
+            "description": "The area of the Identification Service Area is too large.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        },
+        "security": [
+        {
+          "AuthFromAuthorizationAuthority": [
+            "dss.write.identification_service_areas"
+          ]
+        }
+        ],
+        "summary": "/dss/isas/{id}",
+        "description": "Create a new Identification Service Area.  This call will fail if an Identification Service Area with the same ID already exists.\n\nThe DSS assumes the USS has already added the appropriate retention period to operation end time in `time_end` field before storing it.",
+        "parameters": [
+        {
+          "required": true,
+          "name": "body",
+          "in": "body",
+          "schema": {
+            "$ref": "#/definitions/CreateIdentificationServiceAreaParameters"
+          }
+        }
+        ]
+      },
+      "parameters": [
+      {
+        "name": "id",
+        "description": "EntityUUID of the Identification Service Area.",
+        "schema": {
+          "$ref": "#/definitions/EntityUUID"
+        },
+        "in": "path",
+        "required": true
+      }
+      ]
+    },
+    "/v1/dss/isas/{id}/{version}": {
+      "summary": "A specific version of an Identification Service Area in the DSS.",
+      "put": {
+        "tags": [
+          "dss_isas"
+        ],
+        "operationId": "updateIdentificationServiceArea",
+        "responses": {
+          "200": {
+            "description": "An existing Identification Service Area was updated successfully in the DSS.",
+            "schema": {
+              "$ref": "#/definitions/PutIdentificationServiceAreaResponse"
+            }
+          },
+          "400": {
+            "description": "* One or more input parameters were missing or invalid.\n* The request attempted to mutate the Identification Service Area in a disallowed way.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "401": {
+            "description": "Bearer access token was not provided in Authorization header, token could not be decoded, or token was invalid.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "403": {
+            "description": "The access token was decoded successfully but did not include a scope appropriate to this endpoint.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "409": {
+            "description": "* The specified Identification Service Area's current version does not match the provided version.\n* Despite repeated attempts, the DSS was unable to update the DAR because of other simultaneous changes.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "413": {
+            "description": "The area of the Identification Service Area is too large.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        },
+        "security": [
+        {
+          "AuthFromAuthorizationAuthority": [
+            "dss.write.identification_service_areas"
+          ]
+        }
+        ],
+        "summary": "/dss/isas/{id}/{version}",
+        "description": "Update an Identification Service Area.  The full content of the existing Identification Service Area will be replaced with the provided information as only the most recent version is retained.\n\nThe DSS assumes the USS has already added the appropriate retention period to operation end time in `time_end` field before storing it.  Updating `time_start` is not allowed if it is before the current time.",
+        "parameters": [
+        {
+          "required": true,
+          "name": "body",
+          "in": "body",
+          "schema": {
+            "$ref": "#/definitions/UpdateIdentificationServiceAreaParameters"
+          }
+        }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "dss_isas"
+        ],
+        "operationId": "deleteIdentificationServiceArea",
+        "responses": {
+          "200": {
+            "description": "Identification Service Area was successfully deleted from DSS.",
+            "schema": {
+              "$ref": "#/definitions/DeleteIdentificationServiceAreaResponse"
+            }
+          },
+          "400": {
+            "description": "One or more input parameters were missing or invalid.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "401": {
+            "description": "Bearer access token was not provided in Authorization header, token could not be decoded, or token was invalid.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "403": {
+            "description": "* The access token was decoded successfully but did not include a scope appropriate to this endpoint.\n* The Identification Service Area does not belong to the client requesting deletion.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "404": {
+            "description": "Entity could not be deleted because it could not be found.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "409": {
+            "description": "* The specified Identification Service Area's current version does not match the provided version.\n* Despite repeated attempts, the DSS was unable to update the DAR because of other simultaneous changes.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        },
+        "security": [
+        {
+          "AuthFromAuthorizationAuthority": [
+            "dss.write.identification_service_areas"
+          ]
+        }
+        ],
+        "summary": "/dss/isas/{id}/{version}",
+        "description": "Delete an Identification Service Area.  USSs should not delete Identification Service Areas before the end of the last managed flight plus the retention period.",
+        "parameters": []
+      },
+      "parameters": [
+      {
+        "name": "id",
+        "description": "EntityUUID of the Identification Service Area.",
+        "schema": {
+          "$ref": "#/definitions/EntityUUID"
+        },
+        "in": "path",
+        "required": true
+      },
+      {
+        "name": "version",
+        "description": "Version string used to reference an Identification Service Area at a particular point in time. Any updates to an existing Identification Service Area must contain the corresponding version to maintain idempotent updates.",
+        "schema": {
+          "type": "string"
+        },
+        "in": "path",
+        "required": true
+      }
+      ]
+    },
+    "/v1/dss/op_refs": {
+      "summary": "Set of OperationalIntentReferences in the DSS.",
+      "description": "",
+      "get": {
+        "tags": [
+          "dss_ops"
+        ],
+        "operationId": "searchOperationalIntentReferences",
+        "parameters": [
+        {
+          "name": "area",
+          "description": "The area in which to search for OperationalIntentReferences.  References for some OperationalIntents near this area but wholly outside it may also be returned.",
+          "in": "query",
+          "required": true
+        },
+        {
+          "name": "earliest_time",
+          "description": "If specified, indicates non-interest in any OperationalIntents that end before this time.  RFC 3339 format, per OpenAPI specification.",
+          "in": "query",
+          "required": true,
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "name": "latest_time",
+          "description": "If specified, indicates non-interest in any OperationalIntents that start after this time.  RFC 3339 format, per OpenAPI specification.",
+          "in": "query",
+          "required": true,
+          "format": "date-time",
+          "type": "string"
+        }
+        ],
+        "responses": {
+          "200": {
+            "description": "OperationalIntentReferences were successfully retrieved.",
+            "schema": {
+              "$ref": "#/definitions/SearchOperationalIntentReferencesResponse"
+            }
+          },
+          "400": {
+            "description": "One or more input parameters were missing or invalid.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "401": {
+            "description": "Bearer access token was not provided in Authorization header, token could not be decoded, or token was invalid.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "403": {
+            "description": "The access token was decoded successfully but did not include a scope appropriate to this endpoint.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "413": {
+            "description": "The requested area was too large.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        },
+        "security": [
+        {
+          "AuthFromAuthorizationAuthority": [
+            "utm.read.operational_intents"
+          ]
+        }
+        ],
+        "summary": "/dss/op_refs",
+        "description": "Retrieve all OperationalIntentReferences in the DAR for a given area during the given time.  Note that references to some OperationalIntents lying entirely outside the requested area may be returned as well."
+      }
+    },
+    "/v1/dss/op_refs/{id}": {
+      "summary": "An OperationalIntentReference in the DSS.",
+      "get": {
+        "tags": [
+          "dss_ops"
+        ],
+        "operationId": "getOperationalIntentReference",
+        "responses": {
+          "200": {
+            "description": "OperationalIntentReference was retrieved successfully.",
+            "schema": {
+              "$ref": "#/definitions/GetOperationalIntentReferenceResponse"
+            }
+          },
+          "400": {
+            "description": "One or more input parameters were missing or invalid.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "401": {
+            "description": "Bearer access token was not provided in Authorization header, token could not be decoded, or token was invalid.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "403": {
+            "description": "The access token was decoded successfully but did not include a scope appropriate to this endpoint.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "404": {
+            "description": "The requested Entity could not be found.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        },
+        "security": [
+        {
+          "AuthFromAuthorizationAuthority": [
+            "utm.read.operational_intents"
+          ]
+        }
+        ],
+        "summary": "/dss/op_refs/{id}",
+        "description": "Retrieve OperationalIntentReference information from the DSS.",
+        "parameters": []
+      },
+      "put": {
+        "tags": [
+          "dss_ops"
+        ],
+        "operationId": "createOperationalIntentReference",
+        "responses": {
+          "200": {
+            "description": "An OperationalIntentReference was created successfully in the DSS.",
+            "schema": {
+              "$ref": "#/definitions/ChangeOperationalIntentReferenceResponse"
+            }
+          },
+          "400": {
+            "description": "* One or more input parameters were missing or invalid.\n* The request attempted to mutate the Identification Service Area in a disallowed way.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "401": {
+            "description": "Bearer access token was not provided in Authorization header, token could not be decoded, or token was invalid.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "403": {
+            "description": "The access token was decoded successfully but did not include a scope appropriate to this endpoint.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "409": {
+            "description": "* The provided key did not prove knowledge of all current and relevant airspace Entities\n* An OperationalIntentReference with the specified ID already exists.\n* Despite repeated attempts, the DSS was unable to update the DAR because of other simultaneous changes.",
+            "schema": {
+              "$ref": "#/definitions/AirspaceConflictResponse"
+            }
+          },
+          "413": {
+            "description": "The area of the OperationalIntentReference is too large.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        },
+        "security": [
+        {
+          "AuthFromAuthorizationAuthority": [
+            "utm.write.operational_intents"
+          ]
+        }
+        ],
+        "summary": "/dss/op_refs/{id}",
+        "description": "Create a new OperationalIntentReference.  This call will fail if an OperationalIntentReference with the same ID already exists.",
+        "parameters": [
+        {
+          "required": true,
+          "name": "body",
+          "in": "body",
+          "schema": {
+            "$ref": "#/definitions/CreateOperationalIntentReferenceParameters"
+          }
+        }
+        ]
+      },
+      "parameters": [
+      {
+        "name": "id",
+        "description": "EntityUUID of the OperationalIntentReference.",
+        "schema": {
+          "$ref": "#/definitions/EntityUUID"
+        },
+        "in": "path",
+        "required": true
+      }
+      ]
+    },
+    "/v1/dss/op_refs/{id}/{version}": {
+      "summary": "A specific version of an OperationalIntentReference in the DSS.",
+      "put": {
+        "tags": [
+          "dss_ops"
+        ],
+        "operationId": "updateOperationalIntentReference",
+        "responses": {
+          "200": {
+            "description": "An existing OperationalIntentReference was updated successfully in the DSS.",
+            "schema": {
+              "$ref": "#/definitions/ChangeOperationalIntentReferenceResponse"
+            }
+          },
+          "400": {
+            "description": "* One or more input parameters were missing or invalid.\n* The request attempted to mutate the OperationalIntentReference in a disallowed way.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "401": {
+            "description": "Bearer access token was not provided in Authorization header, token could not be decoded, or token was invalid.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "403": {
+            "description": "The access token was decoded successfully but did not include a scope appropriate to this endpoint.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "409": {
+            "description": "* The provided key did not prove knowledge of all current and relevant airspace Entities\n* The specified OperationalIntentReference's current version does not match the provided version.\n* Despite repeated attempts, the DSS was unable to update the DAR because of other simultaneous changes.",
+            "schema": {
+              "$ref": "#/definitions/AirspaceConflictResponse"
+            }
+          },
+          "413": {
+            "description": "The area of the OperationalIntentReference is too large.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        },
+        "security": [
+        {
+          "AuthFromAuthorizationAuthority": [
+            "utm.write.operational_intents"
+          ]
+        }
+        ],
+        "summary": "/dss/op_refs/{id}/{version}",
+        "description": "Update an OperationalIntentReference.  The full content of the existing OperationalIntentReference will be replaced with the provided information as only the most recent version is retained.",
+        "parameters": [
+        {
+          "required": true,
+          "name": "body",
+          "in": "body",
+          "schema": {
+            "$ref": "#/definitions/UpdateOperationalIntentReferenceParameters"
+          }
+        }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "dss_ops"
+        ],
+        "operationId": "deleteOperationalIntentReference",
+        "responses": {
+          "200": {
+            "description": "OperationalIntentReference was successfully deleted from DSS.",
+            "schema": {
+              "$ref": "#/definitions/ChangeOperationalIntentReferenceResponse"
+            }
+          },
+          "400": {
+            "description": "One or more input parameters were missing or invalid.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "401": {
+            "description": "Bearer access token was not provided in Authorization header, token could not be decoded, or token was invalid.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "403": {
+            "description": "* The access token was decoded successfully but did not include a scope appropriate to this endpoint.\n* The OperationalIntentReference does not belong to the client requesting deletion.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "404": {
+            "description": "Entity could not be deleted because it could not be found.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "409": {
+            "description": "* The specified OperationalIntentReference's current version does not match the provided version.\n* Despite repeated attempts, the DSS was unable to update the DAR because of other simultaneous changes.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        },
+        "security": [
+        {
+          "AuthFromAuthorizationAuthority": [
+            "utm.write.operational_intents"
+          ]
+        }
+        ],
+        "summary": "/dss/op_refs/{id}/{version}",
+        "description": "Delete an OperationalIntentReference.",
+        "parameters": []
+      },
+      "parameters": [
+      {
+        "name": "id",
+        "description": "EntityUUID of the OperationalIntentReference.",
+        "schema": {
+          "$ref": "#/definitions/EntityUUID"
+        },
+        "in": "path",
+        "required": true
+      },
+      {
+        "name": "version",
+        "description": "Version string used to reference an OperationalIntentReference at a particular point in time.  Matches the `token` field in the OVN of the OperationalIntentReference.  Any updates to an existing OperationalIntentReference must contain the corresponding version to maintain idempotent updates.",
+        "schema": {
+          "type": "string"
+        },
+        "in": "path",
+        "required": true
+      }
+      ]
+    },
+    "/v1/dss/constraint_refs": {
+      "summary": "Set of ConstraintReferences in the DSS.",
+      "description": "",
+      "get": {
+        "tags": [
+          "dss_constraints"
+        ],
+        "operationId": "searchConstraintReferences",
+        "parameters": [
+        {
+          "name": "area",
+          "description": "The area in which to search for ConstraintReferences.  References to some Constraints near this area but wholly outside it may also be returned.",
+          "in": "query",
+          "required": true
+        },
+        {
+          "name": "earliest_time",
+          "description": "If specified, indicates non-interest in any Constraints that end before this time.  RFC 3339 format, per OpenAPI specification.",
+          "in": "query",
+          "required": true,
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "name": "latest_time",
+          "description": "If specified, indicates non-interest in any Constraints that start after this time.  RFC 3339 format, per OpenAPI specification.",
+          "in": "query",
+          "required": true,
+          "format": "date-time",
+          "type": "string"
+        }
+        ],
+        "responses": {
+          "200": {
+            "description": "ConstraintReferences were successfully retrieved.",
+            "schema": {
+              "$ref": "#/definitions/SearchConstraintReferencesResponse"
+            }
+          },
+          "400": {
+            "description": "One or more input parameters were missing or invalid.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "401": {
+            "description": "Bearer access token was not provided in Authorization header, token could not be decoded, or token was invalid.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "403": {
+            "description": "The access token was decoded successfully but did not include a scope appropriate to this endpoint.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "413": {
+            "description": "The requested area was too large.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        },
+        "security": [
+        {
+          "AuthFromAuthorizationAuthority": [
+            "utm.read.constraints"
+          ]
+        }
+        ],
+        "summary": "/dss/constraint_refs",
+        "description": "Retrieve all ConstraintReferences in the DAR for a given area during the given time.  Note that references to some Constraints lying entirely outside the requested area may be returned as well."
+      }
+    },
+    "/v1/dss/constraint_refs/{id}": {
+      "summary": "A ConstraintReference in the DSS.",
+      "get": {
+        "tags": [
+          "dss_constraints"
+        ],
+        "operationId": "getConstraintReference",
+        "responses": {
+          "200": {
+            "description": "ConstraintReference was retrieved successfully.",
+            "schema": {
+              "$ref": "#/definitions/GetConstraintReferenceResponse"
+            }
+          },
+          "400": {
+            "description": "One or more input parameters were missing or invalid.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "401": {
+            "description": "Bearer access token was not provided in Authorization header, token could not be decoded, or token was invalid.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "403": {
+            "description": "The access token was decoded successfully but did not include a scope appropriate to this endpoint.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "404": {
+            "description": "The requested Entity could not be found.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        },
+        "security": [
+        {
+          "AuthFromAuthorizationAuthority": [
+            "utm.read.constraints"
+          ]
+        }
+        ],
+        "summary": "/dss/constraint_refs/{id}",
+        "description": "Retrieve ConstraintReference information from the DSS.",
+        "parameters": []
+      },
+      "put": {
+        "tags": [
+          "dss_constraints"
+        ],
+        "operationId": "createConstraintReference",
+        "responses": {
+          "200": {
+            "description": "A ConstraintReference was created successfully in the DSS.",
+            "schema": {
+              "$ref": "#/definitions/ChangeConstraintReferenceResponse"
+            }
+          },
+          "400": {
+            "description": "* One or more input parameters were missing or invalid.\n* The request attempted to mutate the ConstraintReference in a disallowed way.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "401": {
+            "description": "Bearer access token was not provided in Authorization header, token could not be decoded, or token was invalid.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "403": {
+            "description": "The access token was decoded successfully but did not include a scope appropriate to this endpoint.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "409": {
+            "description": "* A ConstraintReference with the specified ID already exists.\n* Despite repeated attempts, the DSS was unable to update the DAR because of other simultaneous changes.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "413": {
+            "description": "The area of the OperationalIntentReference is too large.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        },
+        "security": [
+        {
+          "AuthFromAuthorizationAuthority": [
+            "utm.write.constraints"
+          ]
+        }
+        ],
+        "summary": "/dss/constraint_refs/{id}",
+        "description": "Create a new ConstraintReference.  This call will fail if a ConstraintReference with the same ID already exists.",
+        "parameters": [
+        {
+          "required": true,
+          "name": "body",
+          "in": "body",
+          "schema": {
+            "$ref": "#/definitions/CreateConstraintReferenceParameters"
+          }
+        }
+        ]
+      },
+      "parameters": [
+      {
+        "name": "id",
+        "description": "EntityUUID of the ConstraintReference.",
+        "schema": {
+          "$ref": "#/definitions/EntityUUID"
+        },
+        "in": "path",
+        "required": true
+      }
+      ]
+    },
+    "/v1/dss/constraint_refs/{id}/{version}": {
+      "summary": "A specific version of a ConstraintReference in the DSS.",
+      "put": {
+        "tags": [
+          "dss_constraints"
+        ],
+        "operationId": "updateConstraintReference",
+        "responses": {
+          "200": {
+            "description": "An existing ConstraintReference was updated successfully in the DSS.",
+            "schema": {
+              "$ref": "#/definitions/ChangeConstraintReferenceResponse"
+            }
+          },
+          "400": {
+            "description": "* One or more input parameters were missing or invalid.\n* The request attempted to mutate the ConstraintReference in a disallowed way.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "401": {
+            "description": "Bearer access token was not provided in Authorization header, token could not be decoded, or token was invalid.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "403": {
+            "description": "The access token was decoded successfully but did not include a scope appropriate to this endpoint.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "409": {
+            "description": "* The specified ConstraintReference's current version does not match the provided version.\n* Despite repeated attempts, the DSS was unable to update the DAR because of other simultaneous changes.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "413": {
+            "description": "The area of the ConstraintReference is too large.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        },
+        "security": [
+        {
+          "AuthFromAuthorizationAuthority": [
+            "utm.write.constraints"
+          ]
+        }
+        ],
+        "summary": "/dss/constraint_refs/{id}/{version}",
+        "description": "Update a ConstraintReference.  The full content of the existing ConstraintReference will be replaced with the provided information as only the most recent version is retained.",
+        "parameters": [
+        {
+          "required": true,
+          "name": "body",
+          "in": "body",
+          "schema": {
+            "$ref": "#/definitions/UpdateConstraintReferenceParameters"
+          }
+        }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "dss_constraints"
+        ],
+        "operationId": "deleteConstraintReference",
+        "responses": {
+          "200": {
+            "description": "ConstraintReference was successfully deleted from DSS.",
+            "schema": {
+              "$ref": "#/definitions/ChangeConstraintReferenceResponse"
+            }
+          },
+          "400": {
+            "description": "One or more input parameters were missing or invalid.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "401": {
+            "description": "Bearer access token was not provided in Authorization header, token could not be decoded, or token was invalid.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "403": {
+            "description": "* The access token was decoded successfully but did not include a scope appropriate to this endpoint.\n* The ConstraintReference does not belong to the client requesting deletion.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "404": {
+            "description": "Entity could not be deleted because it could not be found.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "409": {
+            "description": "* The specified ConstraintReference's current version does not match the provided version.\n* Despite repeated attempts, the DSS was unable to update the DAR because of other simultaneous changes.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        },
+        "security": [
+        {
+          "AuthFromAuthorizationAuthority": [
+            "utm.write.constraints"
+          ]
+        }
+        ],
+        "summary": "/dss/constraint_refs/{id}/{version}",
+        "description": "Delete a ConstraintReference.",
+        "parameters": []
+      },
+      "parameters": [
+      {
+        "name": "id",
+        "description": "EntityUUID of the ConstraintReference.",
+        "schema": {
+          "$ref": "#/definitions/EntityUUID"
+        },
+        "in": "path",
+        "required": true
+      },
+      {
+        "name": "version",
+        "description": "Version string used to reference a ConstraintReference at a particular point in time.  Matches the `token` field in the OVN of the ConstraintReference.  Any updates to an existing ConstraintReference must contain the corresponding version to maintain idempotent updates.",
+        "schema": {
+          "type": "string"
+        },
+        "in": "path",
+        "required": true
+      }
+      ]
+    },
+    "/v1/uss/flights": {
+      "summary": "Basic operation details to meet remote ID requirements.",
+      "description": "This endpoint may be polled by remote ID display providers to display basic aircraft activity near a user in real time.",
+      "get": {
+        "tags": [
+          "p2p_rid"
+        ],
+        "operationId": "searchFlights",
+        "responses": {
+          "200": {
+            "description": "Flight information was successfully retrieved.",
+            "schema": {
+              "$ref": "#/definitions/GetFlightsResponse"
+            }
+          },
+          "400": {
+            "description": "One or more input parameters were missing or invalid.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "401": {
+            "description": "Bearer access token was not provided in Authorization header, token could not be decoded, or token was invalid.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "403": {
+            "description": "The access token was decoded successfully but did not include a scope appropriate to this endpoint.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "404": {
+            "description": "The requested view is entirely outside any remote ID service provision areas (PositionReporting Entity volumes) this provider has.  A display provider receiving this response should discontinue polling for this endpoint for the view port requested until otherwise directed by DSS interactions.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "413": {
+            "description": "The requested view rectangle was too large.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        },
+        "security": [
+        {
+          "AuthFromAuthorizationAuthority": [
+            "dss.read.identification_service_areas"
+          ]
+        }
+        ],
+        "summary": "/uss/flights",
+        "description": "Retrieve basic flight information from a remote ID service provider to meet remote ID requirements.  This endpoint will be polled by remote ID display providers to display basic aircraft activity near a user in real time.  All flights that have any recent positions (past [NetUasInAreaWindow] seconds) inside the requested view must be returned.",
+        "parameters": []
+      },
+      "parameters": [
+      {
+        "name": "view",
+        "description": "The area of this view: lat1,lng1,lat2,lng2.  Size may not exceed a diagonal length specified in the standard.  The view is the smallest box bounded by the provided corner points.",
+        "schema": {
+          "type": "string",
+          "example": "29.97816,31.13296,29.98025,31.13535"
+        },
+        "in": "query",
+        "required": true
+      },
+      {
+        "name": "include_recent_positions",
+        "description": "If specified as true, include recent positions.  Otherwise, do not include recent positions.\n\nA display provider's first poll of this endpoint for a particular view will usually request recent positions while follow-up polls for that same view will usually not need to request recent positions.",
+        "schema": {
+          "type": "boolean"
+        },
+        "in": "query"
+      }
+      ]
+    },
+    "/v1/uss/flights/{id}/details": {
+      "summary": "A remote ID flight reported by a remote ID service provider.",
+      "get": {
+        "tags": [
+          "p2p_rid"
+        ],
+        "operationId": "getFlightDetails",
+        "responses": {
+          "200": {
+            "description": "Flight details were successfully retrieved.",
+            "schema": {
+              "$ref": "#/definitions/GetFlightDetailsResponse"
+            }
+          },
+          "400": {
+            "description": "One or more input parameters were missing or invalid.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "401": {
+            "description": "Bearer access token was not provided in Authorization header, token could not be decoded, or token was invalid.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "403": {
+            "description": "The access token was decoded successfully but did not include a scope appropriate to this endpoint.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "404": {
+            "description": "The requested flight could not be found.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        },
+        "security": [
+        {
+          "AuthFromAuthorizationAuthority": [
+            "dss.read.identification_service_areas"
+          ]
+        }
+        ],
+        "summary": "/uss/flights/{id}/details",
+        "description": "Retrieve details of a flight from a remote ID service provider to meet remote ID requirements.",
+        "parameters": []
+      },
+      "parameters": [
+      {
+        "name": "id",
+        "description": "Remote ID flight ID for this flight; may be obtained in general /flights query.",
+        "schema": {
+          "$ref": "#/definitions/RIDFlightID"
+        },
+        "in": "path",
+        "required": true
+      }
+      ]
+    },
+    "/v1/dss/subscriptions": {
+      "summary": "Subscriptions for airspace updates to a volume of interest.",
+      "get": {
+        "tags": [
+          "dss_subscriptions"
+        ],
+        "operationId": "searchSubscriptions",
+        "parameters": [
+        {
+          "name": "area",
+          "description": "The area in which to search for Subscriptions.  Some Subscriptions near this area but wholly outside it may also be returned.",
+          "in": "query",
+          "required": true
+        }
+        ],
+        "responses": {
+          "200": {
+            "description": "Subscriptions were retrieved successfully.",
+            "schema": {
+              "$ref": "#/definitions/SearchSubscriptionsResponse"
+            }
+          },
+          "400": {
+            "description": "One or more input parameters were missing or invalid.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "401": {
+            "description": "Bearer access token was not provided in Authorization header, token could not be decoded, or token was invalid.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "403": {
+            "description": "The access token was decoded successfully but did not include a scope appropriate to this endpoint.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "413": {
+            "description": "The requested area was too large.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        },
+        "security": [
+        {
+          "AuthFromAuthorizationAuthority": [
+            "dss.read.identification_service_areas"
+          ]
+        }
+        ],
+        "summary": "/dss/subscriptions",
+        "description": "Retrieve subscriptions intersecting an area of interest.  Subscription notifications are only triggered by (and contain full information of) changes to, creation of, or deletion of, Entities referenced by or stored in the DSS; they do not involve any data transfer (such as remote ID telemetry updates) apart from Entity information.\n\nOnly Subscriptions belonging to the caller are returned.  This endpoint would be used if a USS lost track of Subscriptions they had created and/or wanted to resolve an error indicating that they had too many existing Subscriptions in an area."
+      }
+    },
+    "/v1/dss/subscriptions/{id}": {
+      "summary": "Subscription for airspace updates to a volume of interest.",
+      "get": {
+        "tags": [
+          "dss_subscriptions"
+        ],
+        "operationId": "getSubscription",
+        "responses": {
+          "200": {
+            "description": "Subscription information was retrieved successfully.",
+            "schema": {
+              "$ref": "#/definitions/GetSubscriptionResponse"
+            }
+          },
+          "400": {
+            "description": "One or more input parameters were missing or invalid.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "401": {
+            "description": "Bearer access token was not provided in Authorization header, token could not be decoded, or token was invalid.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "403": {
+            "description": "The access token was decoded successfully but did not include a scope appropriate to this endpoint.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "404": {
+            "description": "A Subscription with the specified ID was not found.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        },
+        "security": [
+        {
+          "AuthFromAuthorizationAuthority": [
+            "dss.read.identification_service_areas",
+            "dss.write.identification_service_areas"
+          ]
+        }
+        ],
+        "summary": "/dss/subscriptions/{id}",
+        "description": "Verify the existence/valdity and state of a particular subscription.",
+        "parameters": []
+      },
+      "put": {
+        "tags": [
+          "dss_subscriptions"
+        ],
+        "operationId": "createSubscription",
+        "responses": {
+          "200": {
+            "description": "A new Subscription was created successfully.",
+            "schema": {
+              "$ref": "#/definitions/PutSubscriptionResponse"
+            }
+          },
+          "400": {
+            "description": "* One or more input parameters were missing or invalid.\n* The request attempted to mutate the Subscription in a disallowed way.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "401": {
+            "description": "Bearer access token was not provided in Authorization header, token could not be decoded, or token was invalid.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "403": {
+            "description": "* The access token was decoded successfully but did not include a scope appropriate to this endpoint or the request.\n* An EntityType was specified in `types_filter` to which the scopes included in the access token do not provide access.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "409": {
+            "description": "* A Subscription with the specified ID already exists and is owned by a different client.\n* Despite repeated attempts, the DSS was unable to update the DAR because of other simultaneous changes.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "429": {
+            "description": "Client already has too many Subscriptions in the area where a new Subscription was requested.  To correct this problem, the client may query GET /subscriptions to see which Subscriptions are counting against their limit.  This problem should not generally be encountered because the Subscription limit should be above what any consumer that reasonably aggregates their Subscriptions should request.  But, a Subscription limit is necessary to bound performance requirements for DSS instances and would likely be hit by, e.g., a large remote ID display provider that created a Subscription for each of their display client users' views.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        },
+        "security": [
+        {
+          "AuthFromAuthorizationAuthority": [
+            "dss.read.identification_service_areas"
+          ]
+        }
+        ],
+        "summary": "/dss/subscriptions/{id}",
+        "description": "Create a subscription.  This call will fail if a Subscription with the same ID already exists.\n\nSubscription notifications are only triggered by (and contain full information of) changes to, creation of, or deletion of, Entities referenced by or stored in the DSS; they do not involve any data transfer (such as remote ID telemetry updates) apart from Entity information.",
+        "parameters": [
+        {
+          "required": true,
+          "name": "body",
+          "in": "body",
+          "schema": {
+            "$ref": "#/definitions/CreateSubscriptionParameters"
+          }
+        }
+        ]
+      },
+      "parameters": [
+      {
+        "name": "id",
+        "description": "SubscriptionUUID of the subscription of interest.",
+        "schema": {
+          "$ref": "#/definitions/SubscriptionUUID"
+        },
+        "in": "path",
+        "required": true
+      }
+      ]
+    },
+    "/v1/dss/subscriptions/{id}/{version}": {
+      "summary": "Specific version of a Subscription for airspace updates to a volume of interest.",
+      "put": {
+        "tags": [
+          "dss_subscriptions"
+        ],
+        "operationId": "updateSubscription",
+        "responses": {
+          "200": {
+            "description": "An existing Subscription was updated successfully.",
+            "schema": {
+              "$ref": "#/definitions/PutSubscriptionResponse"
+            }
+          },
+          "400": {
+            "description": "* One or more input parameters were missing or invalid.\n* The request attempted to mutate the Subscription in a disallowed way.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "401": {
+            "description": "Bearer access token was not provided in Authorization header, token could not be decoded, or token was invalid.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "403": {
+            "description": "* The access token was decoded successfully but did not include a scope appropriate to this endpoint or the request.\n* An EntityType was specified in `types_filter` to which the scopes included in the access token do not provide access.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "409": {
+            "description": "* The specified Subscriptions's current version does not match the provided version.\n* Despite repeated attempts, the DSS was unable to update the DAR because of other simultaneous changes.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "429": {
+            "description": "Client already has too many Subscriptions in the area where a new Subscription was requested.  To correct this problem, the client may query GET /subscriptions to see which Subscriptions are counting against their limit.  This problem should not generally be encountered because the Subscription limit should be above what any consumer that reasonably aggregates their Subscriptions should request.  But, a Subscription limit is necessary to bound performance requirements for DSS instances and would likely be hit by, e.g., a large remote ID display provider that created a Subscription for each of their display client users' views.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        },
+        "security": [
+        {
+          "AuthFromAuthorizationAuthority": [
+            "dss.read.identification_service_areas"
+          ]
+        }
+        ],
+        "summary": "/dss/subscriptions/{id}/{version}",
+        "description": "Update a Subscription.  The full content of the existing Subscription will be replaced with the provided information as only the most recent version is retained.\n\nSubscription notifications are only triggered by (and contain full information of) changes to, creation of, or deletion of, Entities referenced by or stored in the DSS; they do not involve any data transfer (such as remote ID telemetry updates) apart from Entity information.",
+        "parameters": [
+        {
+          "required": true,
+          "name": "body",
+          "in": "body",
+          "schema": {
+            "$ref": "#/definitions/UpdateSubscriptionParameters"
+          }
+        }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "dss_subscriptions"
+        ],
+        "operationId": "deleteSubscription",
+        "responses": {
+          "200": {
+            "description": "Subscription was deleted successfully.",
+            "schema": {
+              "$ref": "#/definitions/DeleteSubscriptionResponse"
+            }
+          },
+          "400": {
+            "description": "One or more input parameters were missing or invalid.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "401": {
+            "description": "Bearer access token was not provided in Authorization header, token could not be decoded, or token was invalid.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "403": {
+            "description": "* The access token was decoded successfully but did not include a scope appropriate to this endpoint.\n* The Entity does not belong to the client requesting deletion.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "404": {
+            "description": "Subscription could not be deleted because it could not be found.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "409": {
+            "description": "* The specified Subscriptions's current version does not match the provided version.\n* Despite repeated attempts, the DSS was unable to update the DAR because of other simultaneous changes.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        },
+        "security": [
+        {
+          "AuthFromAuthorizationAuthority": [
+            "dss.read.identification_service_areas"
+          ]
+        }
+        ],
+        "summary": "/dss/subscriptions/{id}/{version}",
+        "description": "Delete a subscription.",
+        "parameters": []
+      },
+      "parameters": [
+      {
+        "name": "id",
+        "description": "SubscriptionUUID of the subscription of interest.",
+        "schema": {
+          "$ref": "#/definitions/SubscriptionUUID"
+        },
+        "in": "path",
+        "required": true
+      },
+      {
+        "name": "version",
+        "description": "Version string used to reference a Subscription at a particular point in time. Any updates to an existing Subscription must contain the corresponding version to maintain idempotent updates.",
+        "schema": {
+          "type": "string"
+        },
+        "in": "path",
+        "required": true
+      }
+      ]
+    },
+    "/v1/dss/hostnames/{hostname}": {
+      "summary": "Hostnames whose status (operative, non-operative) may be tracked in the DSS.",
+      "get": {
+        "tags": [
+          "dss_hostnames"
+        ],
+        "operationId": "getHostnameStatus",
+        "responses": {
+          "200": {
+            "description": "Information about the status of the specified hostname was retrieved successfully.",
+            "schema": {
+              "$ref": "#/definitions/GetHostNamesResponse"
+            }
+          },
+          "400": {
+            "description": "One or more input parameters were missing or invalid.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "401": {
+            "description": "Bearer access token was not provided in Authorization header, token could not be decoded, or token was invalid.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "403": {
+            "description": "The access token was decoded successfully but did not include a scope appropriate to this endpoint.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        },
+        "security": [
+        {
+          "AuthFromAuthorizationAuthority": [
+            "utm.write.operational_intents",
+            "utm.write.constraints"
+          ]
+        }
+        ],
+        "summary": "/dss/hostnames/{hostname}",
+        "description": "Retrieve status of a hostname that may be tracked in the DSS.",
+        "parameters": []
+      },
+      "parameters": [
+      {
+        "name": "hostname",
+        "description": "Hostname of server that may be down.",
+        "schema": {
+          "$ref": "#/definitions/HostName"
+        },
+        "in": "path",
+        "required": true
+      }
+      ]
+    },
+    "/v1/dss/hostnames/{hostname}/{version}/down": {
+      "summary": "Whether a DSS considers a particular hostname to be down.",
+      "put": {
+        "tags": [
+          "dss_hostnames"
+        ],
+        "operationId": "updateHostnameStatus",
+        "responses": {
+          "200": {
+            "description": "The status of the specified hostname was updated successfully in the DSS.",
+            "schema": {
+              "$ref": "#/definitions/GetHostNamesResponse"
+            }
+          },
+          "400": {
+            "description": "* One or more input parameters were missing or invalid.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "401": {
+            "description": "Bearer access token was not provided in Authorization header, token could not be decoded, or token was invalid.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "403": {
+            "description": "The access token was decoded successfully but did not include a scope appropriate to this endpoint.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "409": {
+            "description": "* The specified hostname's current status version does not match the provided version.\n* Despite repeated attempts, the DSS was unable to update the DAR because of other simultaneous changes.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        },
+        "security": [
+        {
+          "AuthFromAuthorizationAuthority": [
+            "dss.write.hostnames"
+          ]
+        }
+        ],
+        "summary": "/dss/hostnames/{hostname}/{version}/down",
+        "description": "Update the status of a hostname in the DSS (mark it \"up\" or \"down\").",
+        "parameters": [
+        {
+          "required": true,
+          "name": "body",
+          "in": "body",
+          "schema": {
+            "$ref": "#/definitions/UpdateHostNameDownParameters"
+          }
+        }
+        ]
+      },
+      "parameters": [
+      {
+        "name": "hostname",
+        "description": "Hostname of server that may be down.",
+        "schema": {
+          "$ref": "#/definitions/HostName"
+        },
+        "in": "path",
+        "required": true
+      },
+      {
+        "name": "version",
+        "description": "Version string used to resolve race conditions updating a hostname status.",
+        "schema": {
+          "type": "string"
+        },
+        "in": "path",
+        "required": true
+      }
+      ]
+    },
+    "/v1/uss/isas/{id}": {
+      "summary": "Notifications of change to Identification Service Areas.",
+      "post": {
+        "tags": [
+          "p2p_rid"
+        ],
+        "operationId": "publishIdentificationServiceAreaInformation",
+        "responses": {
+          "204": {
+            "description": "Information for Identification Service Area was updated successfully."
+          },
+          "400": {
+            "description": "* One or more parameters were missing or invalid.\n* The Identification Service Area information could not be parsed, or contains illegal data.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "401": {
+            "description": "Bearer access token was not provided in Authorization header, token could not be decoded, or token was invalid.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "403": {
+            "description": "* The access token was decoded successfully but did not include a scope appropriate to this endpoint.\n* The client identified in the access token is not the owner of this Entity according to the receiving client's records.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "409": {
+            "description": "The Entity version specified in this message is identical to a previously-received notification and the Entity is different.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        },
+        "security": [
+        {
+          "AuthFromAuthorizationAuthority": [
+            "dss.write.identification_service_areas"
+          ]
+        }
+        ],
+        "summary": "/uss/isas/{id}",
+        "description": "Hosted by a remote ID display provider using Subscriptions: publish new full information of an Identification Service Area to the host of this endpoint (usually because of instructions from the DSS triggered by a subscription).",
+        "parameters": [
+        {
+          "required": true,
+          "name": "body",
+          "in": "body",
+          "schema": {
+            "$ref": "#/definitions/PutIdentificationServiceAreaNotificationParameters"
+          }
+        }
+        ]
+      },
+      "parameters": [
+      {
+        "name": "id",
+        "description": "EntityUUID of the Identification Service Area.",
+        "schema": {
+          "$ref": "#/definitions/EntityUUID"
+        },
+        "in": "path",
+        "required": true
+      }
+      ]
+    },
+    "/v1/uss/ops/{id}": {
+      "summary": "Full information of an OperationalIntent.",
+      "get": {
+        "tags": [
+          "p2p_utm"
+        ],
+        "operationId": "getOperationalIntent",
+        "responses": {
+          "200": {
+            "description": "The full OperationalIntent information was retrieved successfully.",
+            "schema": {
+              "$ref": "#/definitions/GetOperationalIntentResponse"
+            }
+          },
+          "400": {
+            "description": "One or more input parameters were missing or invalid.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "401": {
+            "description": "Bearer access token was not provided in Authorization header, token could not be decoded, or token was invalid.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "403": {
+            "description": "The access token was decoded successfully but did not include a scope appropriate to this endpoint.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "404": {
+            "description": "The requested Entity could not be found.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        },
+        "security": [
+        {
+          "AuthFromAuthorizationAuthority": [
+            "utm.read.operational_intents"
+          ]
+        }
+        ],
+        "summary": "/uss/ops/{id}",
+        "description": "Retrieve full information of an OperationalIntent owned by the client.",
+        "parameters": []
+      },
+      "post": {
+        "tags": [
+          "p2p_utm"
+        ],
+        "operationId": "publishOperationalIntent",
+        "responses": {
+          "204": {
+            "description": "New or updated full OperationalIntent information received successfully."
+          },
+          "400": {
+            "description": "* One or more parameters were missing or invalid.\n* The Entity could not be parsed, or contains illegal data.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "401": {
+            "description": "Bearer access token was not provided in Authorization header, token could not be decoded, or token was invalid.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "403": {
+            "description": "* The access token was decoded successfully but did not include a scope appropriate to this endpoint.\n* The client identified in the access token is not the owner of this Entity according to the receiving client's records.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "409": {
+            "description": "The Entity version specified in this message is lower than a previously-received notification, or identical to a previously-received notification and the Entity is different.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        },
+        "security": [
+        {
+          "AuthFromAuthorizationAuthority": [
+            "utm.write.operational_intents"
+          ]
+        }
+        ],
+        "summary": "/uss/ops/{id}",
+        "description": "Publish new information about an OperationalIntent to the host of this endpoint (usually because of instructions from the DSS triggered by a subscription).",
+        "parameters": [
+        {
+          "required": true,
+          "name": "body",
+          "in": "body",
+          "schema": {
+            "$ref": "#/definitions/PostOperationalIntentNotificationParameters"
+          }
+        }
+        ]
+      },
+      "parameters": [
+      {
+        "name": "id",
+        "description": "EntityUUID for this OperationalIntent (matches OperationalIntentReference identifier).",
+        "schema": {
+          "$ref": "#/definitions/EntityUUID"
+        },
+        "in": "path",
+        "required": true
+      }
+      ]
+    },
+    "/v1/uss/constraints/{id}": {
+      "summary": "Full information of a Constraint.",
+      "get": {
+        "tags": [
+          "p2p_utm"
+        ],
+        "operationId": "getConstraintInformation",
+        "responses": {
+          "200": {
+            "description": "The full Constraint information was retrieved successfully.",
+            "schema": {
+              "$ref": "#/definitions/GetConstraintResponse"
+            }
+          },
+          "400": {
+            "description": "One or more input parameters were missing or invalid.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "401": {
+            "description": "Bearer access token was not provided in Authorization header, token could not be decoded, or token was invalid.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "403": {
+            "description": "The access token was decoded successfully but did not include a scope appropriate to this endpoint.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "404": {
+            "description": "The requested Entity could not be found.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        },
+        "security": [
+        {
+          "AuthFromAuthorizationAuthority": [
+            "utm.read.constraints"
+          ]
+        }
+        ],
+        "summary": "/uss/constraints/{id}",
+        "description": "Retrieve full information of a Constraint owned by the client.",
+        "parameters": []
+      },
+      "post": {
+        "tags": [
+          "p2p_utm"
+        ],
+        "operationId": "publishConstraintInformation",
+        "responses": {
+          "204": {
+            "description": "New or updated full Constraint information received successfully."
+          },
+          "400": {
+            "description": "* One or more parameters were missing or invalid.\n* The Entity could not be parsed, or contains illegal data.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "401": {
+            "description": "Bearer access token was not provided in Authorization header, token could not be decoded, or token was invalid.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "403": {
+            "description": "* The access token was decoded successfully but did not include a scope appropriate to this endpoint.\n* The client identified in the access token is not the owner of this Entity according to the receiving client's records.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "409": {
+            "description": "The Entity version specified in this message is lower than a previously-received notification, or identical to a previously-received notification and the Entity is different.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        },
+        "security": [
+        {
+          "AuthFromAuthorizationAuthority": [
+            "utm.write.constraints"
+          ]
+        }
+        ],
+        "summary": "/uss/constraints/{id}",
+        "description": "Publish new information about a Constraint to the host of this endpoint (usually because of instructions from the DSS triggered by a subscription).",
+        "parameters": [
+        {
+          "required": true,
+          "name": "body",
+          "in": "body",
+          "schema": {
+            "$ref": "#/definitions/PostConstraintNotificationParameters"
+          }
+        }
+        ]
+      },
+      "parameters": [
+      {
+        "name": "id",
+        "description": "EntityUUID of the Constraint.",
+        "schema": {
+          "$ref": "#/definitions/EntityUUID"
+        },
+        "in": "path",
+        "required": true
+      }
+      ]
+    },
+    "/v1/uss/error_reports/{id}": {
+      "summary": "Means by which other USSs may report errors that would otherwise go unnoticed by this USS.",
+      "put": {
+        "tags": [
+          "p2p_utm"
+        ],
+        "operationId": "publishErrorReport",
+        "responses": {
+          "204": {
+            "description": "Error report received successfully."
+          },
+          "400": {
+            "description": "* One or more parameters were missing or invalid.\n* The error report could not be parsed, or contains illegal data.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "401": {
+            "description": "Bearer access token was not provided in Authorization header, token could not be decoded, or token was invalid.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "403": {
+            "description": "* The access token was decoded successfully but did not include a scope appropriate to this endpoint.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "409": {
+            "description": "The Entity version specified in this message is lower than a previously-received notification, or identical to a previously-received notification and the Entity is different.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        },
+        "security": [
+        {
+          "AuthFromAuthorizationAuthority": [
+            "utm.read.operational_intents",
+            "utm.write.operational_intents",
+            "utm.read.constraints",
+            "utm.write.constraints"
+          ]
+        }
+        ],
+        "summary": "/uss/error_reports/{id}",
+        "description": "Publish a report for an error encountered with this USS that would otherwise go unnoticed by this USS.",
+        "parameters": [
+        {
+          "required": true,
+          "name": "body",
+          "in": "body",
+          "schema": {
+            "$ref": "#/definitions/PutErrorReportParameters"
+          }
+        }
+        ]
+      },
+      "parameters": [
+      {
+        "name": "id",
+        "description": "ID of the error report.",
+        "schema": {
+          "$ref": "#/definitions/UUIDv4"
+        },
+        "in": "path",
+        "required": true
+      }
+      ]
+    },
+    "/v1/uss/negotiations/{id}": {
+      "summary": "Negotiations with a USS to alter their Entities to deconflict with a proposed OperationalIntent.",
+      "post": {
+        "tags": [
+          "p2p_utm"
+        ],
+        "operationId": "createOperationalIntentNegotiation",
+        "responses": {
+          "200": {
+            "description": "All requested Entities have been deconflicted with the proposed OperationalIntent.",
+            "schema": {
+              "$ref": "#/definitions/NegotiationResponse"
+            }
+          },
+          "400": {
+            "description": "* One or more parameters were missing or invalid.\n* The request could not be parsed, or contains illegal data.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "401": {
+            "description": "Bearer access token was not provided in Authorization header, token could not be decoded, or token was invalid.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "403": {
+            "description": "* The access token was decoded successfully but did not include a scope appropriate to this endpoint.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          },
+          "409": {
+            "description": "* USS was unable to deconflict all requested Entities with the proposed OperationalIntent.\n* A different negotiation with the same ID has already been conducted.",
+            "schema": {
+              "$ref": "#/definitions/ErrorResponse"
+            }
+          }
+        },
+        "security": [
+        {
+          "AuthFromAuthorizationAuthority": [
+            "utm.write.operational_intents"
+          ]
+        }
+        ],
+        "summary": "/uss/negotiations/{id}",
+        "description": "Request that a USS alter their Entities to deconflict with a proposed OperationalIntent.",
+        "parameters": [
+        {
+          "required": true,
+          "name": "body",
+          "in": "body",
+          "schema": {
+            "$ref": "#/definitions/NegotiationParameters"
+          }
+        }
+        ]
+      },
+      "parameters": [
+      {
+        "name": "id",
+        "description": "ID of the negotiation request (for idempotence).",
+        "schema": {
+          "$ref": "#/definitions/UUIDv4"
+        },
+        "in": "path",
+        "required": true
+      }
+      ]
+    }
+  },
+  "security": [
+  {
+    "AuthFromAuthorizationAuthority": [
+      "dss.read.identification_service_areas",
+      "dss.write.identification_service_areas",
+      "utm.read.operational_intents",
+      "utm.write.operational_intents",
+      "utm.read.constraints",
+      "utm.write.constraints",
+      "dss.write.hostnames"
+    ]
+  }
+  ],
+  "tags": [
+  {
+    "name": "dss_isas",
+    "description": "Endpoints exposed by the DSS server for Identification Service Area Entities."
+  },
+  {
+    "name": "dss_ops",
+    "description": "Endpoints exposed by the DSS server for OperationalIntentReference Entities."
+  },
+  {
+    "name": "dss_constraints",
+    "description": "Endpoints exposed by the DSS server for ConstraintReference Entities."
+  },
+  {
+    "name": "dss_subscriptions",
+    "description": "Endpoints exposed by the DSS server for Subscriptions."
+  },
+  {
+    "name": "dss_hostnames",
+    "description": "Endpoints exposed by the DSS server for tracking hostname statuses."
+  },
+  {
+    "name": "p2p_rid",
+    "description": "Endpoints exposed by remote ID service providers for peer-peer communication."
+  },
+  {
+    "name": "p2p_utm",
+    "description": "Endpoints exposed by UTM service providers for peer-peer communication."
+  }
+  ],
+  "swagger": "2.0",
+  "securityDefinitions": {
+    "AuthFromAuthorizationAuthority": {
+      "type": "oauth2",
+      "description": "Authorization from, or on behalf of, an authorization authority.  This authority shall issue access tokens that are JSON Web Tokens as defined in RFC 7519, using the `RS256` algorithm for the signature, and publish to all providers the public key for verifying that signature.\n\nThe following fields shall be included in the JWT claim for access tokens issued by this authority:\n* `iss`, with the URL at which the token generation request was received.\n* `exp`, with a time no further than 1 hour in the future.\n* `sub`, with unique ID of the client requesting the access token.\n* `scope`, with an array of strings indicating the scopes granted.\n\nMultiple scopes for a single token shall be granted if requested.  The tokens granted by this authority shall protect against reuse of received tokens to impersonate the sender to other recipients (via use of the `aud` claim or other means).\n\nClients shall provide these access tokens in an `Authorization` header in the form `Bearer <token>` in accordance with RFC 6750.",
+      "flow": "application",
+      "tokenUrl": "https://example.com/oauth/token",
+      "scopes": {
+        "dss.read.identification_service_areas": "Client may query, read, or create subscriptions for Identification Service Areas for remote ID.  A remote ID display provider shall be granted this scope upon request.",
+        "dss.write.identification_service_areas": "Client may create, edit, and delete Identification Service Areas for remote ID.  A remote ID service provider shall be granted this scope upon request.",
+        "utm.read.operational_intents": "Client may query, read, or create subscriptions for OperationalIntents for UTM.",
+        "utm.write.operational_intents": "Client may create, edit, and delete OperationalIntents for UTM.",
+        "utm.read.constraints": "Client may query, read, or create subscriptions for Constraints for UTM.",
+        "utm.write.constraints": "Client may create, edit, and delete Constraints for UTM.",
+        "dss.write.hostnames": "Client may update the status of hostnames in the DSS."
+      }
+    }
+  },
+  "definitions": {
+    "Hash": {
+      "description": "Base64 representation of a SHA256 hash of the given inner content.  If this Hash is for multiple entries, the entries should be concatenated together with delimiting commas (but no spaces) before performing the hash.  For instance, the Hash of the three UUIDs 4704a043-8212-4256-9dec-7ef5a79218e2, b1220203-fc2a-422d-9604-12464a9b45e0, and cca95e90-3163-47d8-bb0e-a7c5c88f078f would be d8NoNy0cPAd7D3b8Qb0DSzcrBVJElwBfmqVcytIoWsk= in base64 which is 77c368372d1c3c077b0f76fc41bd034b372b05524497005f9aa55ccad2285ac9 in hexadecimal.",
+      "maxLength": 44,
+      "minLength": 44,
+      "pattern": "^[0-9a-zA-Z+\\/]{43}=$",
+      "type": "string",
+      "example": "d8NoNy0cPAd7D3b8Qb0DSzcrBVJElwBfmqVcytIoWsk="
+    },
+    "DeconflictionKey": {
+      "description": "Proof that a client has obtained the latest airspace content, used to ensure that write operations to the DSS occur only when the latest content is known (i.e. has been read). The client is required to pass a current DeconflictionKey constructed from information obtained with previous read operations and subsequent requests for full information, and optionally, subscription updates for deconflicted write operations to the DSS.  The contents of this data structure are generated by the client.\n",
+      "type": "object",
+      "properties": {
+        "ovns": {
+          "anyOf": [
+          {
+            "$ref": "#/definitions/OVNDictionary"
+          }
+          ],
+          "description": "For each of a subset of Entities declared by the DSS in the area of interest, the OVN of the current version of the full information of that Entity.  This EntityOVN is provided by the client who defined the Entity, accompanying the full Entity definition data when that data is received."
+        },
+        "hashes": {
+          "anyOf": [
+          {
+            "$ref": "#/definitions/DeconflictionKeyHash"
+          }
+          ],
+          "description": "Optional (optimization).  May be provided for a set of Entities so that each of the included EntityOVNs does not need to be included in the `ovns` property."
+        },
+        "subscription": {
+          "anyOf": [
+          {
+            "$ref": "#/definitions/SubscriptionUUID"
+          }
+          ],
+          "description": "If the client obtained the information in this DeconflictionKey via a subscription, this field is set to the ID of that subscription so the usage of subscriptions can be tracked and unused subscriptions can be removed."
+        }
+      }
+    },
+    "DeconflictionKeyHash": {
+      "description": "A shortcut (optimization) data structure that may be provided instead of a large set of individually-listed EntityOVNs.",
+      "required": [
+        "entity_ids",
+        "entity_ovns"
+      ],
+      "type": "object",
+      "properties": {
+        "entity_ids": {
+          "anyOf": [
+          {
+            "$ref": "#/definitions/Hash"
+          }
+          ],
+          "description": "Hash of an ordered list of other clients’ EntityUUIDs in the airspace (obtained from DSS via GET /v1/dss/<entity type>s) excluding the EntityUUIDs explicitly specified in DeconflictionKey's `ovns` property."
+        },
+        "entity_ovns": {
+          "anyOf": [
+          {
+            "$ref": "#/definitions/Hash"
+          }
+          ],
+          "description": "Hash of an ordered list of EntityOVNs that correspond with the list of EntityUUIDs used to generate the `entity_ids` property value."
+        }
+      }
+    },
+    "Token": {
+      "anyOf": [
+      {
+        "$ref": "#/definitions/UUIDv4"
+      }
+      ],
+      "description": "Universally-unique identifier associated with a specific set of data."
+    },
+    "EntityOVN": {
+      "title": "EntityOVN",
+      "description": "A token associated with a particular UTM Entity+version created by the DSS upon creation or modification of an Entity reference and provided to the client creating or modifying the Entity reference.  The EntityOVN is stored privately by the DSS and then compared against entries in a Key provided to mutate the airspace.  The EntityOVN is also provided by the client whenever that client transmits the full information of the Entity (either via GET, or via a subscription notification).",
+      "required": [
+        "token",
+        "version"
+      ],
+      "type": "object",
+      "properties": {
+        "version": {
+          "format": "int32",
+          "description": "This version increases each time an Entity is modified.  If a client ever receives a subscription update with an EntityOVN for a particular EntityUUID that is smaller than the cached EntityOVN for that EntityUUID, that subscription update should be ignored.",
+          "type": "integer"
+        },
+        "token": {
+          "anyOf": [
+          {
+            "$ref": "#/definitions/Token"
+          }
+          ],
+          "description": "Unique value associated with a specific version of a specific Entity.  Token value may not be reused for any other Entity versions; it must change each time the Entity changes."
+        }
+      }
+    },
+    "OVNEntry": {
+      "description": "Mapping between an EntityUUID and an EntityOVN.",
+      "required": [
+        "id",
+        "sig"
+      ],
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/definitions/EntityUUID",
+          "description": ""
+        },
+        "sig": {
+          "$ref": "#/definitions/EntityOVN",
+          "description": ""
+        }
+      }
+    },
+    "OVNDictionary": {
+      "description": "Collection of mappings between EntityUUID and EntityOVN.",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/OVNEntry"
+      }
+    },
+    "Volume3D": {
+      "description": "A three-dimensional geographic volume consisting of a vertically-extruded polygon.",
+      "required": [
+        "footprint"
+      ],
+      "type": "object",
+      "properties": {
+        "footprint": {
+          "anyOf": [
+          {
+            "$ref": "#/definitions/GeoPolygon"
+          }
+          ],
+          "description": "Projection of this volume onto the earth's surface."
+        },
+        "altitude_lo": {
+          "anyOf": [
+          {
+            "$ref": "#/definitions/Altitude"
+          }
+          ],
+          "description": "Minimum bounding altitude of this volume."
+        },
+        "altitude_hi": {
+          "anyOf": [
+          {
+            "$ref": "#/definitions/Altitude"
+          }
+          ],
+          "description": "Maximum bounding altitude of this volume."
+        }
+      }
+    },
+    "Volume4D": {
+      "description": "Contiguous block of geographic spacetime.",
+      "required": [
+        "spatial_volume"
+      ],
+      "type": "object",
+      "properties": {
+        "spatial_volume": {
+          "anyOf": [
+          {
+            "$ref": "#/definitions/Volume3D"
+          }
+          ],
+          "description": "Constant spatial extent of this volume."
+        },
+        "time_start": {
+          "format": "date-time",
+          "description": "Beginning time of this volume.  RFC 3339 format, per OpenAPI specification.",
+          "type": "string"
+        },
+        "time_end": {
+          "format": "date-time",
+          "description": "End time of this volume.  RFC 3339 format, per OpenAPI specification.",
+          "type": "string"
+        }
+      }
+    },
+    "GetSubscriptionResponse": {
+      "description": "Response to DSS request for the subscription with the given id.",
+      "required": [
+        "subscription"
+      ],
+      "type": "object",
+      "properties": {
+        "subscription": {
+          "$ref": "#/definitions/Subscription"
+        }
+      }
+    },
+    "SearchSubscriptionsResponse": {
+      "description": "Response to DSS query for subscriptions in a particular area.",
+      "required": [
+        "subscriptions"
+      ],
+      "type": "object",
+      "properties": {
+        "subscriptions": {
+          "description": "Subscriptions that overlap the specified area.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Subscription"
+          }
+        }
+      }
+    },
+    "GetFlightsResponse": {
+      "description": "Response to remote ID provider query for flight information in an area of interest.",
+      "required": [
+        "timestamp",
+        "flights"
+      ],
+      "type": "object",
+      "properties": {
+        "timestamp": {
+          "format": "date-time",
+          "description": "The remote ID service provider's timestamp for when this information was current.  RFC 3339 format, per OpenAPI specification.",
+          "type": "string"
+        },
+        "flights": {
+          "description": "A list of all flights that have been within the requested area within the remote ID retention period.  This includes flights that are not currently within the requested area, but were within the requested area within the remote ID retention period.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/RIDFlight"
+          }
+        }
+      }
+    },
+    "URL": {
+      "description": "Valid http or https URL.",
+      "type": "string"
+    },
+    "HostName": {
+      "description": "Valid hostname (no protocol or path allowed).",
+      "type": "string"
+    },
+    "SubscriptionNotificationIndex": {
+      "format": "int32",
+      "description": "Tracks the notifications sent for a subscription so the subscriber can detect missed notifications more easily.",
+      "type": "integer"
+    },
+    "SubscriptionState": {
+      "description": "State of AreaSubscription which is causing a notification to be sent.",
+      "required": [
+        "subscription"
+      ],
+      "type": "object",
+      "properties": {
+        "subscription_id": {
+          "$ref": "#/definitions/SubscriptionUUID"
+        },
+        "notification_index": {
+          "$ref": "#/definitions/SubscriptionNotificationIndex"
+        }
+      }
+    },
+    "UUIDv4": {
+      "description": "UUID v4.",
+      "maxLength": 36,
+      "minLength": 36,
+      "type": "string",
+      "example": "03e5572a-f733-49af-bc14-8a18bd53ee39"
+    },
+    "Version": {
+      "description": "A version string used to reference an object at a particular point in time. Any updates to an object must contain the corresponding version to maintain idempotent updates.",
+      "type": "string"
+    },
+    "EntityUUID": {
+      "anyOf": [
+      {
+        "$ref": "#/definitions/UUIDv4"
+      }
+      ],
+      "description": "Universally-unique identifier for an Entity communicated through the DSS.  Formatted as UUIDv4."
+    },
+    "SubscriptionUUID": {
+      "anyOf": [
+      {
+        "$ref": "#/definitions/UUIDv4"
+      }
+      ],
+      "description": "Universally-unique identifier for a Subscription communicated through the DSS.  Formatted as UUIDv4."
+    },
+    "RIDFlightID": {
+      "description": "ID, unique to a remote ID service provider, which identifies a particular flight for which the remote ID service provider is providing remote ID services.\n\nThe following characters are not allowed: \\0 \\t \\r \\n # % / : ? @ [ \\ ]",
+      "maxLength": 255,
+      "minLength": 1,
+      "type": "string",
+      "example": "uss1.JA6kHYCcByQ-6AfU"
+    },
+    "RIDAuthData": {
+      "description": "Additional authentication data.",
+      "required": [
+        "format",
+        "data"
+      ],
+      "type": "object",
+      "properties": {
+        "format": {
+          "description": "Format of additional authentication data.",
+          "type": "string"
+        },
+        "data": {
+          "description": "Authentication data in form specified by `format`.",
+          "type": "string"
+        }
+      }
+    },
+    "GetFlightDetailsResponse": {
+      "description": "Response to remote ID provider query for details about a specific flight.",
+      "required": [
+        "details"
+      ],
+      "type": "object",
+      "properties": {
+        "details": {
+          "$ref": "#/definitions/RIDFlightDetails"
+        }
+      }
+    },
+    "HorizontalAccuracy": {
+      "description": "This is the NACp enumeration from ADS-B, plus 1m for a more complete range for UAs.\n\n`HAUnknown`: Unknown horizontal accuracy\n\n`HA10NMPlus`: > 10NM (18.52km)\n\n`HA10NM`: < 10NM (18.52km)\n\n`HA4NM`: < 4NM (7.408km)\n\n`HA2NM`: < 2NM (3.704km)\n\n`HA1NM`: < 1NM (1852m)\n\n`HA05NM`: < 0.5NM (926m)\n\n`HA03NM`: < 0.3NM (555.6m)\n\n`HA01NM`: < 0.1NM (185.2m)\n\n`HA005NM`: < 0.05NM (92.6m)\n\n`HA30m`: < 30m\n\n`HA10m`: < 10m\n\n`HA3m`: < 3m\n\n`HA1m`: < 1m",
+      "enum": [
+        "HAUnknown",
+        "HA10NMPlus",
+        "HA10NM",
+        "HA4NM",
+        "HA2NM",
+        "HA1NM",
+        "HA05NM",
+        "HA03NM",
+        "HA01NM",
+        "HA005NM",
+        "HA30m",
+        "HA10m",
+        "HA3m",
+        "HA1m"
+      ],
+      "type": "string"
+    },
+    "VerticalAccuracy": {
+      "description": "This is the GVA enumeration from ADS-B, plus some finer values for UAs.\n\n`VAUnknown`: Unknown vertical accuracy\n\n`VA150mPlus`: > 150m\n\n`VA150m`: < 150m\n\n`VA45m`: < 45m\n\n`VA25m`: < 25m\n\n`VA10m`: < 10m\n\n`VA3m`: < 3m\n\n`VA1m`: < 1m",
+      "enum": [
+        "VAUnknown",
+        "VA150mPlus",
+        "VA150m",
+        "VA45m",
+        "VA25m",
+        "VA10m",
+        "VA3m",
+        "VA1m"
+      ],
+      "type": "string"
+    },
+    "ErrorResponse": {
+      "description": "Data provided when an off-nominal condition was encountered.",
+      "type": "object",
+      "properties": {
+        "message": {
+          "description": "Human-readable message indicating what error occurred and/or why.",
+          "type": "string"
+        }
+      }
+    },
+    "DeleteSubscriptionResponse": {
+      "description": "Response for a successful request to delete an Subscription.",
+      "required": [
+        "subscription"
+      ],
+      "type": "object",
+      "properties": {
+        "subscription": {
+          "anyOf": [
+          {
+            "$ref": "#/definitions/Subscription"
+          }
+          ],
+          "description": "The Subscription which was deleted."
+        }
+      }
+    },
+    "SpeedAccuracy": {
+      "description": "This is the same enumeration scale and values from ADS-B NACv.\n\n`SAUnknown`: Unknown speed accuracy\n\n`SA10mpsPlus`: > 10 m/s\n\n`SA10mps`: < 10 m/s\n\n`SA3mps`: < 3 m/s\n\n`SA1mps`: < 1 m/s\n\n`SA03mps`: < 0.3 m/s",
+      "enum": [
+        "SAUnknown",
+        "SA10mpsPlus",
+        "SA10mps",
+        "SA3mps",
+        "SA1mps",
+        "SA03mps"
+      ],
+      "type": "string"
+    },
+    "RIDAircraftPosition": {
+      "description": "Position of an aircraft as reported for remote ID purposes.",
+      "required": [
+        "lat",
+        "lng",
+        "alt"
+      ],
+      "type": "object",
+      "properties": {
+        "lat": {
+          "$ref": "#/definitions/Latitude"
+        },
+        "lng": {
+          "$ref": "#/definitions/Longitude"
+        },
+        "alt": {
+          "format": "float",
+          "description": "Geodetic altitude (NOT altitude above launch, altitude above ground, or EGM96): aircraft distance above the WGS84 ellipsoid as measured along a line that passes through the aircraft and is normal to the surface of the WGS84 ellipsoid.  This value is provided in meters and must have a minimum resolution of 1 meter.",
+          "type": "number",
+          "example": 1321.2
+        },
+        "accuracy_h": {
+          "anyOf": [
+          {
+            "$ref": "#/definitions/HorizontalAccuracy"
+          }
+          ],
+          "description": "Horizontal error that is likely to be present in this reported position.  Required when `extrapolated` field is true and always in the entry for the current state."
+        },
+        "accuracy_v": {
+          "anyOf": [
+          {
+            "$ref": "#/definitions/VerticalAccuracy"
+          }
+          ],
+          "description": "Vertical error that is likely to be present in this reported position.  Required when `extrapolated` field is true and always in the entry for the current state."
+        },
+        "extrapolated": {
+          "description": "True if this position was generated primarily by computation rather than primarily from a direct instrument measurement.  Assumed false if not specified.",
+          "type": "boolean"
+        },
+        "pressure_altitude": {
+          "format": "float",
+          "description": "The uncorrected altitude (based on reference standard 29.92 inHg, 1013.25 mb) provides a reference for algorithms that utilize \"altitude deltas\" between aircraft.  This value is provided in meters and must have a minimum resolution of 1 meter.",
+          "type": "number"
+        }
+      }
+    },
+    "GeoPolygonString": {
+      "description": "Plain-string representation of a geographic polygon consisting of at least three geographic points describing a closed polygon on the earth.  Each point consists of latitude,longitude in degrees.  Points are also comma-delimited, so this parameter will look like `lat1,lng1,lat2,lng2,lat3,lng3,...`  Latitude values must fall in the range [-90, 90] and longitude values must fall in the range [-180, 180].\n\nAll of the requirements and clarifications for GeoPolygon apply to GeoPolygonString as well.",
+      "type": "string"
+    },
+    "RIDHeight": {
+      "description": "A relative altitude for the purposes of remote ID.",
+      "required": [
+        "distance",
+        "reference"
+      ],
+      "type": "object",
+      "properties": {
+        "distance": {
+          "format": "float",
+          "description": "Distance above reference datum.  This value is provided in meters and must have a minimum resolution of 1 meter.",
+          "type": "number"
+        },
+        "reference": {
+          "description": "The reference datum above which the height is reported.",
+          "enum": [
+            "TakeoffLocation",
+            "GroundLevel"
+          ],
+          "type": "string"
+        }
+      }
+    },
+    "Latitude": {
+      "format": "double",
+      "description": "Degrees of latitude north of the equator, with reference to the WGS84 ellipsoid.",
+      "maximum": 90,
+      "exclusiveMaximum": false,
+      "minimum": -90,
+      "exclusiveMinimum": false,
+      "type": "number",
+      "example": 34.123
+    },
+    "Longitude": {
+      "format": "double",
+      "description": "Degrees of longitude east of the Prime Meridian, with reference to the WGS84 ellipsoid.",
+      "maximum": -180,
+      "exclusiveMaximum": false,
+      "minimum": 180,
+      "exclusiveMinimum": false,
+      "type": "number",
+      "example": -118.456
+    },
+    "LatLngPoint": {
+      "description": "Point on the earth's surface.",
+      "required": [
+        "lat",
+        "lng"
+      ],
+      "type": "object",
+      "properties": {
+        "lng": {
+          "$ref": "#/definitions/Longitude"
+        },
+        "lat": {
+          "$ref": "#/definitions/Latitude"
+        }
+      }
+    },
+    "Altitude": {
+      "format": "float",
+      "description": "An altitude, in meters, above the WGS84 ellipsoid.",
+      "type": "number",
+      "example": 19.5
+    },
+    "RIDFlight": {
+      "description": "Description of a remote ID flight.",
+      "required": [
+        "id",
+        "aircraft_type"
+      ],
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/definitions/RIDFlightID"
+        },
+        "aircraft_type": {
+          "anyOf": [
+          {
+            "$ref": "#/definitions/RIDAircraftType"
+          }
+          ],
+          "description": "Generic type of aircraft."
+        },
+        "current_state": {
+          "anyOf": [
+          {
+            "$ref": "#/definitions/RIDAircraftState"
+          }
+          ],
+          "description": "The most up-to-date state of the aircraft.  Required when the aircraft is currently in the requested area unless `volumes` is specified.\n\nIf current data is not being received from the UAS by the Service Provider, the lack of change in this field is sufficient to indicate that current data is not being received."
+        },
+        "volumes": {
+          "description": "The set of spacetime volumes the aircraft is within.  Required if `current_state` is not specified.  The fields `time_start` and `time_end` are required if `current_state` is not specified.",
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Volume4D"
+          }
+        },
+        "simulated": {
+          "description": "If specified as true, this flight is not a physical aircraft; it is just a simulation to test the system.",
+          "type": "boolean"
+        },
+        "recent_positions": {
+          "description": "A short collection of recent aircraft movement, specified only when `include_recent_positions` is true.  If `volumes` is not specified and `include_recent_positions` is true, then this field is required.\n\nRecent positions provided in this field must conform to requirements in the standard which generally prohibit including positions outside the requested area except transitionally when the aircraft enters or exits the requested area, and which prohibit including positions that not sufficiently recent.\n\nNote that a UI should not draw a connective line between two consecutive position reports that both lie outside the requested area.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/RIDRecentAircraftPosition"
+          }
+        }
+      }
+    },
+    "GeoPolygon": {
+      "description": "An enclosed area on the earth.\nThe bounding edges of this polygon shall be the shortest paths between connected vertices.  This means, for instance, that the edge between two points both defined at a particular latitude is not generally contained at that latitude.\nThe winding order shall be interpreted as the order which produces the smaller area.\nThe path between two vertices shall be the shortest possible path between those vertices.\nEdges may not cross.\nVertices may not be duplicated.  In particular, the final polygon vertex shall not be identical to the first vertex.",
+      "required": [
+        "vertices"
+      ],
+      "type": "object",
+      "properties": {
+        "vertices": {
+          "minItems": 3,
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/LatLngPoint"
+          }
+        }
+      }
+    },
+    "PutIdentificationServiceAreaResponse": {
+      "description": "Response to a request to create or update a reference to an Identification Service Area in the DSS.",
+      "required": [
+        "service_area",
+        "subscribers"
+      ],
+      "type": "object",
+      "properties": {
+        "subscribers": {
+          "description": "DSS subscribers that this client now has the obligation to notify of the Identification Service Area changes just made.  This client must call POST for each provided URL according to the `/uss/isas/{id}` path API.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/SubscriberToNotify"
+          }
+        },
+        "service_area": {
+          "anyOf": [
+          {
+            "$ref": "#/definitions/IdentificationServiceArea"
+          }
+          ],
+          "description": "Resulting service area stored in DSS."
+        }
+      }
+    },
+    "SearchIdentificationServiceAreasResponse": {
+      "description": "Response to DSS query for Identification Service Areas in an area of interest.",
+      "required": [
+        "service_areas"
+      ],
+      "type": "object",
+      "properties": {
+        "service_areas": {
+          "description": "Identification Service Areas in the area of interest.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/IdentificationServiceArea"
+          }
+        }
+      }
+    },
+    "PutIdentificationServiceAreaNotificationParameters": {
+      "description": "Parameters of a message informing of new full information for an Identification Service Area.  Pushed (by a client, not the DSS) directly to clients with subscriptions when another client makes a change to airspace within a cell with a subscription.",
+      "required": [
+        "subscriptions"
+      ],
+      "type": "object",
+      "properties": {
+        "service_area": {
+          "anyOf": [
+          {
+            "$ref": "#/definitions/IdentificationServiceArea"
+          }
+          ],
+          "description": "Identification Service Area that the notifying client changed or created.\n\nIf this field is populated, the Identification Service Area was created or updated.  If this field is not populated, the Identification Service Area was deleted."
+        },
+        "subscriptions": {
+          "description": "Subscription(s) prompting this notification.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/SubscriptionState"
+          }
+        },
+        "extents": {
+          "$ref": "#/definitions/Volume4D",
+          "description": "The new or updated extents of the Identification Service Area.\n\nOmitted if Identification Service Area was deleted."
+        }
+      }
+    },
+    "SubscriberToNotify": {
+      "description": "Subscriber to notify of a creation/change/deletion of a change in the airspace.  This is provided by the DSS to a client changing the airspace, and it is the responsibility of the client changing the airspace (they will receive a set of these notification requests) to send a notification to each specified `url`.",
+      "required": [
+        "subscriptions",
+        "url"
+      ],
+      "type": "object",
+      "properties": {
+        "subscriptions": {
+          "description": "Subscription(s) prompting this notification.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/SubscriptionState"
+          }
+        },
+        "url": {
+          "anyOf": [
+          {
+            "$ref": "#/definitions/URL"
+          }
+          ],
+          "description": "The endpoint that the client mutating the airspace should provide the update to.  API depends on the DSS action taken that triggered this notification request."
+        }
+      }
+    },
+    "DeleteIdentificationServiceAreaResponse": {
+      "description": "Response for a request to delete an Identification Service Area.",
+      "required": [
+        "service_area",
+        "subscribers"
+      ],
+      "type": "object",
+      "properties": {
+        "service_area": {
+          "anyOf": [
+          {
+            "$ref": "#/definitions/IdentificationServiceArea"
+          }
+          ],
+          "description": "Indentification Service Area that was just deleted."
+        },
+        "subscribers": {
+          "description": "DSS subscribers that this client now has the obligation to notify of the Identification Service Area just deleted.  This client must call POST for each provided URL according to the `/uss/isas` path API.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/SubscriberToNotify"
+          }
+        }
+      }
+    },
+    "IdentificationServiceAreaURL": {
+      "anyOf": [
+      {
+        "$ref": "#/definitions/URL"
+      }
+      ],
+      "description": "The URL at which notifications regarding Identification Service Areas may be delivered.  See the `/uss/isas/{id}` path for specification of this endpoint.",
+      "type": "string",
+      "example": "https://example.com/isas/a4c6f8c0-ad77-4d93-9cc2-ec8601383f96"
+    },
+    "PutSubscriptionResponse": {
+      "description": "Response for a request to create or update a subscription.",
+      "required": [
+        "subscription"
+      ],
+      "type": "object",
+      "properties": {
+        "identification_service_areas": {
+          "description": "Identification Service Areas in or near the subscription area at the time of creation/update, if `identification_service_area_url` callback was specified.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/IdentificationServiceArea"
+          }
+        },
+        "operational_intents": {
+          "description": "OperationalIntents in or near the subscription area at the time of creation/update, if `operational_intent_url` callback was specified.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/OperationalIntent"
+          }
+        },
+        "constraints": {
+          "description": "Constraints in or near the subscription area at the time of creation/update, if `constraint_url` callback was specified.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Constraint"
+          }
+        },
+        "subscription": {
+          "anyOf": [
+          {
+            "$ref": "#/definitions/Subscription"
+          }
+          ],
+          "description": "Result of the operation on the subscription."
+        }
+      }
+    },
+    "RIDOperationalStatus": {
+      "description": "Indicates operational status of associated aircraft.",
+      "enum": [
+        "Undeclared",
+        "Ground",
+        "Airborne"
+      ],
+      "type": "string"
+    },
+    "RIDFlightDetails": {
+      "description": "Details about a flight reported by a remote ID service provider.  At least one of the registration or serial fields must be filled if required by CAA.",
+      "required": [
+        "id"
+      ],
+      "type": "object",
+      "properties": {
+        "id": {
+          "description": "ID for this flight, matching argument in request.",
+          "type": "string",
+          "example": "a3423b-213401-0023"
+        },
+        "operator_id": {
+          "description": "CAA-issued registration/license ID for the remote pilot or operator. ",
+          "type": "string"
+        },
+        "operator_location": {
+          "anyOf": [
+          {
+            "$ref": "#/definitions/LatLngPoint"
+          }
+          ],
+          "description": "Location of party controlling the aircraft."
+        },
+        "operation_description": {
+          "description": "Free-text field that enables the operator to describe the purpose of a flight, if so desired.",
+          "type": "string",
+          "example": "SafeFlightDrone company doing survey with DJI Inspire 2. See my privacy policy www.example.com/privacy."
+        },
+        "auth_data": {
+          "$ref": "#/definitions/RIDAuthData"
+        },
+        "serial_number": {
+          "description": "Can be specified when no registration ID exists and required by law in a region. This is expressed in the ANSI/CTA-2063 Physical Serial Number format.",
+          "type": "string",
+          "example": "INTCJ123-4567-890"
+        },
+        "registration_number": {
+          "description": "If a CAA provides a method of registering UAS, this number is provided by the CAA or its authorized representative.  Required when required by law in a region.",
+          "type": "string",
+          "example": "FA12345897"
+        }
+      }
+    },
+    "RIDRecentAircraftPosition": {
+      "description": "",
+      "required": [
+        "time",
+        "position"
+      ],
+      "type": "object",
+      "properties": {
+        "time": {
+          "format": "date-time",
+          "description": "Time at which this position applied.  RFC 3339 format, per OpenAPI specification.",
+          "type": "string"
+        },
+        "position": {
+          "$ref": "#/definitions/RIDAircraftPosition"
+        }
+      }
+    },
+    "GetIdentificationServiceAreaResponse": {
+      "description": "Response to DSS request for the identification service area with the given id.",
+      "required": [
+        "service_area"
+      ],
+      "type": "object",
+      "properties": {
+        "service_area": {
+          "$ref": "#/definitions/IdentificationServiceArea"
+        }
+      }
+    },
+    "CreateIdentificationServiceAreaParameters": {
+      "description": "Parameters for a request to create an Identification Service Area in the DSS.",
+      "required": [
+        "extents",
+        "flights_url"
+      ],
+      "type": "object",
+      "properties": {
+        "extents": {
+          "anyOf": [
+          {
+            "$ref": "#/definitions/Volume4D"
+          }
+          ],
+          "description": "The bounding spacetime extents of this Identification Service Area.  End time must be specified.  If start time is not specified, it will be set to the current time.  Start times in the past should be rejected by the DSS, except that it may adjust very recent start times to the current time.\n\nThese extents should not reveal any sensitive information about the flight or flights within them.  This means, for instance, that extents should not tightly-wrap a flight path, nor should they generally be centered around the takeoff point of a single flight."
+        },
+        "flights_url": {
+          "$ref": "#/definitions/RIDFlightsURL"
+        }
+      }
+    },
+    "UpdateIdentificationServiceAreaParameters": {
+      "description": "Parameters for a request to update an Identification Service Area in the DSS.",
+      "required": [
+        "extents",
+        "flights_url"
+      ],
+      "type": "object",
+      "properties": {
+        "extents": {
+          "anyOf": [
+          {
+            "$ref": "#/definitions/Volume4D"
+          }
+          ],
+          "description": "The bounding spacetime extents of this Identification Service Area.  End time must be specified.  If start time is not specified, it will remain unchanged.  Start times in the past should be rejected by the DSS unless they are unchanged from the Identification Service Area's current start time.\n\nThese extents should not reveal any sensitive information about the flight or flights within them.  This means, for instance, that extents should not tightly-wrap a flight path, nor should they generally be centered around the takeoff point of a single flight."
+        },
+        "flights_url": {
+          "$ref": "#/definitions/RIDFlightsURL"
+        }
+      }
+    },
+    "CreateSubscriptionParameters": {
+      "description": "Parameters for a request to create a subscription in the DSS.",
+      "required": [
+        "extents",
+        "callbacks"
+      ],
+      "type": "object",
+      "properties": {
+        "extents": {
+          "anyOf": [
+          {
+            "$ref": "#/definitions/Volume4D"
+          }
+          ],
+          "description": "The spacetime extents of the volume to subscribe to.\n\nThis subscription will automatically be deleted after its end time if it has not been refreshed by then.  If end time is not specified, the value will be chosen automatically by the DSS.\n\nNote that some Entities triggering notifications may lie entirely outside the requested area."
+        },
+        "callbacks": {
+          "$ref": "#/definitions/SubscriptionCallbacks"
+        }
+      }
+    },
+    "UpdateSubscriptionParameters": {
+      "description": "Parameters for a request to update a subscription in the DSS.",
+      "required": [
+        "extents",
+        "callbacks"
+      ],
+      "type": "object",
+      "properties": {
+        "extents": {
+          "anyOf": [
+          {
+            "$ref": "#/definitions/Volume4D"
+          }
+          ],
+          "description": "The spacetime extents of the volume to subscribe to.\n\nThis subscription will automatically be deleted after its end time if it has not been refreshed by then.  If end time is not specified, the value will be chosen automatically by the DSS.\n\nNote that some Entities triggering notifications may lie entirely outside the requested area."
+        },
+        "callbacks": {
+          "$ref": "#/definitions/SubscriptionCallbacks"
+        }
+      }
+    },
+    "Subscription": {
+      "description": "Specification of a geographic area that a client is interested in on an ongoing basis (e.g., “planning area”).  Internal to the DSS.",
+      "required": [
+        "id",
+        "url",
+        "notification_index",
+        "owner",
+        "version",
+        "callbacks"
+      ],
+      "type": "object",
+      "properties": {
+        "id": {
+          "anyOf": [
+          {
+            "$ref": "#/definitions/SubscriptionUUID"
+          }
+          ],
+          "description": "Unique identifier for this subscription."
+        },
+        "callbacks": {
+          "$ref": "#/definitions/SubscriptionCallbacks"
+        },
+        "owner": {
+          "description": "Assigned by the DSS based on creating client’s ID (via access token).  Used for restricting mutation and deletion operations to owner.",
+          "type": "string",
+          "example": "myuss"
+        },
+        "notification_index": {
+          "$ref": "#/definitions/SubscriptionNotificationIndex"
+        },
+        "time_end": {
+          "format": "date-time",
+          "description": "If set, this subscription will be automatically removed after this time.  RFC 3339 format, per OpenAPI specification.",
+          "type": "string"
+        },
+        "time_start": {
+          "format": "date-time",
+          "description": "If set, this Subscription will not generate any notifications before this time.  RFC 3339 format, per OpenAPI specification.",
+          "type": "string"
+        },
+        "version": {
+          "$ref": "#/definitions/Version"
+        }
+      }
+    },
+    "IdentificationServiceArea": {
+      "description": "An Identification Service Area (area in which remote ID services are being provided).  The DSS reports only these declarations and clients must exchange flight information peer-to-peer.",
+      "required": [
+        "flights_url",
+        "owner",
+        "time_start",
+        "time_end",
+        "version",
+        "id"
+      ],
+      "type": "object",
+      "properties": {
+        "flights_url": {
+          "$ref": "#/definitions/RIDFlightsURL"
+        },
+        "owner": {
+          "description": "Assigned by the DSS based on creating client’s ID (via access token).  Used for restricting mutation and deletion operations to owner.",
+          "type": "string",
+          "example": "myuss"
+        },
+        "time_start": {
+          "format": "date-time",
+          "description": "Beginning time of service.  RFC 3339 format, per OpenAPI specification.",
+          "type": "string"
+        },
+        "time_end": {
+          "format": "date-time",
+          "description": "End time of service.  RFC 3339 format, per OpenAPI specification.",
+          "type": "string"
+        },
+        "version": {
+          "$ref": "#/definitions/Version"
+        },
+        "id": {
+          "anyOf": [
+          {
+            "$ref": "#/definitions/EntityUUID"
+          }
+          ],
+          "description": "Unique identifier for this Identification Service Area."
+        }
+      }
+    },
+    "RIDAircraftState": {
+      "description": "State of an aircraft for the purposes of remote ID.",
+      "required": [
+        "timestamp",
+        "timestamp_accuracy",
+        "accuracy_h",
+        "accuracy_v",
+        "speed",
+        "vertical_speed",
+        "track",
+        "speed_accuracy",
+        "position"
+      ],
+      "type": "object",
+      "properties": {
+        "timestamp": {
+          "format": "date-time",
+          "description": "Time at which this state was valid.  This may be the time coming from the source, such as a GPS, or the time when the system computes the values using an algorithm such as an Extended Kalman Filter (EKF).  Timestamp must be expressed with a minimum resolution of 1/10th of a second.  RFC 3339 format, per OpenAPI specification.",
+          "type": "string"
+        },
+        "timestamp_accuracy": {
+          "format": "float",
+          "description": "Declaration of timestamp accuracy, which is the largest difference between Timestamp and true time of applicability for any of the following fields: Latitude, Longitude, Geodetic Altitude, Pressure Altitude of Position, Height. to determine time of applicability of the location data provided.  Expressed in seconds, precise to 1/10ths of seconds. The accuracy reflects the 95% uncertainty bound value for the timestamp.",
+          "minimum": 0,
+          "exclusiveMinimum": false,
+          "type": "number"
+        },
+        "operational_status": {
+          "$ref": "#/definitions/RIDOperationalStatus"
+        },
+        "position": {
+          "$ref": "#/definitions/RIDAircraftPosition"
+        },
+        "track": {
+          "format": "float",
+          "description": "Direction of flight expressed as a \"True North-based\" ground track angle.  This value is provided in degrees East of North with a minimum resolution of 1 degree.",
+          "maximum": 360,
+          "exclusiveMaximum": true,
+          "minimum": 0,
+          "exclusiveMinimum": false,
+          "type": "number"
+        },
+        "speed": {
+          "format": "float",
+          "description": "Ground speed of flight in meters per second.",
+          "minimum": 0,
+          "exclusiveMinimum": false,
+          "type": "number",
+          "example": 1.9
+        },
+        "speed_accuracy": {
+          "anyOf": [
+          {
+            "$ref": "#/definitions/SpeedAccuracy"
+          }
+          ],
+          "description": "Accuracy of horizontal ground speed."
+        },
+        "vertical_speed": {
+          "format": "float",
+          "description": "Speed up (vertically) WGS84-HAE, m/s.",
+          "type": "number",
+          "example": 0.2
+        },
+        "height": {
+          "$ref": "#/definitions/RIDHeight"
+        },
+        "group_radius": {
+          "format": "float",
+          "description": "Farthest horizontal distance from reported group location at which an aircraft in the group may be located (meters).  This value contains the \"Operating Area Radius\" data from the common data dictionary when group operation area is specified by point-radius.",
+          "minimum": 0,
+          "exclusiveMinimum": true,
+          "type": "number"
+        },
+        "group_ceiling": {
+          "format": "float",
+          "description": "Maximum altitude (meters WGS84-HAE) of Group Operation.  This value contains the \"Operating Area Ceiling\" data from the common data dictionary when group operation area is specified by point-radius.",
+          "type": "number"
+        },
+        "group_floor": {
+          "format": "float",
+          "description": "Minimum altitude (meters WGS84-HAE) of Group Operation.  If not specified, ground level shall be assumed.  This value contains the \"Operating Area Floor\" data from the common data dictionary when group operation area is specified by point-radius.",
+          "type": "number"
+        },
+        "group_count": {
+          "format": "int32",
+          "description": "When operating a group (or formation or swarm), number of aircraft in group.  This value contains the \"Operating Area Count\" data from the common data dictionary when group operation area is specified by point-radius.",
+          "minimum": 1,
+          "exclusiveMinimum": false,
+          "type": "integer"
+        },
+        "group_time_start": {
+          "format": "date-time",
+          "description": "Time at which a group operation starts.  This value contains the \"Operation Area Start\" data from the common data dictionary when group operation area is specified by point-radius.",
+          "type": "string"
+        },
+        "group_time_end": {
+          "format": "date-time",
+          "description": "Time at which a group operation starts.  This value contains the \"Operation Area End\" data from the common data dictionary when group operation area is specified by point-radius.",
+          "type": "string"
+        }
+      }
+    },
+    "RIDAircraftType": {
+      "description": "Type of aircraft for the purposes of remote ID.\n\n`VTOL` is a fixed wing aircraft that can take off vertically.  `Rotocraft` includes multirotor.",
+      "enum": [
+        "NotDeclared",
+        "Aeroplane",
+        "Rotorcraft",
+        "Gyroplane",
+        "VTOL",
+        "Ornithopter",
+        "Glider",
+        "Kite",
+        "FreeBalloon",
+        "CaptiveBalloon",
+        "Airship",
+        "FreeFallOrParachute",
+        "Rocket",
+        "TetheredPoweredAircraft",
+        "GroundObstacle",
+        "Other"
+      ],
+      "type": "string"
+    },
+    "RIDFlightsURL": {
+      "anyOf": [
+      {
+        "$ref": "#/definitions/URL"
+      }
+      ],
+      "description": "The URL at which the remote ID flights and their details may be retrieved.  See `/flights` and `/flights/{id}/details` paths for specification of this endpoint.\nThis URL is the base flights resource.  If this URL is specified as https://example.com/flights then the flight details for a particular {id} may be obtained at the URL https://example.com/flights/{id}/details.  This URL may not have a trailing / character.",
+      "type": "string",
+      "example": "https://example.com/flights"
+    },
+    "OperationalIntentReference": {
+      "description": "An OperationalIntentReference (area in which an Operation is being conducted, along with other high-level information, but no details).  The DSS reports only these references and clients must exchange details and additional information peer-to-peer.",
+      "required": [
+        "details_url",
+        "owner",
+        "time_start",
+        "time_end",
+        "id",
+        "priority"
+      ],
+      "type": "object",
+      "properties": {
+        "id": {
+          "anyOf": [
+          {
+            "$ref": "#/definitions/EntityUUID"
+          }
+          ],
+          "description": "Unique identifier for this OperationalIntentReference."
+        },
+        "details_url": {
+          "$ref": "#/definitions/OperationalIntentDetailsURL"
+        },
+        "error_reports_url": {
+          "$ref": "#/definitions/ErrorReportsURL"
+        },
+        "owner": {
+          "description": "Assigned by the DSS based on creating client’s ID (via access token).  Used for restricting mutation and deletion operations to owner.",
+          "type": "string",
+          "example": "myuss"
+        },
+        "time_start": {
+          "format": "date-time",
+          "description": "Beginning time of Operation.  RFC 3339 format, per OpenAPI specification.",
+          "type": "string"
+        },
+        "time_end": {
+          "format": "date-time",
+          "description": "End time of Operation.  RFC 3339 format, per OpenAPI specification.",
+          "type": "string"
+        },
+        "ovn": {
+          "anyOf": [
+          {
+            "$ref": "#/definitions/EntityOVN"
+          }
+          ],
+          "description": "Opaque version number of this OperationalIntentReference, used for updating or deleting the OperationalIntentReference.  Only populated by the DSS for OperationalIntentReferences owned by the requesting client.  Must be populated by a USS when notifying a subscriber of an altered OperationalIntent or providing full OperationalIntent information."
+        },
+        "priority": {
+          "$ref": "#/definitions/OperationalIntentPriority"
+        },
+        "uss_may_be_down": {
+          "type": "boolean",
+          "description": "If specified as true by the DSS, the details for this OperationalIntent may not be accessible.  The OVN for this OperationalIntentReference may be omitted when deconflicting an OperationalIntent, at which point this OperationalIntent will be disabled."
+        },
+        "disabled": {
+          "type": "boolean",
+          "description": "If specified as true by the DSS, this OperationalIntent has been disabled and will not be permitted to transition to Activated.  This means aircraft for this OperationalIntent will not be permitted to fly pursuant to this OperationalIntent, so this OperationalIntent may be ignored when planning and its OVN does not need to be provided to prove relevant airspace knowledge."
+        }
+      }
+    },
+    "GetOperationalIntentReferenceResponse": {
+      "description": "Response to DSS request for the OperationalIntentReference with the given ID.",
+      "required": [
+        "operational_intent_reference"
+      ],
+      "type": "object",
+      "properties": {
+        "operational_intent_reference": {
+          "$ref": "#/definitions/OperationalIntentReference"
+        }
+      }
+    },
+    "UpdateOperationalIntentReferenceParameters": {
+      "description": "Parameters for a request to update an OperationalIntentReference in the DSS.",
+      "required": [
+        "extents",
+        "details_url",
+        "priority",
+        "key"
+      ],
+      "type": "object",
+      "properties": {
+        "extents": {
+          "anyOf": [
+          {
+            "$ref": "#/definitions/Volume4D"
+          }
+          ],
+          "description": "The bounding spacetime extents of this OperationalIntentReference.  End time must be specified.  If start time is not specified, it will be set to the current time.  Start times in the past should be rejected by the DSS, except that it may adjust very recent start times to the current time."
+        },
+        "details_url": {
+          "$ref": "#/definitions/OperationalIntentDetailsURL"
+        },
+        "error_reports_url": {
+          "$ref": "#/definitions/ErrorReportsURL"
+        },
+        "priority": {
+          "$ref": "#/definitions/OperationalIntentPriority"
+        },
+        "key": {
+          "anyOf": [
+          {
+            "$ref": "#/definitions/DeconflictionKey"
+          }
+          ],
+          "description": "Proof that the client is aware of all relevant Entities with the requirement that the client has deconflicted with all these Entities.  Relevant Entities for OperationalIntents consist of all Constraints, and OperationalIntents with equal or higher priority."
+        }
+      }
+    },
+    "CreateOperationalIntentReferenceParameters": {
+      "description": "Parameters for a request to create an OperationalIntentReference in the DSS.",
+      "required": [
+        "extents",
+        "details_url",
+        "priority",
+        "key"
+      ],
+      "type": "object",
+      "properties": {
+        "extents": {
+          "anyOf": [
+          {
+            "$ref": "#/definitions/Volume4D"
+          }
+          ],
+          "description": "The bounding spacetime extents of this OperationalIntentReference.  End time must be specified.  If start time is not specified, it will be set to the current time.  Start times in the past should be rejected by the DSS, except that it may adjust very recent start times to the current time."
+        },
+        "details_url": {
+          "$ref": "#/definitions/OperationalIntentDetailsURL"
+        },
+        "error_reports_url": {
+          "$ref": "#/definitions/ErrorReportsURL"
+        },
+        "priority": {
+          "$ref": "#/definitions/OperationalIntentPriority"
+        },
+        "key": {
+          "anyOf": [
+          {
+            "$ref": "#/definitions/DeconflictionKey"
+          }
+          ],
+          "description": "Proof that the client is aware of all relevant Entities with the requirement that the client has deconflicted with all these Entities.  Relevant Entities for OperationalIntents consist of all Constraints, and OperationalIntents with equal or higher priority."
+        }
+      }
+    },
+    "OperationalIntent": {
+      "description": "Full description of a UTM OperationalIntent.",
+      "required": [
+        "reference",
+        "details"
+      ],
+      "type": "object",
+      "properties": {
+        "reference": {
+          "$ref": "#/definitions/OperationalIntentReference"
+        },
+        "details": {
+          "$ref": "#/definitions/OperationalIntentDetails"
+        }
+      }
+    },
+    "OperationalIntentDetails": {
+      "description": "Details of a UTM OperationalIntent. Note that this data is not stored in the DSS; only with the clients.",
+      "required": [
+        "volumes"
+      ],
+      "type": "object",
+      "properties": {
+        "volumes": {
+          "description": "Volumes that wholly contain the Operation while being as small as practical.",
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Volume4D"
+          }
+        },
+        "negotiations_url": {
+          "$ref": "#/definitions/NegotiationsURL"
+        },
+        "state": {
+          "$ref": "#/definitions/OperationalIntentState"
+        }
+      }
+    },
+    "RogueFlight": {
+      "description": "Details about a rogue flight inside a Constraint.",
+      "type": "object",
+      "properties": {
+        "position_reporting_url": {
+          "$ref": "#/definitions/RIDFlightsURL"
+        },
+        "flight_id": {
+          "description": "This flight ID may be used to request real-time position updates for the rogue aircraft in this Constraint through the specified remote ID interface.",
+          "allOf": [
+          {
+            "$ref": "#/definitions/RIDFlightID"
+          }
+          ]
+        }
+      }
+    },
+    "SearchOperationalIntentReferencesResponse": {
+      "description": "Response to DSS query for OperationalIntentReferences in an area of interest.",
+      "required": [
+        "operational_intent_references"
+      ],
+      "type": "object",
+      "properties": {
+        "operational_intent_references": {
+          "description": "OperationalIntentReferences in the area of interest.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/OperationalIntentReference"
+          }
+        }
+      }
+    },
+    "PostOperationalIntentNotificationParameters": {
+      "description": "Parameters of a message informing of new full information for an OperationalIntent.  Pushed (by a client, not the DSS) directly to clients with subscriptions when another client makes a change to airspace within a cell with a subscription.",
+      "required": [
+        "subscriptions"
+      ],
+      "type": "object",
+      "properties": {
+        "operational_intent": {
+          "anyOf": [
+          {
+            "$ref": "#/definitions/OperationalIntent"
+          }
+          ],
+          "description": "Full information for OperationalIntent that the notifying client changed or created.\n\nIf this field is populated, the OperationalIntent was created or updated.  If this field is not populated, the OperationalIntent was deleted."
+        },
+        "subscriptions": {
+          "description": "Subscription(s) prompting this notification.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/SubscriptionState"
+          }
+        }
+      }
+    },
+    "PutErrorReportParameters": {
+      "description": "Parameters of a message informing a USS of an error that the USS would otherwise not notice.",
+      "required": [
+        "endpoint_url",
+        "response_code",
+        "problem",
+        "timestamp"
+      ],
+      "type": "object",
+      "properties": {
+        "endpoint_url": {
+          "type": "string",
+          "description": "URL for request that resulted in an error."
+        },
+        "headers": {
+          "description": "Set of headers included in request that resulted in an error.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "body": {
+          "description": "Base64-encoded body content sent in request that resulted in an error.",
+          "type": "string"
+        },
+        "response_code": {
+          "type": "integer",
+          "format": "int32",
+          "description": "HTTP response code encountered in error response."
+        },
+        "response_body": {
+          "type": "string",
+          "description": "Base64-encoded body content received in response that was in error."
+        },
+        "problem": {
+          "type": "string",
+          "description": "Human-readable description of the problem with the response."
+        },
+        "timestamp": {
+          "format": "date-time",
+          "description": "When the error was observed.  RFC 3339 format, per OpenAPI specification.",
+          "type": "string"
+        }
+      }
+    },
+    "CreateConstraintReferenceParameters": {
+      "description": "Parameters for a request to create a ConstraintReference in the DSS.",
+      "required": [
+        "extents",
+        "details_url"
+      ],
+      "type": "object",
+      "properties": {
+        "extents": {
+          "anyOf": [
+          {
+            "$ref": "#/definitions/Volume4D"
+          }
+          ],
+          "description": "The bounding spacetime extents of this ConstraintReference.  End time must be specified.  If start time is not specified, it will be set to the current time.  Start times in the past should be rejected by the DSS, except that it may adjust very recent start times to the current time."
+        },
+        "details_url": {
+          "$ref": "#/definitions/ConstraintDetailsURL"
+        },
+        "error_reports_url": {
+          "$ref": "#/definitions/ErrorReportsURL"
+        }
+      }
+    },
+    "GetConstraintReferenceResponse": {
+      "description": "Response to DSS request for the ConstraintReference with the given ID.",
+      "required": [
+        "constraint_reference"
+      ],
+      "type": "object",
+      "properties": {
+        "constraint_reference": {
+          "$ref": "#/definitions/ConstraintReference"
+        }
+      }
+    },
+    "ConstraintReference": {
+      "description": "A ConstraintReference (area in which a Constraint is present, along with other high-level information, but no details).  The DSS reports only these references and clients must exchange details and additional information peer-to-peer.",
+      "required": [
+        "id",
+        "details_url",
+        "owner",
+        "time_start",
+        "time_end"
+      ],
+      "type": "object",
+      "properties": {
+        "id": {
+          "anyOf": [
+          {
+            "$ref": "#/definitions/EntityUUID"
+          }
+          ],
+          "description": "Unique identifier for this ConstraintReference."
+        },
+        "details_url": {
+          "$ref": "#/definitions/ConstraintDetailsURL"
+        },
+        "error_reports_url": {
+          "$ref": "#/definitions/ErrorReportsURL"
+        },
+        "owner": {
+          "description": "Assigned by the DSS based on creating client’s ID (via access token).  Used for restricting mutation and deletion operations to owner.",
+          "type": "string",
+          "example": "myuss"
+        },
+        "time_start": {
+          "format": "date-time",
+          "description": "Beginning time of Operation.  RFC 3339 format, per OpenAPI specification.",
+          "type": "string"
+        },
+        "time_end": {
+          "format": "date-time",
+          "description": "End time of Operation.  RFC 3339 format, per OpenAPI specification.",
+          "type": "string"
+        },
+        "ovn": {
+          "anyOf": [
+          {
+            "$ref": "#/definitions/EntityOVN"
+          }
+          ],
+          "description": "Opaque version number of this ConstraintReference, used for updating or deleting the ConstraintReference.  Only populated by the DSS for ConstraintReferences owned by the requesting client.  Must be populated by a USS when notifying a subscriber of an altered Constraint or providing full Constraint information."
+        }
+      }
+    },
+    "PostConstraintNotificationParameters": {
+      "description": "Parameters of a message informing of new full information for a Constraint.  Pushed (by a client, not the DSS) directly to clients with subscriptions when another client makes a change to airspace within a cell with a subscription.",
+      "required": [
+        "subscriptions"
+      ],
+      "type": "object",
+      "properties": {
+        "constraint": {
+          "anyOf": [
+          {
+            "$ref": "#/definitions/Constraint"
+          }
+          ],
+          "description": "Constraint that the notifying client changed or created.\n\nIf this field is populated, the Constraint was created or updated.  If this field is not populated, the Constraint was deleted."
+        },
+        "subscriptions": {
+          "description": "Subscription(s) prompting this notification.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/SubscriptionState"
+          }
+        }
+      }
+    },
+    "Constraint": {
+      "description": "Full specification of a UTM Constraint.",
+      "required": [
+        "reference",
+        "details"
+      ],
+      "type": "object",
+      "properties": {
+        "reference": {
+          "$ref": "#/definitions/ConstraintReference"
+        },
+        "details": {
+          "$ref": "#/definitions/ConstraintDetails"
+        }
+      }
+    },
+    "ConstraintDetails": {
+      "description": "Details of a UTM Constraint. Note that this data is not stored in the DSS; only with the clients.",
+      "required": [
+        "volumes"
+      ],
+      "type": "object",
+      "properties": {
+        "volumes": {
+          "description": "Volumes that wholly contain the Constraint while being as small as practical.",
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Volume4D"
+          }
+        },
+        "negotiations_url": {
+          "$ref": "#/definitions/NegotiationsURL"
+        },
+        "rogue_flight": {
+          "oneOf": [
+          {
+            "$ref": "#/definitions/RogueFlight"
+          }
+          ],
+          "description": "If this Constraint is an alert for a rogue flight, this field contains the details for tracking that flight."
+        },
+        "exempt_operational_intents": {
+          "description": "List of OperationalIntents exempt from this Constraint, if applicable.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/EntityUUID"
+          }
+        }
+      }
+    },
+    "ChangeConstraintReferenceResponse": {
+      "description": "Response to a request to create, update, or delete a ConstraintReference. in the DSS.",
+      "required": [
+        "subscribers"
+      ],
+      "type": "object",
+      "properties": {
+        "subscribers": {
+          "description": "DSS subscribers that this client now has the obligation to notify of the Constraint changes just made.  This client must call POST for each provided URL according to the `/uss/constraints/{id}` path API.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/SubscriberToNotify"
+          }
+        },
+        "constraint_reference": {
+          "anyOf": [
+          {
+            "$ref": "#/definitions/ConstraintReference"
+          }
+          ],
+          "description": "Resulting ConstraintReference stored in DSS.  Omitted if and only if ConstraintReference was deleted."
+        }
+      }
+    },
+    "ChangeOperationalIntentReferenceResponse": {
+      "description": "Response to a request to create, update, or delete an OperationalIntentReference in the DSS.",
+      "required": [
+        "subscribers"
+      ],
+      "type": "object",
+      "properties": {
+        "subscribers": {
+          "description": "DSS subscribers that this client now has the obligation to notify of the Operation changes just made.  This client must call POST for each provided URL according to the `/uss/ops/{id}` path API.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/SubscriberToNotify"
+          }
+        },
+        "operational_intent_reference": {
+          "anyOf": [
+          {
+            "$ref": "#/definitions/OperationalIntentReference"
+          }
+          ],
+          "description": "Resulting OperationalIntentReference stored in DSS.  Omitted if and only if OperationalIntentReference was deleted."
+        }
+      }
+    },
+    "SearchConstraintReferencesResponse": {
+      "description": "Response to DSS query for ConstraintReferences in an area of interest.",
+      "required": [
+        "constraint_references"
+      ],
+      "type": "object",
+      "properties": {
+        "constraint_references": {
+          "description": "ConstraintReferences in the area of interest.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ConstraintReference"
+          }
+        }
+      }
+    },
+    "UpdateConstraintReferenceParameters": {
+      "description": "Parameters for a request to update a ConstraintReference in the DSS.",
+      "required": [
+        "extents",
+        "details_url"
+      ],
+      "type": "object",
+      "properties": {
+        "extents": {
+          "anyOf": [
+          {
+            "$ref": "#/definitions/Volume4D"
+          }
+          ],
+          "description": "The bounding spacetime extents of this ConstraintReference.  End time must be specified.  If start time is not specified, it will be set to the current time.  Start times in the past should be rejected by the DSS, except that it may adjust very recent start times to the current time."
+        },
+        "details_url": {
+          "$ref": "#/definitions/ConstraintDetailsURL"
+        },
+        "error_reports_url": {
+          "$ref": "#/definitions/ErrorReportsURL"
+        }
+      }
+    },
+    "EntityReference": {
+      "description": "Reference to a generic Entity known to the DSS.",
+      "type": "object",
+      "properties": {
+        "operational_intent_reference": {
+          "$ref": "#/definitions/OperationalIntentReference",
+          "description": ""
+        },
+        "constraint_reference": {
+          "$ref": "#/definitions/ConstraintReference",
+          "description": ""
+        }
+      }
+    },
+    "GetConstraintResponse": {
+      "description": "Response to peer request for the details of Operation with the given ID.",
+      "required": [
+        "constraint"
+      ],
+      "type": "object",
+      "properties": {
+        "constraint": {
+          "$ref": "#/definitions/Constraint"
+        }
+      }
+    },
+    "GetOperationalIntentResponse": {
+      "description": "Response to peer request for the details of OperationalIntent with the given ID.",
+      "required": [
+        "operational_intent"
+      ],
+      "type": "object",
+      "properties": {
+        "operational_intent": {
+          "$ref": "#/definitions/OperationalIntent"
+        }
+      }
+    },
+    "SubscriptionCallbacks": {
+      "description": "Endpoints that should be called when an applicable event occurs.  At least one field must be specified.",
+      "type": "object",
+      "properties": {
+        "identification_service_area_url": {
+          "anyOf": [
+          {
+            "$ref": "#/definitions/IdentificationServiceAreaURL"
+          }
+          ],
+          "description": "If specified, other clients will be instructed by the DSS to call this endpoint when an Identification Service Area relevant to this Subscription is created, modified, or deleted.  Must implement PUT and DELETE according to the `/uss/isas/{id}` path API."
+        },
+        "operational_intents_url": {
+          "anyOf": [
+          {
+            "$ref": "#/definitions/OperationalIntentDetailsURL"
+          }
+          ],
+          "description": "If specified, other clients will be instructed by the DSS to call this endpoint when an Operation relevant to this Subscription is created, modified, or deleted.  Must implement POST according to the `/uss/ops/{id}` path API."
+        },
+        "constraints_url": {
+          "anyOf": [
+          {
+            "$ref": "#/definitions/ConstraintDetailsURL"
+          }
+          ],
+          "description": "If specified, other clients will be instructed by the DSS to call this endpoint when a Constraint relevant to this Subscription is created, modified, or deleted.  Must implement POST according to the `/uss/constraints/{id}` path API."
+        }
+      }
+    },
+    "AirspaceConflictResponse": {
+      "description": "Data provided when an airspace conflict was encountered.",
+      "type": "object",
+      "properties": {
+        "message": {
+          "description": "Human-readable message indicating what error occurred and/or why.",
+          "type": "string"
+        },
+        "entity_conflicts": {
+          "description": "List of Entity references for which current proof of knowledge was not provided.  If this field is present and contains elements, the calling USS should query the details URLs for these Entities to obtain their details and correct OVNs.  The OVNs can be used to update the key, at which point the USS may retry this call.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/EntityReference"
+          }
+        },
+        "hash_conflicts": {
+          "description": "List of `entity_ids` Hashes (one per DeconflictionKeyHash) for which the corresponding entity_ovns did not match the current versions of all listed Entities.  If this field is present and contains elements, the calling USS should re-query the details of the relevant Entities to obtain updated OVNs.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Hash"
+          }
+        }
+      }
+    },
+    "OperationalIntentDetailsURL": {
+      "anyOf": [
+      {
+        "$ref": "#/definitions/URL"
+      }
+      ],
+      "description": "The URL at which the details of an OperationalIntent may be retrieved.  See `/uss/ops/{id}` path for specification of this endpoint.  This URL is the base OperationalIntents resource.  If this URL is specified as https://example.com/ops then the details for a particular {id} may be obtained at the URL https://example.com/ops/{id}.  This URL may not have a trailing / character.",
+      "example": "https://example.com/ops"
+    },
+    "ConstraintDetailsURL": {
+      "anyOf": [
+      {
+        "$ref": "#/definitions/URL"
+      }
+      ],
+      "description": "The URL at which the details of a Constraint may be retrieved.  See `/uss/constraints/{id}` path for specification of this endpoint.\nThis URL is the base Constraints resource.  If this URL is specified as https://example.com/constraints then the details for a particular {id} may be obtained at the URL https://example.com/constraints/{id}.  This URL may not have a trailing / character.",
+      "example": "https://example.com/constraints"
+    },
+    "ErrorReportsURL": {
+      "anyOf": [
+      {
+        "$ref": "#/definitions/URL"
+      }
+      ],
+      "description": "The URL at which an error report may be submitted.  See `/uss/error_reports/{id}` path for specification of this endpoint.\nThis URL is the base ErrorReports resource.  If this URL is specified as https://example.com/error_reports then an error report with {id} may be submitted at the URL https://example.com/error_reports/{id}.  This URL may not have a trailing / character.",
+      "example": "https://example.com/error_reports"
+    },
+    "OperationalIntentPriority": {
+      "format": "int32",
+      "description": "Ordinal priority of this OperationalIntent.  Determined by client USS via a function of the details of the OperationalIntent according to relevant regulations.  The simplest (non-prioritized) of these functions would be one that returns 0 priority for any OperationalIntents.",
+      "type": "integer"
+    },
+    "OperationalIntentState": {
+      "description": "State of an OperationalIntent.\n\n`Proposed`: This OperationalIntent has not yet been fully deconflicted with other Entities, but the owning USS is pursuing negotiations to complete deconfliction.\n\n`Accepted`: This OperationalIntent was fully deconflicted from other Entities at the time it changed to this state, but no aircraft associated with it are active yet.\n\n`Activated`: One or more aircraft associated with this OperationalIntent are, or will imminently be, in flight.",
+      "enum": [
+        "Proposed",
+        "Accepted",
+        "Activated"
+      ],
+      "type": "string"
+    },
+    "NegotiationsURL": {
+      "anyOf": [
+      {
+        "$ref": "#/definitions/URL"
+      }
+      ],
+      "description": "The URL at which negotiations may be requested.  See `/uss/negotiations/{id}` path for specification of this endpoint.\nThis URL is the base negotiations resource.  If this URL is specified as https://example.com/negotiations then a negotiation with {id} may be requested at the URL https://example.com/negotiations/{id}.  This URL may not have a trailing / character.",
+      "example": "https://example.com/negotiations"
+    },
+    "NegotiationParameters": {
+      "description": "Parameters of a negotiation request for a set of OperationalIntents and/or Constraints to be deconflicted with a proposed OperationalIntent.",
+      "required": [
+        "proposed_operational_intent"
+      ],
+      "type": "object",
+      "properties": {
+        "proposed_operational_intent": {
+          "anyOf": [
+          {
+            "$ref": "#/definitions/OperationalIntent"
+          }
+          ],
+          "description": "Full information of proposed OperationalIntent from which the conflicting_entities should be deconflicted."
+        },
+        "conflicting_operational_intents": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/EntityUUID"
+          },
+          "description": "OperationalIntents that the initiating USS is requesting be deconflicted from the proposed_operational_intent."
+        },
+        "conflicting_constraints": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/EntityUUID"
+          },
+          "description": "Constraints that the initiating DSS is requesting be deconflicted from (or an exemption added for) the proposed_operational_intent."
+        }
+      }
+    },
+    "NegotiationResponse": {
+      "description": "Response to a successful negotiation request to deconflict a set of OperationalIntents and/or Constraints from a proposed OperationalIntent.",
+      "type": "object",
+      "properties": {
+        "operational_intents": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/OperationalIntent"
+          },
+          "description": "Full information for updated OperationalIntents deconflicted in response to this negotiation request."
+        },
+        "constraints": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Constraint"
+          },
+          "description": "Full information for updated Constraints deconflicted in response to this negotiation request."
+        }
+      }
+    },
+    "GetHostNamesResponse": {
+      "description": "Response to a request for information tracked by the DSS regarding the status of a particular hostname.",
+      "required": [
+        "status",
+        "version"
+      ],
+      "type": "object",
+      "properties": {
+        "status": {
+          "$ref": "#/definitions/HostNameStatus"
+        },
+        "version": {
+          "anyOf": [
+          {
+            "$ref": "#/definitions/UUIDv4"
+          }
+          ],
+          "description": "Current version of hostname status.  Must be provided to the DSS when changing the hostname's status."
+        }
+      }
+    },
+    "HostNameStatus": {
+      "description": "Status of a hostname as tracked by the DSS.",
+      "required": [
+        "down"
+      ],
+      "type": "object",
+      "properties": {
+        "down": {
+          "type": "boolean",
+          "description": "If true, the DSS believes this hostname is down.  Future OperationalIntents whose details are hosted by this hostname may be disabled by the DSS if another USS wishes to plan in the area."
+        }
+      }
+    },
+    "UpdateHostNameDownParameters": {
+      "description": "Parameters of a request to change the status of a hostname's \"down\" status in the DSS.",
+      "required": [
+        "down"
+      ],
+      "type": "object",
+      "properties": {
+        "down": {
+          "type": "boolean",
+          "description": "If true, the DSS should consider this hostname to be down.  Future OperationalIntents whose details are hosted by this hostname may be disabled by the DSS if another USS wishes to plan in the area."
+        }
+      }
+    }
+  },
+  "x-components": {}
+}

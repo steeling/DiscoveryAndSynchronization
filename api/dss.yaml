@@ -14,6 +14,7 @@ paths:
     get:
       tags:
       - dss_ops
+      operationId: searchOperationalIntentReferences
       parameters:
       - name: area
         description: The area in which to search for OperationalIntentReferences.  References for some OperationalIntents near this area but wholly outside it may also be returned.
@@ -82,6 +83,7 @@ paths:
     get:
       tags:
       - dss_ops
+      operationId: getOperationalIntentReference
       responses:
         "200":
           content:
@@ -129,6 +131,7 @@ paths:
         required: true
       tags:
       - dss_ops
+      operationId: createOperationalIntentReference
       responses:
         "200":
           content:
@@ -197,6 +200,7 @@ paths:
         required: true
       tags:
       - dss_ops
+      operationId: updateOperationalIntentReference
       responses:
         "200":
           content:
@@ -252,6 +256,7 @@ paths:
     delete:
       tags:
       - dss_ops
+      operationId: deleteOperationalIntentReference
       responses:
         "200":
           content:

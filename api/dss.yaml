@@ -1464,8 +1464,7 @@ components:
           description: This flight ID may be used to request real-time position updates
             for the rogue aircraft in this Constraint through the specified remote
             ID interface.
-          allOf:
-          - $ref: '#/components/schemas/RIDFlightID'
+          $ref: '#/components/schemas/RIDFlightID'
     SearchOperationalIntentReferencesResponse:
       description: Response to DSS query for OperationalIntentReferences in an area of interest.
       required:
@@ -1643,8 +1642,7 @@ components:
         negotiations_url:
           $ref: '#/components/schemas/NegotiationsURL'
         rogue_flight:
-          oneOf:
-            - $ref: '#/components/schemas/RogueFlight'
+          $ref: '#/components/schemas/RogueFlight'
           description: If this Constraint is an alert for a rogue flight, this field contains the details
             for tracking that flight.
         exempt_operational_intents:

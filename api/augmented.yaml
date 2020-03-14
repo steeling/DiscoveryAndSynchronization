@@ -50,7 +50,7 @@ definitions:
           $ref: '#/definitions/SubscriberToNotify'
         type: array
     required:
-    - subscribers
+      - subscribers
     type: object
   ChangeOperationalIntentReferenceResponse:
     description: >-
@@ -71,7 +71,7 @@ definitions:
           $ref: '#/definitions/SubscriberToNotify'
         type: array
     required:
-    - subscribers
+      - subscribers
     type: object
   Constraint:
     description: Full specification of a UTM Constraint.
@@ -81,8 +81,8 @@ definitions:
       reference:
         $ref: '#/definitions/ConstraintReference'
     required:
-    - reference
-    - details
+      - reference
+      - details
     type: object
   ConstraintDetails:
     description: >-
@@ -97,6 +97,7 @@ definitions:
       negotiations_url:
         $ref: '#/definitions/NegotiationsURL'
       rogue_flight:
+        $ref: '#/definitions/RogueFlight'
         description: >-
           If this Constraint is an alert for a rogue flight, this field contains
           the details for tracking that flight.
@@ -109,7 +110,7 @@ definitions:
         minItems: 1
         type: array
     required:
-    - volumes
+      - volumes
     type: object
   ConstraintDetailsURL:
     $ref: '#/definitions/URL'
@@ -161,11 +162,11 @@ definitions:
         format: date-time
         type: string
     required:
-    - id
-    - details_url
-    - owner
-    - time_start
-    - time_end
+      - id
+      - details_url
+      - owner
+      - time_start
+      - time_end
     type: object
   CreateConstraintReferenceParameters:
     description: Parameters for a request to create a ConstraintReference in the DSS.
@@ -183,8 +184,8 @@ definitions:
           DSS, except that it may adjust very recent start times to the current
           time.
     required:
-    - extents
-    - details_url
+      - extents
+      - details_url
     type: object
   CreateIdentificationServiceAreaParameters:
     description: >-
@@ -208,8 +209,8 @@ definitions:
       flights_url:
         $ref: '#/definitions/RIDFlightsURL'
     required:
-    - extents
-    - flights_url
+      - extents
+      - flights_url
     type: object
   CreateOperationalIntentReferenceParameters:
     description: >-
@@ -238,10 +239,10 @@ definitions:
       priority:
         $ref: '#/definitions/OperationalIntentPriority'
     required:
-    - extents
-    - details_url
-    - priority
-    - key
+      - extents
+      - details_url
+      - priority
+      - key
     type: object
   CreateSubscriptionParameters:
     description: Parameters for a request to create a subscription in the DSS.
@@ -262,8 +263,8 @@ definitions:
           Note that some Entities triggering notifications may lie entirely
           outside the requested area.
     required:
-    - extents
-    - callbacks
+      - extents
+      - callbacks
     type: object
   DeconflictionKey:
     description: >
@@ -315,8 +316,8 @@ definitions:
           Hash of an ordered list of EntityOVNs that correspond with the list of
           EntityUUIDs used to generate the `entity_ids` property value.
     required:
-    - entity_ids
-    - entity_ovns
+      - entity_ids
+      - entity_ovns
     type: object
   DeleteIdentificationServiceAreaResponse:
     description: Response for a request to delete an Identification Service Area.
@@ -333,8 +334,8 @@ definitions:
           $ref: '#/definitions/SubscriberToNotify'
         type: array
     required:
-    - service_area
-    - subscribers
+      - service_area
+      - subscribers
     type: object
   DeleteSubscriptionResponse:
     description: Response for a successful request to delete an Subscription.
@@ -343,7 +344,7 @@ definitions:
         $ref: '#/definitions/Subscription'
         description: The Subscription which was deleted.
     required:
-    - subscription
+      - subscription
     type: object
   EntityOVN:
     description: >-
@@ -370,8 +371,8 @@ definitions:
         format: int32
         type: integer
     required:
-    - token
-    - version
+      - token
+      - version
     title: EntityOVN
     type: object
   EntityReference:
@@ -433,7 +434,7 @@ definitions:
         minItems: 3
         type: array
     required:
-    - vertices
+      - vertices
     type: object
   GeoPolygonString:
     description: >-
@@ -454,7 +455,7 @@ definitions:
       constraint_reference:
         $ref: '#/definitions/ConstraintReference'
     required:
-    - constraint_reference
+      - constraint_reference
     type: object
   GetConstraintResponse:
     description: Response to peer request for the details of Operation with the given ID.
@@ -462,7 +463,7 @@ definitions:
       constraint:
         $ref: '#/definitions/Constraint'
     required:
-    - constraint
+      - constraint
     type: object
   GetFlightDetailsResponse:
     description: Response to remote ID provider query for details about a specific flight.
@@ -470,7 +471,7 @@ definitions:
       details:
         $ref: '#/definitions/RIDFlightDetails'
     required:
-    - details
+      - details
     type: object
   GetFlightsResponse:
     description: >-
@@ -493,8 +494,8 @@ definitions:
         format: date-time
         type: string
     required:
-    - timestamp
-    - flights
+      - timestamp
+      - flights
     type: object
   GetHostNamesResponse:
     description: >-
@@ -509,8 +510,8 @@ definitions:
           Current version of hostname status.  Must be provided to the DSS when
           changing the hostname's status.
     required:
-    - status
-    - version
+      - status
+      - version
     type: object
   GetIdentificationServiceAreaResponse:
     description: >-
@@ -520,7 +521,7 @@ definitions:
       service_area:
         $ref: '#/definitions/IdentificationServiceArea'
     required:
-    - service_area
+      - service_area
     type: object
   GetOperationalIntentReferenceResponse:
     description: >-
@@ -530,7 +531,7 @@ definitions:
       operational_intent_reference:
         $ref: '#/definitions/OperationalIntentReference'
     required:
-    - operational_intent_reference
+      - operational_intent_reference
     type: object
   GetOperationalIntentResponse:
     description: >-
@@ -540,7 +541,7 @@ definitions:
       operational_intent:
         $ref: '#/definitions/OperationalIntent'
     required:
-    - operational_intent
+      - operational_intent
     type: object
   GetSubscriptionResponse:
     description: Response to DSS request for the subscription with the given id.
@@ -548,7 +549,7 @@ definitions:
       subscription:
         $ref: '#/definitions/Subscription'
     required:
-    - subscription
+      - subscription
     type: object
   Hash:
     description: >-
@@ -614,20 +615,20 @@ definitions:
 
       `HA1m`: < 1m
     enum:
-    - HAUnknown
-    - HA10NMPlus
-    - HA10NM
-    - HA4NM
-    - HA2NM
-    - HA1NM
-    - HA05NM
-    - HA03NM
-    - HA01NM
-    - HA005NM
-    - HA30m
-    - HA10m
-    - HA3m
-    - HA1m
+      - HAUnknown
+      - HA10NMPlus
+      - HA10NM
+      - HA4NM
+      - HA2NM
+      - HA1NM
+      - HA05NM
+      - HA03NM
+      - HA01NM
+      - HA005NM
+      - HA30m
+      - HA10m
+      - HA3m
+      - HA1m
     type: string
   HostName:
     description: Valid hostname (no protocol or path allowed).
@@ -642,7 +643,7 @@ definitions:
           disabled by the DSS if another USS wishes to plan in the area.
         type: boolean
     required:
-    - down
+      - down
     type: object
   IdentificationServiceArea:
     description: >-
@@ -674,12 +675,12 @@ definitions:
       version:
         $ref: '#/definitions/Version'
     required:
-    - flights_url
-    - owner
-    - time_start
-    - time_end
-    - version
-    - id
+      - flights_url
+      - owner
+      - time_start
+      - time_end
+      - version
+      - id
     type: object
   IdentificationServiceAreaURL:
     $ref: '#/definitions/URL'
@@ -697,8 +698,8 @@ definitions:
       lng:
         $ref: '#/definitions/Longitude'
     required:
-    - lat
-    - lng
+      - lat
+      - lng
     type: object
   Latitude:
     description: >-
@@ -719,8 +720,8 @@ definitions:
     exclusiveMaximum: false
     exclusiveMinimum: false
     format: double
-    maximum: 180
-    minimum: -180
+    maximum: -180
+    minimum: 180
     type: number
   NegotiationParameters:
     description: >-
@@ -747,7 +748,7 @@ definitions:
           Full information of proposed OperationalIntent from which the
           conflicting_entities should be deconflicted.
     required:
-    - proposed_operational_intent
+      - proposed_operational_intent
     type: object
   NegotiationResponse:
     description: >-
@@ -795,8 +796,8 @@ definitions:
         $ref: '#/definitions/EntityOVN'
         description: ''
     required:
-    - id
-    - sig
+      - id
+      - sig
     type: object
   OperationalIntent:
     description: Full description of a UTM OperationalIntent.
@@ -806,8 +807,8 @@ definitions:
       reference:
         $ref: '#/definitions/OperationalIntentReference'
     required:
-    - reference
-    - details
+      - reference
+      - details
     type: object
   OperationalIntentDetails:
     description: >-
@@ -827,12 +828,12 @@ definitions:
         minItems: 1
         type: array
     required:
-    - volumes
+      - volumes
     type: object
   OperationalIntentDetailsURL:
     $ref: '#/definitions/URL'
     description: >-
-      The URL at which the details of an OperationalIntent may be retrieved.
+      The URL at which the details of an OperationalIntent may be retrieved. 
       See `/uss/ops/{id}` path for specification of this endpoint.  This URL is
       the base OperationalIntents resource.  If this URL is specified as
       https://example.com/ops then the details for a particular {id} may be
@@ -881,7 +882,7 @@ definitions:
           information.
       owner:
         description: >-
-          Assigned by the DSS based on creating client’s ID (via access token).
+          Assigned by the DSS based on creating client’s ID (via access token). 
           Used for restricting mutation and deletion operations to owner.
         example: myuss
         type: string
@@ -906,12 +907,12 @@ definitions:
           disabled.
         type: boolean
     required:
-    - details_url
-    - owner
-    - time_start
-    - time_end
-    - id
-    - priority
+      - details_url
+      - owner
+      - time_start
+      - time_end
+      - id
+      - priority
     type: object
   OperationalIntentState:
     description: >-
@@ -931,9 +932,9 @@ definitions:
       `Activated`: One or more aircraft associated with this OperationalIntent
       are, or will imminently be, in flight.
     enum:
-    - Proposed
-    - Accepted
-    - Activated
+      - Proposed
+      - Accepted
+      - Activated
     type: string
   PostConstraintNotificationParameters:
     description: >-
@@ -956,7 +957,7 @@ definitions:
           $ref: '#/definitions/SubscriptionState'
         type: array
     required:
-    - subscriptions
+      - subscriptions
     type: object
   PostOperationalIntentNotificationParameters:
     description: >-
@@ -981,7 +982,7 @@ definitions:
           $ref: '#/definitions/SubscriptionState'
         type: array
     required:
-    - subscriptions
+      - subscriptions
     type: object
   PutErrorReportParameters:
     description: >-
@@ -1016,10 +1017,10 @@ definitions:
         format: date-time
         type: string
     required:
-    - endpoint_url
-    - response_code
-    - problem
-    - timestamp
+      - endpoint_url
+      - response_code
+      - problem
+      - timestamp
     type: object
   PutIdentificationServiceAreaNotificationParameters:
     description: >-
@@ -1050,7 +1051,7 @@ definitions:
           $ref: '#/definitions/SubscriptionState'
         type: array
     required:
-    - subscriptions
+      - subscriptions
     type: object
   PutIdentificationServiceAreaResponse:
     description: >-
@@ -1070,8 +1071,8 @@ definitions:
           $ref: '#/definitions/SubscriberToNotify'
         type: array
     required:
-    - service_area
-    - subscribers
+      - service_area
+      - subscribers
     type: object
   PutSubscriptionResponse:
     description: Response for a request to create or update a subscription.
@@ -1102,7 +1103,7 @@ definitions:
         $ref: '#/definitions/Subscription'
         description: Result of the operation on the subscription.
     required:
-    - subscription
+      - subscription
     type: object
   RIDAircraftPosition:
     description: Position of an aircraft as reported for remote ID purposes.
@@ -1148,9 +1149,9 @@ definitions:
         format: float
         type: number
     required:
-    - lat
-    - lng
-    - alt
+      - lat
+      - lng
+      - alt
     type: object
   RIDAircraftState:
     description: State of an aircraft for the purposes of remote ID.
@@ -1224,7 +1225,7 @@ definitions:
         description: >-
           Time at which this state was valid.  This may be the time coming from
           the source, such as a GPS, or the time when the system computes the
-          values using an algorithm such as an Extended Kalman Filter (EKF).
+          values using an algorithm such as an Extended Kalman Filter (EKF). 
           Timestamp must be expressed with a minimum resolution of 1/10th of a
           second.  RFC 3339 format, per OpenAPI specification.
         format: date-time
@@ -1259,15 +1260,15 @@ definitions:
         format: float
         type: number
     required:
-    - timestamp
-    - timestamp_accuracy
-    - accuracy_h
-    - accuracy_v
-    - speed
-    - vertical_speed
-    - track
-    - speed_accuracy
-    - position
+      - timestamp
+      - timestamp_accuracy
+      - accuracy_h
+      - accuracy_v
+      - speed
+      - vertical_speed
+      - track
+      - speed_accuracy
+      - position
     type: object
   RIDAircraftType:
     description: >-
@@ -1277,22 +1278,22 @@ definitions:
       `VTOL` is a fixed wing aircraft that can take off vertically.  `Rotocraft`
       includes multirotor.
     enum:
-    - NotDeclared
-    - Aeroplane
-    - Rotorcraft
-    - Gyroplane
-    - VTOL
-    - Ornithopter
-    - Glider
-    - Kite
-    - FreeBalloon
-    - CaptiveBalloon
-    - Airship
-    - FreeFallOrParachute
-    - Rocket
-    - TetheredPoweredAircraft
-    - GroundObstacle
-    - Other
+      - NotDeclared
+      - Aeroplane
+      - Rotorcraft
+      - Gyroplane
+      - VTOL
+      - Ornithopter
+      - Glider
+      - Kite
+      - FreeBalloon
+      - CaptiveBalloon
+      - Airship
+      - FreeFallOrParachute
+      - Rocket
+      - TetheredPoweredAircraft
+      - GroundObstacle
+      - Other
     type: string
   RIDAuthData:
     description: Additional authentication data.
@@ -1304,8 +1305,8 @@ definitions:
         description: Format of additional authentication data.
         type: string
     required:
-    - format
-    - data
+      - format
+      - data
     type: object
   RIDFlight:
     description: Description of a remote ID flight.
@@ -1359,8 +1360,8 @@ definitions:
         minItems: 1
         type: array
     required:
-    - id
-    - aircraft_type
+      - id
+      - aircraft_type
     type: object
   RIDFlightDetails:
     description: >-
@@ -1403,7 +1404,7 @@ definitions:
         example: INTCJ123-4567-890
         type: string
     required:
-    - id
+      - id
     type: object
   RIDFlightID:
     description: >-
@@ -1442,19 +1443,19 @@ definitions:
       reference:
         description: The reference datum above which the height is reported.
         enum:
-        - TakeoffLocation
-        - GroundLevel
+          - TakeoffLocation
+          - GroundLevel
         type: string
     required:
-    - distance
-    - reference
+      - distance
+      - reference
     type: object
   RIDOperationalStatus:
     description: Indicates operational status of associated aircraft.
     enum:
-    - Undeclared
-    - Ground
-    - Airborne
+      - Undeclared
+      - Ground
+      - Airborne
     type: string
   RIDRecentAircraftPosition:
     description: ''
@@ -1468,15 +1469,14 @@ definitions:
         format: date-time
         type: string
     required:
-    - time
-    - position
+      - time
+      - position
     type: object
   RogueFlight:
     description: Details about a rogue flight inside a Constraint.
     properties:
       flight_id:
-        allOf:
-        - $ref: '#/definitions/RIDFlightID'
+        $ref: '#/definitions/RIDFlightID'
         description: >-
           This flight ID may be used to request real-time position updates for
           the rogue aircraft in this Constraint through the specified remote ID
@@ -1493,7 +1493,7 @@ definitions:
           $ref: '#/definitions/ConstraintReference'
         type: array
     required:
-    - constraint_references
+      - constraint_references
     type: object
   SearchIdentificationServiceAreasResponse:
     description: >-
@@ -1506,7 +1506,7 @@ definitions:
           $ref: '#/definitions/IdentificationServiceArea'
         type: array
     required:
-    - service_areas
+      - service_areas
     type: object
   SearchOperationalIntentReferencesResponse:
     description: >-
@@ -1519,7 +1519,7 @@ definitions:
           $ref: '#/definitions/OperationalIntentReference'
         type: array
     required:
-    - operational_intent_references
+      - operational_intent_references
     type: object
   SearchSubscriptionsResponse:
     description: Response to DSS query for subscriptions in a particular area.
@@ -1530,7 +1530,7 @@ definitions:
           $ref: '#/definitions/Subscription'
         type: array
     required:
-    - subscriptions
+      - subscriptions
     type: object
   SpeedAccuracy:
     description: |-
@@ -1548,12 +1548,12 @@ definitions:
 
       `SA03mps`: < 0.3 m/s
     enum:
-    - SAUnknown
-    - SA10mpsPlus
-    - SA10mps
-    - SA3mps
-    - SA1mps
-    - SA03mps
+      - SAUnknown
+      - SA10mpsPlus
+      - SA10mps
+      - SA3mps
+      - SA1mps
+      - SA03mps
     type: string
   SubscriberToNotify:
     description: >-
@@ -1575,8 +1575,8 @@ definitions:
           update to.  API depends on the DSS action taken that triggered this
           notification request.
     required:
-    - subscriptions
-    - url
+      - subscriptions
+      - url
     type: object
   Subscription:
     description: >-
@@ -1592,7 +1592,7 @@ definitions:
         $ref: '#/definitions/SubscriptionNotificationIndex'
       owner:
         description: >-
-          Assigned by the DSS based on creating client’s ID (via access token).
+          Assigned by the DSS based on creating client’s ID (via access token). 
           Used for restricting mutation and deletion operations to owner.
         example: myuss
         type: string
@@ -1611,12 +1611,12 @@ definitions:
       version:
         $ref: '#/definitions/Version'
     required:
-    - id
-    - url
-    - notification_index
-    - owner
-    - version
-    - callbacks
+      - id
+      - url
+      - notification_index
+      - owner
+      - version
+      - callbacks
     type: object
   SubscriptionCallbacks:
     description: >-
@@ -1659,7 +1659,7 @@ definitions:
       subscription_id:
         $ref: '#/definitions/SubscriptionUUID'
     required:
-    - subscription
+      - subscription
     type: object
   SubscriptionUUID:
     $ref: '#/definitions/UUIDv4'
@@ -1694,8 +1694,8 @@ definitions:
           DSS, except that it may adjust very recent start times to the current
           time.
     required:
-    - extents
-    - details_url
+      - extents
+      - details_url
     type: object
   UpdateHostNameDownParameters:
     description: >-
@@ -1709,7 +1709,7 @@ definitions:
           disabled by the DSS if another USS wishes to plan in the area.
         type: boolean
     required:
-    - down
+      - down
     type: object
   UpdateIdentificationServiceAreaParameters:
     description: >-
@@ -1719,7 +1719,7 @@ definitions:
       extents:
         $ref: '#/definitions/Volume4D'
         description: >-
-          The bounding spacetime extents of this Identification Service Area.
+          The bounding spacetime extents of this Identification Service Area. 
           End time must be specified.  If start time is not specified, it will
           remain unchanged.  Start times in the past should be rejected by the
           DSS unless they are unchanged from the Identification Service Area's
@@ -1733,8 +1733,8 @@ definitions:
       flights_url:
         $ref: '#/definitions/RIDFlightsURL'
     required:
-    - extents
-    - flights_url
+      - extents
+      - flights_url
     type: object
   UpdateOperationalIntentReferenceParameters:
     description: >-
@@ -1748,7 +1748,7 @@ definitions:
       extents:
         $ref: '#/definitions/Volume4D'
         description: >-
-          The bounding spacetime extents of this OperationalIntentReference.
+          The bounding spacetime extents of this OperationalIntentReference. 
           End time must be specified.  If start time is not specified, it will
           be set to the current time.  Start times in the past should be
           rejected by the DSS, except that it may adjust very recent start times
@@ -1757,16 +1757,16 @@ definitions:
         $ref: '#/definitions/DeconflictionKey'
         description: >-
           Proof that the client is aware of all relevant Entities with the
-          requirement that the client has deconflicted with all these Entities.
+          requirement that the client has deconflicted with all these Entities. 
           Relevant Entities for OperationalIntents consist of all Constraints,
           and OperationalIntents with equal or higher priority.
       priority:
         $ref: '#/definitions/OperationalIntentPriority'
     required:
-    - extents
-    - details_url
-    - priority
-    - key
+      - extents
+      - details_url
+      - priority
+      - key
     type: object
   UpdateSubscriptionParameters:
     description: Parameters for a request to update a subscription in the DSS.
@@ -1787,8 +1787,8 @@ definitions:
           Note that some Entities triggering notifications may lie entirely
           outside the requested area.
     required:
-    - extents
-    - callbacks
+      - extents
+      - callbacks
     type: object
   Version:
     description: >-
@@ -1816,14 +1816,14 @@ definitions:
 
       `VA1m`: < 1m
     enum:
-    - VAUnknown
-    - VA150mPlus
-    - VA150m
-    - VA45m
-    - VA25m
-    - VA10m
-    - VA3m
-    - VA1m
+      - VAUnknown
+      - VA150mPlus
+      - VA150m
+      - VA45m
+      - VA25m
+      - VA10m
+      - VA3m
+      - VA1m
     type: string
   Volume3D:
     description: >-
@@ -1840,7 +1840,7 @@ definitions:
         $ref: '#/definitions/GeoPolygon'
         description: Projection of this volume onto the earth's surface.
     required:
-    - footprint
+      - footprint
     type: object
   Volume4D:
     description: Contiguous block of geographic spacetime.
@@ -1859,7 +1859,7 @@ definitions:
         format: date-time
         type: string
     required:
-    - spatial_volume
+      - spatial_volume
     type: object
 info:
   description: >-
@@ -1882,36 +1882,32 @@ paths:
         lying entirely outside the requested area may be returned as well.
       operationId: searchOperationalIntentReferences
       parameters:
-      - description: >-
-          The area in which to search for OperationalIntentReferences.
-          References for some OperationalIntents near this area but wholly
-          outside it may also be returned.
-        in: query
-        name: area
-        required: true
-        schema:
+        - description: >-
+            The area in which to search for OperationalIntentReferences. 
+            References for some OperationalIntents near this area but wholly
+            outside it may also be returned.
+          in: query
+          name: area
+          required: true
           type: string
-      - description: >-
-          If specified, indicates non-interest in any OperationalIntents that
-          end before this time.  RFC 3339 format, per OpenAPI specification.
-        in: query
-        name: earliest_time
-        required: true
-        schema:
+        - description: >-
+            If specified, indicates non-interest in any OperationalIntents that
+            end before this time.  RFC 3339 format, per OpenAPI specification.
           format: date-time
+          in: query
+          name: earliest_time
+          required: true
           type: string
-      - description: >-
-          If specified, indicates non-interest in any OperationalIntents that
-          start after this time.  RFC 3339 format, per OpenAPI specification.
-        format: date-time
-        in: query
-        name: latest_time
-        required: true
-        schema:
+        - description: >-
+            If specified, indicates non-interest in any OperationalIntents that
+            start after this time.  RFC 3339 format, per OpenAPI specification.
           format: date-time
+          in: query
+          name: latest_time
+          required: true
           type: string
       produces:
-      - application/json
+        - application/json
       responses:
         '200':
           description: OperationalIntentReferences were successfully retrieved.
@@ -1938,11 +1934,11 @@ paths:
           schema:
             $ref: '#/definitions/ErrorResponse'
       security:
-      - AuthFromAuthorizationAuthority:
-        - utm.read.operational_intents
+        - AuthFromAuthorizationAuthority:
+            - utm.read.operational_intents
       summary: /dss/op_refs
       tags:
-      - dss_ops
+        - dss_ops
     summary: Set of OperationalIntentReferences in the DSS.
   '/v1/dss/op_refs/{id}':
     get:
@@ -1950,7 +1946,7 @@ paths:
       operationId: getOperationalIntentReference
       parameters: []
       produces:
-      - application/json
+        - application/json
       responses:
         '200':
           description: OperationalIntentReference was retrieved successfully.
@@ -1977,18 +1973,78 @@ paths:
           schema:
             $ref: '#/definitions/ErrorResponse'
       security:
-      - AuthFromAuthorizationAuthority:
-        - utm.read.operational_intents
+        - AuthFromAuthorizationAuthority:
+            - utm.read.operational_intents
       summary: '/dss/op_refs/{id}'
       tags:
-      - dss_ops
+        - dss_ops
     parameters:
-    - description: EntityUUID of the OperationalIntentReference.
-      in: path
-      name: id
-      schema:
-        type: string
-      required: true
+      - description: EntityUUID of the OperationalIntentReference.
+        in: path
+        name: id
+        required: true
+    put:
+      consumes:
+        - application/json
+      description: >-
+        Create a new OperationalIntentReference.  This call will fail if an
+        OperationalIntentReference with the same ID already exists.
+      operationId: createOperationalIntentReference
+      parameters:
+        - in: body
+          name: body
+          required: true
+          schema:
+            $ref: '#/definitions/CreateOperationalIntentReferenceParameters'
+      produces:
+        - application/json
+      responses:
+        '200':
+          description: An OperationalIntentReference was created successfully in the DSS.
+          schema:
+            $ref: '#/definitions/ChangeOperationalIntentReferenceResponse'
+        '400':
+          description: >-
+            * One or more input parameters were missing or invalid.
+
+            * The request attempted to mutate the Identification Service Area in
+            a disallowed way.
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        '401':
+          description: >-
+            Bearer access token was not provided in Authorization header, token
+            could not be decoded, or token was invalid.
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        '403':
+          description: >-
+            The access token was decoded successfully but did not include a
+            scope appropriate to this endpoint.
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        '409':
+          description: >-
+            * The provided key did not prove knowledge of all current and
+            relevant airspace Entities
+
+            * An OperationalIntentReference with the specified ID already
+            exists.
+
+            * Despite repeated attempts, the DSS was unable to update the DAR
+            because of other simultaneous changes.
+          schema:
+            $ref: '#/definitions/AirspaceConflictResponse'
+        '413':
+          description: The area of the OperationalIntentReference is too large.
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+        - AuthFromAuthorizationAuthority:
+            - utm.write.operational_intents
+      summary: '/dss/op_refs/{id}'
+      tags:
+        - dss_ops
     summary: An OperationalIntentReference in the DSS.
   '/v1/dss/op_refs/{id}/{version}':
     delete:
@@ -1996,7 +2052,7 @@ paths:
       operationId: deleteOperationalIntentReference
       parameters: []
       produces:
-      - application/json
+        - application/json
       responses:
         '200':
           description: OperationalIntentReference was successfully deleted from DSS.
@@ -2035,39 +2091,101 @@ paths:
           schema:
             $ref: '#/definitions/ErrorResponse'
       security:
-      - AuthFromAuthorizationAuthority:
-        - utm.write.operational_intents
+        - AuthFromAuthorizationAuthority:
+            - utm.write.operational_intents
       summary: '/dss/op_refs/{id}/{version}'
       tags:
-      - dss_ops
+        - dss_ops
     parameters:
-    - description: EntityUUID of the OperationalIntentReference.
-      in: path
-      name: id
-      required: true
-      schema:
+      - description: EntityUUID of the OperationalIntentReference.
+        in: path
+        name: id
+        required: true
+      - description: >-
+          Version string used to reference an OperationalIntentReference at a
+          particular point in time.  Matches the `token` field in the OVN of the
+          OperationalIntentReference.  Any updates to an existing
+          OperationalIntentReference must contain the corresponding version to
+          maintain idempotent updates.
+        in: path
+        name: version
+        required: true
         type: string
-    - description: >-
-        Version string used to reference an OperationalIntentReference at a
-        particular point in time.  Matches the `token` field in the OVN of the
-        OperationalIntentReference.  Any updates to an existing
-        OperationalIntentReference must contain the corresponding version to
-        maintain idempotent updates.
-      in: path
-      name: version
-      required: true
-      schema:
-        type: string
+    put:
+      consumes:
+        - application/json
+      description: >-
+        Update an OperationalIntentReference.  The full content of the existing
+        OperationalIntentReference will be replaced with the provided
+        information as only the most recent version is retained.
+      operationId: updateOperationalIntentReference
+      parameters:
+        - in: body
+          name: body
+          required: true
+          schema:
+            $ref: '#/definitions/UpdateOperationalIntentReferenceParameters'
+      produces:
+        - application/json
+      responses:
+        '200':
+          description: >-
+            An existing OperationalIntentReference was updated successfully in
+            the DSS.
+          schema:
+            $ref: '#/definitions/ChangeOperationalIntentReferenceResponse'
+        '400':
+          description: >-
+            * One or more input parameters were missing or invalid.
+
+            * The request attempted to mutate the OperationalIntentReference in
+            a disallowed way.
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        '401':
+          description: >-
+            Bearer access token was not provided in Authorization header, token
+            could not be decoded, or token was invalid.
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        '403':
+          description: >-
+            The access token was decoded successfully but did not include a
+            scope appropriate to this endpoint.
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+        '409':
+          description: >-
+            * The provided key did not prove knowledge of all current and
+            relevant airspace Entities
+
+            * The specified OperationalIntentReference's current version does
+            not match the provided version.
+
+            * Despite repeated attempts, the DSS was unable to update the DAR
+            because of other simultaneous changes.
+          schema:
+            $ref: '#/definitions/AirspaceConflictResponse'
+        '413':
+          description: The area of the OperationalIntentReference is too large.
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+      security:
+        - AuthFromAuthorizationAuthority:
+            - utm.write.operational_intents
+      summary: '/dss/op_refs/{id}/{version}'
+      tags:
+        - dss_ops
     summary: A specific version of an OperationalIntentReference in the DSS.
 security:
-- AuthFromAuthorizationAuthority:
-  - dss.read.identification_service_areas
-  - dss.write.identification_service_areas
-  - utm.read.operational_intents
-  - utm.write.operational_intents
-  - utm.read.constraints
-  - utm.write.constraints
-  - dss.write.hostnames
+  - AuthFromAuthorizationAuthority:
+      - dss.read.identification_service_areas
+      - dss.write.identification_service_areas
+      - utm.read.operational_intents
+      - utm.write.operational_intents
+      - utm.read.constraints
+      - utm.write.constraints
+      - dss.write.hostnames
 securityDefinitions:
   AuthFromAuthorizationAuthority:
     description: >-
@@ -2118,24 +2236,25 @@ securityDefinitions:
     type: oauth2
 swagger: '2.0'
 tags:
-- description: >-
-    Endpoints exposed by the DSS server for Identification Service Area
-    Entities.
-  name: dss_isas
-- description: >-
-    Endpoints exposed by the DSS server for OperationalIntentReference
-    Entities.
-  name: dss_ops
-- description: Endpoints exposed by the DSS server for ConstraintReference Entities.
-  name: dss_constraints
-- description: Endpoints exposed by the DSS server for Subscriptions.
-  name: dss_subscriptions
-- description: Endpoints exposed by the DSS server for tracking hostname statuses.
-  name: dss_hostnames
-- description: >-
-    Endpoints exposed by remote ID service providers for peer-peer
-    communication.
-  name: p2p_rid
-- description: Endpoints exposed by UTM service providers for peer-peer communication.
-  name: p2p_utm
+  - description: >-
+      Endpoints exposed by the DSS server for Identification Service Area
+      Entities.
+    name: dss_isas
+  - description: >-
+      Endpoints exposed by the DSS server for OperationalIntentReference
+      Entities.
+    name: dss_ops
+  - description: Endpoints exposed by the DSS server for ConstraintReference Entities.
+    name: dss_constraints
+  - description: Endpoints exposed by the DSS server for Subscriptions.
+    name: dss_subscriptions
+  - description: Endpoints exposed by the DSS server for tracking hostname statuses.
+    name: dss_hostnames
+  - description: >-
+      Endpoints exposed by remote ID service providers for peer-peer
+      communication.
+    name: p2p_rid
+  - description: Endpoints exposed by UTM service providers for peer-peer communication.
+    name: p2p_utm
 x-components: {}
+
